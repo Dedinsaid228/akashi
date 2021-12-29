@@ -1,5 +1,5 @@
 QT       += network websockets core sql
-QT       -= gui
+QT       += gui
 TEMPLATE = app
 
 CONFIG += c++11 console
@@ -9,6 +9,7 @@ CONFIG += c++11 console
 # depend on your compiler). Please consult the documentation of the
 # deprecated API in order to know how to port your code away from it.
 DEFINES += QT_DEPRECATED_WARNINGS
+DEFINES += QT_DEBUG_PLUGINS
 
 # You can also make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

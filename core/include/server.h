@@ -26,7 +26,6 @@
 #include "include/discord.h"
 #include "include/config_manager.h"
 #include "include/http_advertiser.h"
-#include "include/logger/u_logger.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -74,16 +73,6 @@ class Server : public QObject {
      * Advertising is not done here -- see Advertiser::contactMasterServer() for that.
      */
     void start();
-
-    /**
-     * @brief Enum to specifc different targets to send altered packets to a specific usergroup.
-     */
-    enum class TARGET_TYPE {
-        AUTHENTICATED,
-        MODCHAT,
-        ADVERT
-    };
-    Q_ENUM(TARGET_TYPE)
 
     /**
      * @brief Gets a pointer to a client by IPID.
@@ -140,26 +129,6 @@ class Server : public QObject {
     void broadcast(AOPacket packet);
 
     /**
-     * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
-     *
-     * @param The packet to send to the clients.
-     *
-     * @param ENUM to determine the targets of the altered packet.
-     */
-    void broadcast(AOPacket packet, TARGET_TYPE target);
-
-    /**
-     * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
-     *
-     * @param The packet to send to the clients.
-     *
-     * @param The altered packet to send to the other clients.
-     *
-     * @param ENUM to determine the targets of the altered packet.
-     */
-    void broadcast(AOPacket packet, AOPacket other_packet, enum TARGET_TYPE target);
-
-    /**
      * @brief Returns the character's character ID (= their index in the character list).
      *
      * @param char_name The 'internal' name for the character whose character ID to look up. This is equivalent to
@@ -170,34 +139,39 @@ class Server : public QObject {
     int getCharID(QString char_name);
 
     /**
+     * @brief Creates an HTTP advertiser config struct and emits it using server::reloadHTTPRequest.
+     */
+    void setHTTPAdvertiserConfig();
+
+    /**
+     * @brief Updates the modern advertiser configuration on configuration reload.
+     */
+    void updateHTTPAdvertiserConfig();
+
+    /**
      * @brief Checks if an IP is in a subnet of the IPBanlist.
      **/
     bool isIPBanned(QHostAddress f_remote_IP);
 
     /**
-     * @brief Getter for an area specific buffer from the logger.
-     */
-    QQueue<QString> getAreaBuffer(const QString& f_areaName);
-
-    /**
      * @brief The collection of all currently connected clients.
      */
-    QVector<AOClient*> m_clients;
+    QVector<AOClient*> clients;
 
     /**
      * @brief The overall player count in the server.
      */
-    int m_player_count;
+    int player_count;
 
     /**
      * @brief The characters available on the server to use.
      */
-    QStringList m_characters;
+    QStringList characters;
 
     /**
      * @brief The areas on the server.
      */
-    QVector<AreaData*> m_areas;
+    QVector<AreaData*> areas;
 
     /**
      * @brief The names of the areas on the server.
@@ -205,7 +179,7 @@ class Server : public QObject {
      * @details Equivalent to iterating over #areas and getting the area names individually, but grouped together
      * here for faster access.
      */
-    QStringList m_area_names;
+    QStringList area_names;
 
     /**
      * @brief The available songs on the server.
@@ -213,12 +187,12 @@ class Server : public QObject {
      * @details Does **not** include the area names, the actual music list packet should be constructed from
      * #area_names and this combined.
      */
-    QStringList m_music_list;
+    QStringList music_list;
 
     /**
      * @brief The backgrounds on the server that may be used in areas.
      */
-    QStringList m_backgrounds;
+    QStringList backgrounds;
 
     /**
      * @brief Collection of all IPs that are banned.
@@ -253,13 +227,19 @@ class Server : public QObject {
      */
     bool can_send_ic_messages = true;
 
-  public slots:
+    /**
+     * @brief Frees the given UID, allowing it to be taken by new clients.
+     *
+     * @param id The UID to free.
+     */
+    void freeUID(const int id);
 
     /**
-     * @brief Convenience class to call a reload of available configuraiton elements.
+     * @brief Informs the server to resize the UID vectV53*mGr4xzmAGpYor.
      */
-    void reloadSettings();
+    void resizeUIDs();
 
+  public slots:
     /**
      * @brief Handles a new connection.
      *
@@ -275,13 +255,6 @@ class Server : public QObject {
      */
     void allowMessage();
 
-    /**
-     * @brief Method to construct and reconstruct Discord Webhook Integration.
-     *
-     * @details Constructs or rebuilds Discord Object during server startup and configuration reload.
-     */
-    void handleDiscordIntegration();
-
   signals:
 
     /**
@@ -293,15 +266,16 @@ class Server : public QObject {
     void reloadRequest(QString p_name, QString p_desc);
 
     /**
-     * @brief Updates the playercount in the modern advertiser.
+     * @brief Sends all necessary info for the new advertiser.
+     * @param Struct that contains all configuration for the advertiser
      */
-    void updatePlayerCount(int f_current_players);
+    void setHTTPConfiguration(struct advertiser_config config);
 
     /**
-     * @brief Triggers a partial update of the modern advertiser as some information, such as ports
-     * can't be updated while the server is running.
+     * @brief Sends a partial update to the modern advertiser.
+     * @param Struct that contains partial information about the server to update the advertised information.
      */
-    void updateHTTPConfiguration();
+    void updateHTTPConfiguration(struct update_advertiser_config config);
 
     /**
      * @brief Sends a modcall webhook request, emitted by AOClient::pktModcall.
@@ -313,30 +287,9 @@ class Server : public QObject {
      */
     void modcallWebhookRequest(const QString& f_name, const QString& f_area, const QString& f_reason, const QQueue<QString>& f_buffer);
 
-    /**
-     * @brief Sends a ban webhook request, emitted by AOClient::cmdBan
-     * @param f_ipid The IPID of the banned client.
-     * @param f_moderator The moderator who issued the ban.
-     * @param f_duration The duration of the ban in a human readable format.
-     * @param f_reason The reason for the ban.
-     * @param f_banID The ID of the issued ban.
-     */
     void banWebhookRequest(const QString& f_ipid, const QString& f_moderator, const QString& f_duration, const QString& f_reason, const int& f_banID);
 
-    /**
-     * @brief Signal connected to universal logger. Logs a client connection attempt.
-     * @param f_ip_address The IP Address of the incoming connection.
-     * @param f_ipid The IPID of the incoming connection.
-     * @param f_hdid The HDID of the incoming connection.
-     */
-    void logConnectionAttempt(const QString& f_ip_address, const QString& f_ipid, const QString& f_hwid);
-
   private:
-    /**
-     * @brief Connects new AOClient to the logger.
-     **/
-    void hookupLogger(AOClient* client);
-
     /**
      * @brief The proxy used for WebSocket connections.
      *
@@ -365,11 +318,6 @@ class Server : public QObject {
     QTimer* httpAdvertiserTimer;
 
     /**
-     * @brief Handles the universal log framework.
-     */
-    ULogger* logger;
-
-    /**
      * @brief The port through which the server will accept TCP connections.
      */
     int port;
@@ -378,6 +326,10 @@ class Server : public QObject {
      * @brief The port through which the server will accept WebSocket connections.
      */
     int ws_port;
-};
 
+    /**
+     * @brief A vector containing possible UIDs and whether or not they have been taken.
+     */
+    QVector<bool>* uid;
+};
 #endif // SERVER_H

@@ -26,32 +26,38 @@ AreaData::AreaData(QString p_name, int p_index) :
     m_status(IDLE),
     m_locked(FREE),
     m_document("No document."),
-    m_area_message("No area message set."),
     m_defHP(10),
     m_proHP(10),
     m_statement(0),
     m_judgelog(),
     m_lastICMessage(),
-    m_send_area_message(false)
+    m_lastICMessageOwner()
 {
     QStringList name_split = p_name.split(":");
     name_split.removeFirst();
     m_name = name_split.join(":");
-    QSettings* areas_ini = ConfigManager::areaData();
-    areas_ini->setIniCodec("UTF-8");
-    areas_ini->beginGroup(p_name);
-    m_background = areas_ini->value("background", "gs4").toString();
-    m_isProtected = areas_ini->value("protected_area", "false").toBool();
-    m_iniswapAllowed = areas_ini->value("iniswap_allowed", "true").toBool();
-    m_bgLocked = areas_ini->value("bg_locked", "false").toBool();
-    m_eviMod = QVariant(areas_ini->value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
-    m_blankpostingAllowed = areas_ini->value("blankposting_allowed","true").toBool();
-    m_forceImmediate = areas_ini->value("force_immediate", "false").toBool();
-    m_toggleMusic = areas_ini->value("toggle_music", "true").toBool();
-    m_shownameAllowed = areas_ini->value("shownames_allowed", "true").toBool();
-    m_ignoreBgList = areas_ini->value("ignore_bglist", "false").toBool();
-    m_jukebox = areas_ini->value("jukebox_enabled", "false").toBool();
-    areas_ini->endGroup();
+    QSettings areas_ini("config/areas.ini", QSettings::IniFormat);
+    areas_ini.setIniCodec("UTF-8");
+    areas_ini.beginGroup(p_name);
+    m_background = areas_ini.value("background", "gs4").toString();
+    m_isProtected = areas_ini.value("protected_area", "false").toBool();
+    m_iniswapAllowed = areas_ini.value("iniswap_allowed", "true").toBool();
+    m_bgLocked = areas_ini.value("bg_locked", "false").toBool();
+    m_eviMod = QVariant(areas_ini.value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
+    m_blankpostingAllowed = areas_ini.value("blankposting_allowed","true").toBool();
+    m_forceImmediate = areas_ini.value("force_immediate", "false").toBool();
+    toggle_music = areas_ini.value("toggle_music", "true").toBool();
+    m_shownameAllowed = areas_ini.value("shownames_allowed", "true").toBool();
+    m_ignoreBgList = areas_ini.value("ignore_bglist", "false").toBool();
+    m_floodguardactive = areas_ini.value("floodguard_active", "false").toBool();
+    m_chillMod = areas_ini.value("chillmod", "false").toBool();
+    m_autoMod = areas_ini.value("automod", "false").toBool();
+    areas_ini.endGroup();
+    int log_size = ConfigManager::logBuffer();
+    DataTypes::LogType l_logType = ConfigManager::loggingType();
+    if (log_size == 0)
+        log_size = 500;
+    m_logger = new Logger(m_name, log_size, l_logType);
     QTimer* timer1 = new QTimer();
     m_timers.append(timer1);
     QTimer* timer2 = new QTimer();
@@ -60,9 +66,6 @@ AreaData::AreaData(QString p_name, int p_index) :
     m_timers.append(timer3);
     QTimer* timer4 = new QTimer();
     m_timers.append(timer4);
-    m_jukebox_timer = new QTimer();
-    connect(m_jukebox_timer, &QTimer::timeout,
-            this, &AreaData::switchJukeboxSong);
 }
 
 const QMap<QString, AreaData::Status> AreaData::map_statuses = {
@@ -73,6 +76,8 @@ const QMap<QString, AreaData::Status> AreaData::map_statuses = {
     {"looking-for-players",     AreaData::Status::LOOKING_FOR_PLAYERS },
     {"recess",                  AreaData::Status::RECESS              },
     {"gaming",                  AreaData::Status::GAMING              },
+    {"erp",                     AreaData::Status::ERP                 },
+    {"yablachki",               AreaData::Status::YABLACHKI           },
 };
 
 void AreaData::clientLeftArea(int f_charId)
@@ -93,23 +98,25 @@ void AreaData::clientJoinedArea(int f_charId)
     }
 }
 
-QList<int> AreaData::owners() const
+QList<int> AreaData::findOwner() const
 {
-    return m_owners;
+    return owners;
 }
 
 void AreaData::addOwner(int f_clientId)
 {
-    m_owners.append(f_clientId);
-    m_invited.append(f_clientId);
+    owners.append(f_clientId);
+    invited.append(f_clientId);
 }
 
 bool AreaData::removeOwner(int f_clientId)
 {
-    m_owners.removeAll(f_clientId);
-    m_invited.removeAll(f_clientId);
+    const QList<int> lastowners = owners;
 
-    if (m_owners.isEmpty() && m_locked != AreaData::FREE) {
+    owners.removeAll(f_clientId);
+    invited.removeAll(f_clientId);
+
+    if (!lastowners.isEmpty() && owners.isEmpty() && m_locked != AreaData::FREE) {
         m_locked = AreaData::FREE;
         return true;
     }
@@ -137,11 +144,6 @@ AreaData::LockStatus AreaData::lockStatus() const
     return m_locked;
 }
 
-bool AreaData::isjukeboxEnabled() const
-{
-    return m_jukebox;
-}
-
 void AreaData::lock()
 {
     m_locked = LockStatus::LOCKED;
@@ -159,21 +161,21 @@ void AreaData::spectatable()
 
 bool AreaData::invite(int f_clientId)
 {
-    if (m_invited.contains(f_clientId)) {
+    if (invited.contains(f_clientId)) {
         return false;
     }
 
-    m_invited.append(f_clientId);
+    invited.append(f_clientId);
     return true;
 }
 
 bool AreaData::uninvite(int f_clientId)
 {
-    if (!m_invited.contains(f_clientId)) {
-        return false;
+    if (!invited.contains(f_clientId)) {
+         return false;
     }
 
-    m_invited.removeAll(f_clientId);
+    invited.removeAll(f_clientId);
     return true;
 }
 
@@ -202,9 +204,9 @@ QList<int> AreaData::charactersTaken() const
     return m_charactersTaken;
 }
 
-bool AreaData::changeCharacter(int f_from, int f_to)
+bool AreaData::changeCharacter(int f_from, int f_to, bool taketaked)
 {
-    if (m_charactersTaken.contains(f_to)) {
+    if (m_charactersTaken.contains(f_to) && taketaked == false) {
         return false;
     }
 
@@ -212,6 +214,7 @@ bool AreaData::changeCharacter(int f_from, int f_to)
         if (f_from != -1) {
             m_charactersTaken.removeAll(f_from);
         }
+
         m_charactersTaken.append(f_to);
         return true;
     }
@@ -268,24 +271,98 @@ bool AreaData::changeStatus(const QString &f_newStatus_r)
     return false;
 }
 
-QList<int> AreaData::invited() const
+/*QList<int> AreaData::invited() const
 {
     return m_invited;
-}
+}*/
 
 bool AreaData::isMusicAllowed() const
 {
-    return m_toggleMusic;
+    return toggle_music;
 }
 
 void AreaData::toggleMusic()
 {
-    m_toggleMusic = !m_toggleMusic;
+    toggle_music = !toggle_music;
+}
+
+void AreaData::log(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r,
+                   const AOPacket &f_packet_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
+{
+    auto l_header = f_packet_r.header;
+
+    if (l_header == "MS") {
+        m_logger->logIC(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(4), f_showname_r, f_oocname_r, f_uid_r);
+    }
+    else if (l_header == "CT") {
+        m_logger->logOOC(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(1), f_showname_r, f_oocname_r, f_uid_r);
+    }
+    else if (l_header == "ZZ") {
+        m_logger->logModcall(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(0), f_showname_r, f_oocname_r, f_uid_r);
+    }
+}
+
+void AreaData::logLogin(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r, bool f_success,
+                        const QString& f_modname_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
+{
+    m_logger->logLogin(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_success, f_modname_r, f_showname_r, f_oocname_r, f_uid_r);
+}
+
+void AreaData::logCmd(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r, const QString &f_command_r,
+                      const QStringList &f_cmdArgs_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
+{
+    m_logger->logCmd(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_command_r, f_cmdArgs_r, f_showname_r, f_oocname_r, f_uid_r);
+}
+
+void AreaData::logCmdAdvanced(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_type_r, const QString& f_message_r,
+                              const QString& f_hwid_r, const QString& f_showname_r, const QString& f_oocname_r, const QString& f_uid_r)
+{
+    m_logger->logCmdAdvanced(f_charName_r, f_ipid_r, f_type_r, f_message_r,
+                             f_hwid_r, f_showname_r, f_oocname_r, f_uid_r);
+}
+
+void AreaData::LogDisconnect(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
+                             const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r)
+{
+    m_logger->LogDisconnecting(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_uid_r);
+}
+
+void AreaData::LogConnect(const QString &f_ipid_r)
+{
+    m_logger->LogConnect(f_ipid_r);
+}
+
+void AreaData::LogMusic(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
+                        const QString& f_showname_r, const QString& f_oocname_r, const QString& f_music_r, const QString &f_uid_r)
+{
+        m_logger->LogMusic(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_music_r, f_uid_r);
+}
+
+void AreaData::LogChangeChar(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
+                             const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r, const QString &f_oldCharName_r)
+{
+    m_logger->LogChangeChar(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_uid_r, f_oldCharName_r);
+}
+
+void AreaData::LogChangeArea(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
+                             const QString& f_showname_r, const QString& f_oocname_r, const QString& f_area_r, const QString &f_uid_r)
+{
+    m_logger->LogChangeArea(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_area_r, f_uid_r);
+}
+
+void AreaData::flushLogs() const
+{
+    m_logger->flush();
 }
 
 void AreaData::setEviMod(const EvidenceMod &f_eviMod_r)
 {
     m_eviMod = f_eviMod_r;
+}
+
+QQueue<QString> AreaData::buffer() const
+{
+    return m_logger->buffer();
 }
 
 void AreaData::setTestimonyRecording(const TestimonyRecording &f_testimonyRecording_r)
@@ -319,6 +396,16 @@ void AreaData::toggleImmediate()
 const QStringList& AreaData::lastICMessage() const
 {
     return m_lastICMessage;
+}
+
+const QString& AreaData::lastICMessageOwner() const
+{
+    return m_lastICMessageOwner;
+}
+
+void AreaData::updateLastICMessageOwner(const QString &f_lastMessageOwner_r)
+{
+    m_lastICMessageOwner = f_lastMessageOwner_r;
 }
 
 void AreaData::updateLastICMessage(const QStringList &f_lastMessage_r)
@@ -426,32 +513,6 @@ QStringList AreaData::getNotecards()
     return l_notecards;
 }
 
-QString AreaData::musicPlayerBy() const
-{
-    return m_musicPlayedBy;
-}
-
-void AreaData::setMusicPlayedBy(const QString& f_music_player)
-{
-    m_musicPlayedBy = f_music_player;
-}
-
-void AreaData::changeMusic(const QString &f_source_r, const QString &f_newSong_r)
-{
-    m_currentMusic = f_newSong_r;
-    m_musicPlayedBy = f_source_r;
-}
-
-QString AreaData::currentMusic() const
-{
-    return m_currentMusic;
-}
-
-void AreaData::setCurrentMusic(QString f_current_song)
-{
-    m_currentMusic = f_current_song;
-}
-
 int AreaData::proHP() const
 {
     return m_proHP;
@@ -479,24 +540,6 @@ QString AreaData::document() const
 void AreaData::changeDoc(const QString &f_newDoc_r)
 {
     m_document = f_newDoc_r;
-}
-
-QString AreaData::areaMessage() const
-{
-    return m_area_message;
-}
-
-bool AreaData::sendAreaMessageOnJoin() const
-{
-    return m_send_area_message;
-}
-
-void AreaData::changeAreaMessage(const QString& f_newMessage_r)
-{
-    if(f_newMessage_r.isEmpty())
-        m_area_message = "No area message set.";
-    else
-        m_area_message = f_newMessage_r;
 }
 
 bool AreaData::bgLocked() const
@@ -544,57 +587,32 @@ void AreaData::toggleIgnoreBgList()
     m_ignoreBgList = !m_ignoreBgList;
 }
 
-void AreaData::toggleAreaMessageJoin()
+bool AreaData::floodguardActive()
 {
-    m_send_area_message = !m_send_area_message;
+    return m_floodguardactive;
 }
 
-void AreaData::toggleJukebox()
+void AreaData::toggleFloodguardActive()
 {
-    m_jukebox = !m_jukebox;
-    if (!m_jukebox) {
-        m_jukebox_queue.clear();
-        m_jukebox_timer->stop();
-    }
+    m_floodguardactive = !m_floodguardactive;
 }
 
-QString AreaData::addJukeboxSong(QString f_song)
+bool AreaData::chillMod()
 {
-    if(!m_jukebox_queue.contains(f_song)) {
-            int l_song_duration = ConfigManager::songInformation(f_song);
-            if (l_song_duration > 0) {
-                if (m_jukebox_queue.size() == 0) {
-                    emit playJukeboxSong(AOPacket("MC",{f_song,QString::number(-1)}), index());
-                    m_jukebox_timer->start(l_song_duration * 1000);
-                    setCurrentMusic(f_song);
-                    setMusicPlayedBy("Jukebox");
-                }
-                m_jukebox_queue.append(f_song);
-                return "Song added to Jukebox.";
-            }
-            else {
-                return "Unable to add song. Duration shorter than 1.";
-            }
-    }
-    return "Unable to add song. Song already in Jukebox.";
+    return m_chillMod;
 }
 
-void AreaData::switchJukeboxSong()
+void AreaData::toggleChillMod()
 {
-    QString l_song_name;
-    if(m_jukebox_queue.size() == 1) {
-        l_song_name = m_jukebox_queue[0];
-        emit playJukeboxSong(AOPacket("MC",{l_song_name,"-1"}), m_index);
-        m_jukebox_timer->start(ConfigManager::songInformation(l_song_name) * 1000);
-    }
-    else {
-        int l_random_index = QRandomGenerator::system()->bounded(m_jukebox_queue.size() -1);
-        l_song_name = m_jukebox_queue[l_random_index];
-        emit playJukeboxSong(AOPacket("MC",{l_song_name,QString::number(-1)}), m_index);
-        m_jukebox_timer->start(ConfigManager::songInformation(m_jukebox_queue[l_random_index]) * 1000);
-        m_jukebox_queue.remove(l_random_index);
-        m_jukebox_queue.squeeze();
-    }
-    setCurrentMusic(l_song_name);
-    setMusicPlayedBy("Jukebox");
+    m_chillMod = !m_chillMod;
+}
+
+bool AreaData::autoMod()
+{
+    return m_autoMod;
+}
+
+void AreaData::toggleAutoMod()
+{
+    m_autoMod = !m_autoMod;
 }

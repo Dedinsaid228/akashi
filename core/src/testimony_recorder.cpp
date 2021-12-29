@@ -17,13 +17,17 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+//
+
 void AOClient::addStatement(QStringList packet)
 {
     if (checkTestimonySymbols(packet[4])) {
         return;
     }
-    AreaData* area = server->m_areas[m_current_area];
+
+    AreaData* area = server->areas[current_area];
     int c_statement = area->statement();
+
     if (c_statement >= -1) {
         if (area->testimonyRecording() == AreaData::TestimonyRecording::RECORDING) {
             if (c_statement <= ConfigManager::maxStatements()) {
@@ -31,6 +35,7 @@ void AOClient::addStatement(QStringList packet)
                     packet[14] = "3";
                 else
                     packet[14] = "1";
+
                 area->recordStatement(packet);
                 return;
             }
@@ -43,10 +48,10 @@ void AOClient::addStatement(QStringList packet)
                 area->addStatement(c_statement, packet);
                 area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
             }
-        else {
-            sendServerMessage("Unable to add more statements. The maximum amount of statements has been reached.");
-            area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
-        }
+            else {
+                sendServerMessage("Unable to add more statements. The maximum amount of statements has been reached.");
+                area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
+            }
     }
 }
 
@@ -55,9 +60,12 @@ QStringList AOClient::updateStatement(QStringList packet)
     if (checkTestimonySymbols(packet[4])) {
         return packet;
     }
-    AreaData* area = server->m_areas[m_current_area];
+
+    AreaData* area = server->areas[current_area];
     int c_statement = area->statement();
+
     area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
+
     if (c_statement <= 0 || area->testimony()[c_statement].empty())
         sendServerMessage("Unable to update an empty statement. Please use /addtestimony.");
     else {
@@ -66,12 +74,13 @@ QStringList AOClient::updateStatement(QStringList packet)
         sendServerMessage("Updated current statement.");
         return area->testimony()[c_statement];
     }
+
     return packet;
 }
 
 void AOClient::clearTestimony()
 {
-    AreaData* area = server->m_areas[m_current_area];
+    AreaData* area = server->areas[current_area];
     area->clearTestimony();
 }
 

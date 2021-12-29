@@ -3,17 +3,9 @@
 HTTPAdvertiser::HTTPAdvertiser()
 {
     m_manager = new QNetworkAccessManager();
+
     connect(m_manager, &QNetworkAccessManager::finished,
             this, &HTTPAdvertiser::msRequestFinished);
-
-
-    m_name = ConfigManager::serverName();
-    m_hostname = ConfigManager::advertiserHostname();
-    m_description = ConfigManager::serverDescription();
-    m_port = ConfigManager::serverPort();
-    m_ws_port = ConfigManager::webaoPort();
-    m_masterserver = ConfigManager::advertiserHTTPIP();
-    m_debug = ConfigManager::advertiserHTTPDebug();
 }
 
 HTTPAdvertiser::~HTTPAdvertiser()
@@ -29,69 +21,74 @@ void HTTPAdvertiser::msAdvertiseServer()
         QNetworkRequest request(url);
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-        QJsonObject l_json;
+        QJsonObject json;
+        json["port"] = m_port;
 
-        if (!m_hostname.isEmpty()) {
-            l_json["ip"] = m_hostname;
-        }
-
-        l_json["port"] = m_port;
         if (m_ws_port != -1) {
-            l_json["ws_port"] = m_ws_port;
+            json["ws_port"] = m_ws_port;
         }
 
-        l_json["players"] = m_players;
-        l_json["name"] = m_name;
+        json["players"] = m_players;
+        json["name"] = m_name;
 
         if (!m_description.isEmpty()) {
-        l_json["description"] = m_description;
+        json["description"] = m_description;
         }
 
-        m_manager->post(request, QJsonDocument(l_json).toJson());
+        m_manager->post(request, QJsonDocument(json).toJson());
 
         if (m_debug)
             qDebug().noquote() << "Advertised Server";
+
         return;
     }
     if (m_debug)
         qWarning().noquote() << "Unable to advertise. Masterserver URL '" + m_masterserver.toString() + "' is not valid.";
+
     return;
 
 }
 
-void HTTPAdvertiser::msRequestFinished(QNetworkReply *f_reply)
+void HTTPAdvertiser::msRequestFinished(QNetworkReply *reply)
 {
     if (m_debug) {
-        if (f_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
+        if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 200) {
             qDebug().noquote() << "Succesfully advertised server.";
         }
         else {
-            QJsonDocument json = QJsonDocument::fromJson(f_reply->readAll());
+            QJsonDocument json = QJsonDocument::fromJson(reply->readAll());
             if (json.isNull()) {
-                qCritical().noquote() << "Invalid JSON response from" << f_reply->url();
-                f_reply->deleteLater();
+                qCritical().noquote() << "Invalid JSON response from" << reply->url();
+                reply->deleteLater();
                 return;
             }
 
-            qDebug().noquote() << "Got valid response from" << f_reply->url();
+            qDebug().noquote() << "Got valid response from" << reply->url();
             qDebug() << json;
         }
     }
-    f_reply->deleteLater();
+
+    reply->deleteLater();
 }
 
-void HTTPAdvertiser::updatePlayerCount(int f_current_players)
+void HTTPAdvertiser::setAdvertiserSettings(advertiser_config config)
 {
-    m_players = f_current_players;
+    m_name = config.name;
+    m_description = config.description;
+    m_port = config.port;
+    m_ws_port = config.ws_port;
+    m_players = config.players;
+    m_masterserver = config.masterserver;
+    m_debug = config.debug;
+
+    msAdvertiseServer();
 }
 
-void HTTPAdvertiser::updateAdvertiserSettings()
+void HTTPAdvertiser::updateAdvertiserSettings(update_advertiser_config config)
 {
-    m_name = ConfigManager::serverName();
-    m_hostname = ConfigManager::advertiserHostname();
-    m_description = ConfigManager::serverDescription();
-    m_masterserver = ConfigManager::advertiserHTTPIP();
-    m_debug = ConfigManager::advertiserHTTPDebug();
+    m_name = config.name;
+    m_description = config.description;
+    m_players = config.players;
+    m_masterserver = config.masterserver;
+    m_debug = config.debug;
 }
-
-

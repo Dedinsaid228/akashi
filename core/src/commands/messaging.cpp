@@ -22,28 +22,27 @@
 
 void AOClient::cmdPos(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     changePosition(argv[0]);
-    updateEvidenceList(server->m_areas[m_current_area]);
+    updateEvidenceList(server->areas[current_area]);
 }
 
 void AOClient::cmdForcePos(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     bool ok;
-    QList<AOClient*> l_targets;
-    int l_target_id = argv[1].toInt(&ok);
-    int l_forced_clients = 0;
+    QList<AOClient*> targets;
+    AreaData* area = server->areas[current_area];
+    int target_id = argv[1].toInt(&ok);
+    int forced_clients = 0;
+
     if (!ok && argv[1] != "*") {
         sendServerMessage("That does not look like a valid ID.");
         return;
     }
     else if (ok) {
-        AOClient* l_target_client = server->getClientByID(l_target_id);
-        if (l_target_client != nullptr)
-            l_targets.append(l_target_client);
+        AOClient* target_client = server->getClientByID(target_id);
+
+        if (target_client != nullptr)
+            targets.append(target_client);
         else {
             sendServerMessage("Target ID not found!");
             return;
@@ -51,53 +50,66 @@ void AOClient::cmdForcePos(int argc, QStringList argv)
     }
 
     else if (argv[1] == "*") { // force all clients in the area
-        for (AOClient* client : qAsConst(server->m_clients)) {
-            if (client->m_current_area == m_current_area)
-                l_targets.append(client);
+        for (AOClient* client : server->clients) {
+            if (client->current_area == current_area)
+                targets.append(client);
         }
     }
-    for (AOClient* l_target : l_targets) {
-        l_target->sendServerMessage("Position forcibly changed by CM.");
-        l_target->changePosition(argv[0]);
-        l_forced_clients++;
+
+    for (AOClient* target : targets) {
+        target->sendServerMessage("Position forcibly changed.");
+        target->changePosition(argv[0]);
+        forced_clients++;
     }
-    sendServerMessage("Forced " + QString::number(l_forced_clients) + " into pos " + argv[0] + ".");
+
+    sendServerMessage("Forced " + QString::number(forced_clients) + " into pos " + argv[0] + ".");
+    area->logCmdAdvanced(current_char, ipid, hwid, "FORCE POS", "Client(-s): " + QString::number(forced_clients) + ". Pos: " + argv[0], showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdG(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
+    AreaData* area = server->areas[current_area];
+    QString sender_name = ooc_name;
+    QString sender_area = server->area_names.value(current_area);
+    bool sender_auth = authenticated;
+    bool sender_slientmod = slient_mod;
+    QString sender_message = argv.join(" ");
 
-    QString l_sender_name = m_ooc_name;
-    QString l_sender_area = server->m_area_names.value(m_current_area);
-    QString l_sender_message = argv.join(" ");
-    //Slightly better readability
-    AOPacket l_packet = AOPacket("CT", {"[G][" + m_ipid + "][" + l_sender_area + "]" + l_sender_name, l_sender_message});
-    AOPacket l_other_packet = AOPacket("CT", {"[G][" + l_sender_area + "]" + l_sender_name, l_sender_message});
-    server->broadcast(l_packet, l_other_packet, Server::TARGET_TYPE::AUTHENTICATED);
+    for (AOClient* client : server->clients) {
+        if (client->global_enabled && sender_auth == true && sender_slientmod == false)
+            client->sendPacket("CT", {"[G][" + sender_area + "]" "[M]" + sender_name, sender_message});
+        else if (client->global_enabled)
+            client->sendPacket("CT", {"[G][" + sender_area + "]" + sender_name, sender_message});
+    }
+    area->logCmdAdvanced(current_char, ipid, hwid, "GLOBAL MESSAGE", sender_message, showname, ooc_name, QString::number(id));
     return;
 }
 
 void AOClient::cmdNeed(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
+    AreaData* area = server->areas[current_area];
+    QString sender_area = server->area_names.value(current_area);
+    QString sender_message = argv.join(" ");
 
-    QString l_sender_area = server->m_area_names.value(m_current_area);
-    QString l_sender_message = argv.join(" ");
-    server->broadcast(AOPacket("CT",{"=== Advert ===\n[" + l_sender_area + "] needs " + l_sender_message+ "."}),Server::TARGET_TYPE::ADVERT);
+    for (AOClient* client : server->clients) {
+        if (client->advert_enabled) {
+            client->sendServerMessage({"=== Advert ===\n[" + sender_area + "] needs " + sender_message+ "."});
+        }
+    }
+    area->logCmdAdvanced(current_char, ipid, hwid, "NEED MESSAGE", sender_message, showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdSwitch(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
+    int selected_char_id = server->getCharID(argv.join(" "));
 
-    int l_selected_char_id = server->getCharID(argv.join(" "));
-    if (l_selected_char_id == -1) {
+    if (selected_char_id == -1) {
         sendServerMessage("That does not look like a valid character.");
         return;
     }
-    if (changeCharacter(l_selected_char_id)) {
-        m_char_id = l_selected_char_id;
+
+    if (changeCharacter(selected_char_id)) {
+        char_id = selected_char_id;
     }
     else {
         sendServerMessage("The character you picked is either taken or invalid.");
@@ -106,365 +118,402 @@ void AOClient::cmdSwitch(int argc, QStringList argv)
 
 void AOClient::cmdRandomChar(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    AreaData* area = server->areas[current_area];
+    int selected_char_id;
+    bool taken = true;
 
-    AreaData* l_area = server->m_areas[m_current_area];
-    int l_selected_char_id;
-    bool l_taken = true;
-    while (l_taken) {
-        l_selected_char_id = genRand(0, server->m_characters.size() - 1);
-        if (!l_area->charactersTaken().contains(l_selected_char_id)) {
-            l_taken = false;
+    while (taken) {
+        selected_char_id = genRand(0, server->characters.size() - 1);
+        if (!area->charactersTaken().contains(selected_char_id)) {
+            taken = false;
         }
     }
-    if (changeCharacter(l_selected_char_id)) {
-        m_char_id = l_selected_char_id;
+
+    if (changeCharacter(selected_char_id)) {
+        char_id = selected_char_id;
     }
 }
 
 void AOClient::cmdToggleGlobal(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    global_enabled = !global_enabled;
+    QString str_en = global_enabled ? "shown" : "hidden";
 
-    m_global_enabled = !m_global_enabled;
-    QString l_str_en = m_global_enabled ? "shown" : "hidden";
-    sendServerMessage("Global chat set to " + l_str_en);
+    sendServerMessage("Global chat set to " + str_en);
 }
 
-void AOClient::cmdPM(int argc, QStringList argv)
+void AOClient::cmdPM(int arc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    const int sender_area = current_area;
     bool ok;
-    int l_target_id = argv.takeFirst().toInt(&ok); // using takeFirst removes the ID from our list of arguments...
+    int target_id = argv.takeFirst().toInt(&ok); // using takeFirst removes the ID from our list of arguments...
+
     if (!ok) {
         sendServerMessage("That does not look like a valid ID.");
         return;
     }
-    AOClient* l_target_client = server->getClientByID(l_target_id);
-    if (l_target_client == nullptr) {
+
+    AOClient* target_client = server->getClientByID(target_id);
+
+    if (target_client == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
-    if (l_target_client->m_pm_mute) {
+    if (target_client->pm_mute) {
         sendServerMessage("That user is not recieving PMs.");
         return;
     }
-    QString l_message = argv.join(" "); //...which means it will not end up as part of the message
-    l_target_client->sendServerMessage("Message from " + m_ooc_name + " (" + QString::number(m_id) + "): " + l_message);
-    sendServerMessage("PM sent to " + QString::number(l_target_id) +". Message: " + l_message);
+
+    QString message = argv.join(" "); //...which means it will not end up as part of the message
+    QString final_message = "PM from " + ooc_name;
+
+    if (!showname.isEmpty())
+        final_message += " (" + showname + ") ";
+
+    final_message += " (ID: " + QString::number(id) + ") " + "in " + server->area_names[sender_area] + ". Message: " + message;
+
+    target_client->sendServerMessage(final_message);
+    sendServerMessage("PM sent to " + QString::number(target_client->id) + ". Message: " + message);
 }
 
 void AOClient::cmdAnnounce(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     sendServerBroadcast("=== Announcement ===\r\n" + argv.join(" ") + "\r\n=============");
 }
 
 void AOClient::cmdM(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
+    AreaData* area = server->areas[current_area];
+    QString sender_name = ooc_name;
+    int sender_area = current_area;
+    QString sender_message = argv.join(" ");
 
-    QString l_sender_name = m_ooc_name;
-    QString l_sender_message = argv.join(" ");
-    server->broadcast(AOPacket("CT", {"[M]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
-}
+    for (AOClient* client : server->clients) {
+        if (client->checkAuth(ACLFlags.value("MODCHAT")))
+            client->sendPacket("CT", {"$M[" + QString::number(sender_area) + "]" + sender_name, sender_message});
+    }
 
-void AOClient::cmdGM(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
+    area->logCmdAdvanced(current_char, ipid, hwid, "MODCHAT", sender_message, showname, ooc_name, QString::number(id));
 
-    QString l_sender_name = m_ooc_name;
-    QString l_sender_area = server->m_area_names.value(m_current_area);
-    QString l_sender_message = argv.join(" ");
-    server->broadcast(AOPacket("CT", {"[G][" + l_sender_area + "]" + "["+ l_sender_name+"][M]", l_sender_message}),Server::TARGET_TYPE::MODCHAT);
-}
-
-void AOClient::cmdLM(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
-
-    QString l_sender_name = m_ooc_name;
-    QString l_sender_message = argv.join(" ");
-    server->broadcast(AOPacket("CT", {"["+ l_sender_name +"][M]", l_sender_message}), m_current_area);
+    return;
 }
 
 void AOClient::cmdGimp(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (l_target->m_is_gimped)
+    if (target->id == id) {
+        sendServerMessage("Nope.");
+        return;
+    }
+
+    if (target->is_gimped)
         sendServerMessage("That player is already gimped!");
     else {
         sendServerMessage("Gimped player.");
-        l_target->sendServerMessage("You have been gimped! " + getReprimand());
     }
-    l_target->m_is_gimped = true;
+
+    target->is_gimped = true;
+    area->logCmdAdvanced(current_char, ipid, hwid, "GIMP", "Gimped UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdUnGimp(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (!(l_target->m_is_gimped))
+    if (!(target->is_gimped))
         sendServerMessage("That player is not gimped!");
     else {
         sendServerMessage("Ungimped player.");
-        l_target->sendServerMessage("A moderator has ungimped you! " + getReprimand(true));
+        target->sendServerMessage("A moderator has ungimped you! ");
     }
-    l_target->m_is_gimped = false;
+
+    target->is_gimped = false;
+    area->logCmdAdvanced(current_char, ipid, hwid, "UNGIMP", "Ungimped UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdDisemvowel(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (l_target->m_is_disemvoweled)
+    if (target->id == id) {
+        sendServerMessage("Nope.");
+        return;
+    }
+
+    if (target->is_disemvoweled)
         sendServerMessage("That player is already disemvoweled!");
     else {
         sendServerMessage("Disemvoweled player.");
-        l_target->sendServerMessage("You have been disemvoweled! " + getReprimand());
     }
-    l_target->m_is_disemvoweled = true;
+
+    target->is_disemvoweled = true;
+    area->logCmdAdvanced(current_char, ipid, hwid, "DISEMVOWEL", "Disemvoweled UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (!(l_target->m_is_disemvoweled))
+    if (!(target->is_disemvoweled))
         sendServerMessage("That player is not disemvoweled!");
     else {
         sendServerMessage("Undisemvoweled player.");
-        l_target->sendServerMessage("A moderator has undisemvoweled you! " + getReprimand(true));
+        target->sendServerMessage("A moderator has undisemvoweled you! ");
     }
-    l_target->m_is_disemvoweled = false;
+
+    target->is_disemvoweled = false;
+    area->logCmdAdvanced(current_char, ipid, hwid, "DISEMVOWEL", "Undisemvoweled UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdShake(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (l_target->m_is_shaken)
+    if (target->id == id) {
+        sendServerMessage("Nope.");
+        return;
+    }
+
+    if (target->is_shaken)
         sendServerMessage("That player is already shaken!");
     else {
         sendServerMessage("Shook player.");
-        l_target->sendServerMessage("A moderator has shaken your words! " + getReprimand());
     }
-    l_target->m_is_shaken = true;
+
+    target->is_shaken = true;
+    area->logCmdAdvanced(current_char, ipid, hwid, "SHAKE", "Shaked UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdUnShake(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (!(l_target->m_is_shaken))
+    if (!(target->is_shaken))
         sendServerMessage("That player is not shaken!");
     else {
         sendServerMessage("Unshook player.");
-        l_target->sendServerMessage("A moderator has unshook you! " + getReprimand(true));
+        target->sendServerMessage("A moderator has unshook you! ");
     }
-    l_target->m_is_shaken = false;
+
+    target->is_shaken = false;
+    area->logCmdAdvanced(current_char, ipid, hwid, "UNSHAKE", "Unshaked UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdMutePM(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    pm_mute = !pm_mute;
+    QString str_en = pm_mute ? "muted" : "unmuted";
 
-    m_pm_mute = !m_pm_mute;
-    QString l_str_en = m_pm_mute ? "muted" : "unmuted";
-    sendServerMessage("PM's are now " + l_str_en);
-}
-
-void AOClient::cmdToggleAdverts(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-
-    m_advert_enabled = !m_advert_enabled;
-    QString l_str_en = m_advert_enabled ? "on" : "off";
-    sendServerMessage("Advertisements turned " + l_str_en);
+    sendServerMessage("PM's are now " + str_en);
 }
 
 void AOClient::cmdAfk(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    if (is_afk == true) {
+        is_afk = false;
 
-    m_is_afk = true;
-    sendServerMessage("You are now AFK.");
+        sendServerMessage("You are no longer AFK. Welcome back!");
+
+        if (current_char.isEmpty() && showname.isEmpty())
+           sendServerMessageArea("[" + QString::number(id) + "] Spectator are no longer AFK.");
+        else if (showname.isEmpty())
+           sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " are no longer AFK.");
+        else
+           sendServerMessageArea("[" + QString::number(id) + "] " + showname + " are no longer AFK.");
+
+        return;
+    }
+
+    is_afk = true;
+    sendServerMessage("You are now AFK. Have a good day!");
+
+    if (showname.isEmpty() && current_char.isEmpty())
+        sendServerMessageArea("[" + QString::number(id) + "] " + "Spectator" + " is now AFK.");
+    else if (showname.isEmpty())
+        sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " is now AFK.");
+    else
+        sendServerMessageArea("[" + QString::number(id) + "] " + showname + " is now AFK.");
 }
 
 void AOClient::cmdCharCurse(int argc, QStringList argv)
 {
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (l_target->m_is_charcursed) {
+    if (target->id == id) {
+        sendServerMessage("Nope.");
+        return;
+    }
+
+    if (target->is_charcursed) {
         sendServerMessage("That player is already charcursed!");
         return;
     }
 
     if (argc == 1) {
-        l_target->m_charcurse_list.append(server->getCharID(l_target->m_current_char));
+        target->charcurse_list.append(server->getCharID(target->current_char));
     }
     else {
         argv.removeFirst();
-        QStringList l_char_names = argv.join(" ").split(",");
+        QStringList char_names = argv.join(" ").split(",");
 
-        l_target->m_charcurse_list.clear();
-        for (const QString &l_char_name : qAsConst(l_char_names)) {
-            int char_id = server->getCharID(l_char_name);
+        target->charcurse_list.clear();
+
+        for (QString char_name : char_names) {
+            int char_id = server->getCharID(char_name);
             if (char_id == -1) {
-                sendServerMessage("Could not find character: " + l_char_name);
+                sendServerMessage("Could not find character: " + char_name);
                 return;
             }
-            l_target->m_charcurse_list.append(char_id);
+
+            target->charcurse_list.append(char_id);
         }
     }
 
-    l_target->m_is_charcursed = true;
+    target->is_charcursed = true;
 
     //Kick back to char select screen
-    if (!l_target->m_charcurse_list.contains(server->getCharID(l_target->m_current_char))) {
-        l_target->changeCharacter(-1);
-        server->updateCharsTaken(server->m_areas.value(m_current_area));
-        l_target->sendPacket("DONE");
+    if (!target->charcurse_list.contains(server->getCharID(target->current_char))) {
+        target->changeCharacter(-1);
+        server->updateCharsTaken(server->areas.value(current_area));
+        target->sendPacket("DONE");
     }
     else {
-        server->updateCharsTaken(server->m_areas.value(m_current_area));
+        server->updateCharsTaken(server->areas.value(current_area));
     }
 
-    l_target->sendServerMessage("You have been charcursed!");
+    target->sendServerMessage("You have been charcursed!");
     sendServerMessage("Charcursed player.");
+    area->logCmdAdvanced(current_char, ipid, hwid, "CHARCURSE", "Charcursed UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdUnCharCurse(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
+    AreaData* area = server->areas[current_area];
     bool conv_ok = false;
-    int l_uid = argv[0].toInt(&conv_ok);
+    int uid = argv[0].toInt(&conv_ok);
+
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
-    AOClient* l_target = server->getClientByID(l_uid);
+    AOClient* target = server->getClientByID(uid);
 
-    if (l_target == nullptr) {
+    if (target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
     }
 
-    if (!l_target->m_is_charcursed) {
+    if (!target->is_charcursed) {
         sendServerMessage("That player is not charcursed!");
         return;
     }
-    l_target->m_is_charcursed = false;
-    l_target->m_charcurse_list.clear();
-    server->updateCharsTaken(server->m_areas.value(m_current_area));
+
+    target->is_charcursed = false;
+    target->charcurse_list.clear();
+    server->updateCharsTaken(server->areas.value(current_area));
     sendServerMessage("Uncharcursed player.");
-    l_target->sendServerMessage("You were uncharcursed.");
+    target->sendServerMessage("You were uncharcursed.");
+    area->logCmdAdvanced(current_char, ipid, hwid, "UNCHARCURSE", "Uncharcursed UID: " + QString::number(target->id), showname, ooc_name, QString::number(id));
 }
 
 void AOClient::cmdCharSelect(int argc, QStringList argv)
@@ -480,69 +529,24 @@ void AOClient::cmdCharSelect(int argc, QStringList argv)
         }
 
         bool ok = false;
-        int l_target_id = argv[0].toInt(&ok);
-        if (!ok) {
-            sendServerMessage("This ID does not look valid. Please use the client ID.");
+        int target_id = argv[0].toInt(&ok);
+        if (!ok)
             return;
-        }
 
-        AOClient* l_target = server->getClientByID(l_target_id);
+        AOClient* target = server->getClientByID(target_id);
 
-        if (l_target == nullptr) {
-            sendServerMessage("Unable to locate client with ID " + QString::number(l_target_id) + ".");
+        if (target == nullptr)
             return;
-        }
 
-        l_target->changeCharacter(-1);
-        l_target->sendPacket("DONE");
-        sendServerMessage("Client has been forced into character select!");
-
-    }
-}
-
-void AOClient::cmdA(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
-
-    bool ok;
-    int l_area_id = argv[0].toInt(&ok);
-    if (!ok) {
-        sendServerMessage("This does not look like a valid AreaID.");
-        return;
-    }
-
-    AreaData* l_area = server->m_areas[l_area_id];
-    if (!l_area->owners().contains(m_id)) {
-        sendServerMessage("You are not CM in that area.");
-        return;
-    }
-
-    argv.removeAt(0);
-    QString l_sender_name = m_ooc_name;
-    QString l_ooc_message = argv.join(" ");
-    server->broadcast(AOPacket("CT", {"[CM]" + l_sender_name, l_ooc_message}), l_area_id);
-}
-
-void AOClient::cmdS(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
-
-    int l_all_areas = server->m_areas.size() - 1;
-    QString l_sender_name = m_ooc_name;
-    QString l_ooc_message = argv.join(" ");
-
-    for (int i = 0; i <= l_all_areas; i++) {
-        if (server->m_areas[i]->owners().contains(m_id))
-            server->broadcast(AOPacket("CT", {"[CM]" + l_sender_name, l_ooc_message}), i);
+        target->changeCharacter(-1);
+        target->sendPacket("DONE");
     }
 }
 
 void AOClient::cmdFirstPerson(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    first_person = !first_person;
+    QString str_en = first_person ? "enabled" : "disabled";
 
-    m_first_person = !m_first_person;
-    QString l_str_en = m_first_person ? "enabled" : "disabled";
-    sendServerMessage("First person mode " + l_str_en + ".");
+    sendServerMessage("First person mode " + str_en + ".");
 }

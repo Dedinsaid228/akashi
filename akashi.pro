@@ -11,3 +11,4 @@ SUBDIRS += \
 #
 # Too bad.
 CONFIG += ordered
+DEFINES += QT_DEBUG_PLUGINS

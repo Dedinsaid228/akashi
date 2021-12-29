@@ -22,38 +22,68 @@
 
 void AOClient::cmdLogin(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-
-    if (m_authenticated) {
+    if (authenticated) {
         sendServerMessage("You are already logged in!");
         return;
     }
+
     switch (ConfigManager::authType()) {
-    case DataTypes::AuthType::SIMPLE:
+
+    case DataTypes::AuthType::SIMPLE: {
+
         if (ConfigManager::modpass() == "") {
-            sendServerMessage("No modpass is set. Please set a modpass before logging in.");
-            return;
+            sendServerMessage("No modpass is set! Please set a modpass before authenticating.");
+        }
+        else if (argv[0] == ConfigManager::modpass()) {
+            sendPacket("AUTH", {"1"}); // Client: "You were granted the Disable Modcalls button."
+            sendServerMessage("Logged in as a moderator."); // pre-2.9.1 clients are hardcoded to display the mod UI when this string is sent in OOC
+            authenticated = true;
         }
         else {
-            sendServerMessage("Entering login prompt.\nPlease enter the server modpass.");
-            m_is_logging_in = true;
-            return;
+            sendPacket("AUTH", {"0"}); // Client: "Login unsuccessful."
+            sendServerMessage("Incorrect password.");
         }
-        break;
-    case DataTypes::AuthType::ADVANCED:
-        sendServerMessage("Entering login prompt.\nPlease enter your username and password.");
-        m_is_logging_in = true;
-        return;
+
+        server->areas.value(current_area)->logLogin(current_char, ipid, hwid, authenticated, "moderator", showname, ooc_name, QString::number(id));
         break;
     }
+    case DataTypes::AuthType::ADVANCED: {
+
+        if (argc < 2) {
+            sendServerMessage("You must specify a username and a password");
+            return;
+        }
+
+        QString username = argv[0];
+        QString password = argv[1];
+
+        if (server->db_manager->authenticate(username, password)) {
+            moderator_name = username;
+            authenticated = true;
+            sendPacket("AUTH", {"1"}); // Client: "You were granted the Disable Modcalls button."
+
+            if (version.release <= 2 && version.major <= 9 && version.minor <= 0)
+                sendServerMessage("Logged in as a moderator."); // pre-2.9.1 clients are hardcoded to display the mod UI when this string is sent in OOC
+
+            sendServerMessage("Welcome, " + username);
+        }
+        else {
+            sendPacket("AUTH", {"0"}); // Client: "Login unsuccessful."
+            sendServerMessage("Incorrect password.");
+        }
+
+        server->areas.value(current_area)->logLogin(current_char, ipid, hwid, authenticated, username, showname, ooc_name, QString::number(id));
+        break;
+    }
+    default: {
+        qWarning() << "config.ini has an unrecognized auth_type!";
+        sendServerMessage("Config.ini contains an invalid auth_type, please check your config.");
+    }
+  }
 }
 
 void AOClient::cmdChangeAuth(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-
     if (ConfigManager::authType() == DataTypes::AuthType::SIMPLE) {
         change_auth_started = true;
         sendServerMessage("WARNING!\nThis command will change how logging in as a moderator works.\nOnly proceed if you know what you are doing\nUse the command /rootpass to set the password for your root account.");
@@ -62,8 +92,6 @@ void AOClient::cmdChangeAuth(int argc, QStringList argv)
 
 void AOClient::cmdSetRootPass(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     if (!change_auth_started)
         return;
 
@@ -73,41 +101,42 @@ void AOClient::cmdSetRootPass(int argc, QStringList argv)
     }
 
     sendServerMessage("Changing auth type and setting root password.\nLogin again with /login root [password]");
-    m_authenticated = false;
+    authenticated = false;
     ConfigManager::setAuthType(DataTypes::AuthType::ADVANCED);
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
     qsrand(QDateTime::currentMSecsSinceEpoch());
-    quint32 l_upper_salt = qrand();
-    quint32 l_lower_salt = qrand();
-    quint64 l_salt_number = (upper_salt << 32) | lower_salt;
+    quint32 upper_salt = qrand();
+    quint32 lower_salt = qrand();
+    quint64 salt_number = (upper_salt << 32) | lower_salt;
 #else
-    quint64 l_salt_number = QRandomGenerator::system()->generate64();
+    quint64 salt_number = QRandomGenerator::system()->generate64();
 #endif
-    QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
 
-    server->db_manager->createUser("root", l_salt, argv[0], ACLFlags.value("SUPER"));
+    QString salt = QStringLiteral("%1").arg(salt_number, 16, 16, QLatin1Char('0'));
+
+    server->db_manager->createUser("root", salt, argv[0], ACLFlags.value("SUPER"));
 }
 
 void AOClient::cmdAddUser(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     if (!checkPasswordRequirements(argv[0], argv[1])) {
         sendServerMessage("Password does not meet server requirements.");
         return;
     }
+
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
     qsrand(QDateTime::currentMSecsSinceEpoch());
-    quint32 l_upper_salt = qrand();
-    quint32 l_lower_salt = qrand();
-    quint64 l_salt_number = (upper_salt << 32) | lower_salt;
+    quint32 upper_salt = qrand();
+    quint32 lower_salt = qrand();
+    quint64 salt_number = (upper_salt << 32) | lower_salt;
 #else
-    quint64 l_salt_number = QRandomGenerator::system()->generate64();
+    quint64 salt_number = QRandomGenerator::system()->generate64();
 #endif
-    QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
 
-    if (server->db_manager->createUser(argv[0], l_salt, argv[1], ACLFlags.value("NONE")))
+    QString salt = QStringLiteral("%1").arg(salt_number, 16, 16, QLatin1Char('0'));
+
+    if (server->db_manager->createUser(argv[0], salt, argv[1], ACLFlags.value("NONE")))
         sendServerMessage("Created user " + argv[0] + ".\nUse /addperm to modify their permissions.");
     else
         sendServerMessage("Unable to create user " + argv[0] + ".\nDoes a user with that name already exist?");
@@ -115,8 +144,6 @@ void AOClient::cmdAddUser(int argc, QStringList argv)
 
 void AOClient::cmdRemoveUser(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
     if (server->db_manager->deleteUser(argv[0]))
         sendServerMessage("Successfully removed user " + argv[0] + ".");
     else
@@ -125,60 +152,58 @@ void AOClient::cmdRemoveUser(int argc, QStringList argv)
 
 void AOClient::cmdListPerms(int argc, QStringList argv)
 {
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
-    QStringList l_message;
-    const QStringList l_keys = ACLFlags.keys();
+    unsigned long long user_acl = server->db_manager->getACL(moderator_name);
+    QStringList message;
+
     if (argc == 0) {
         // Just print out all permissions available to the user.
-        l_message.append("You have been given the following permissions:");
-        for (const QString &l_perm : l_keys) {
-            if (l_perm == "NONE"); // don't need to list this one
-            else if (l_perm == "SUPER") {
-                if (l_user_acl == ACLFlags.value("SUPER")) // This has to be checked separately, because SUPER & anything will always be truthy
-                    l_message.append("SUPER (Be careful! This grants the user all permissions.)");
+        message.append("You have been given the following permissions:");
+        for (QString perm : ACLFlags.keys()) {
+            if (perm == "NONE"); // don't need to list this one
+            else if (perm == "SUPER") {
+                if (user_acl == ACLFlags.value("SUPER")) // This has to be checked separately, because SUPER & anything will always be truthy
+                    message.append("SUPER (Be careful! This grants the user all permissions.)");
             }
-            else if ((ACLFlags.value(l_perm) & l_user_acl) == 0); // user doesn't have this permission, don't print it
+            else if ((ACLFlags.value(perm) & user_acl) == 0); // user doesn't have this permission, don't print it
             else
-                l_message.append(l_perm);
+                message.append(perm);
         }
     }
     else {
-        if ((l_user_acl & ACLFlags.value("MODIFY_USERS")) == 0) {
+        if ((user_acl & ACLFlags.value("MODIFY_USERS")) == 0) {
             sendServerMessage("You do not have permission to view other users' permissions.");
             return;
         }
 
-        l_message.append("User " + argv[0] + " has the following permissions:");
-        unsigned long long l_acl = server->db_manager->getACL(argv[0]);
-        if (l_acl == 0) {
+        message.append("User " + argv[0] + " has the following permissions:");
+        unsigned long long acl = server->db_manager->getACL(argv[0]);
+        if (acl == 0) {
             sendServerMessage("This user either doesn't exist, or has no permissions set.");
             return;
         }
 
-        for (const QString &l_perm : l_keys) {
-            if ((ACLFlags.value(l_perm) & l_acl) != 0 && l_perm != "SUPER") {
-                l_message.append(l_perm);
+        for (QString perm : ACLFlags.keys()) {
+            if ((ACLFlags.value(perm) & acl) != 0 && perm != "SUPER") {
+                message.append(perm);
             }
         }
     }
-    sendServerMessage(l_message.join("\n"));
+
+    sendServerMessage(message.join("\n"));
 }
 
 void AOClient::cmdAddPerms(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
+    unsigned long long user_acl = server->db_manager->getACL(moderator_name);
     argv[1] = argv[1].toUpper();
-    const QStringList l_keys = ACLFlags.keys();
 
-    if (!l_keys.contains(argv[1])) {
+    if (!ACLFlags.keys().contains(argv[1])) {
         sendServerMessage("That permission doesn't exist!");
         return;
     }
 
     if (argv[1] == "SUPER") {
-        if (l_user_acl != ACLFlags.value("SUPER")) {
+        if (user_acl != ACLFlags.value("SUPER")) {
             // This has to be checked separately, because SUPER & anything will always be truthy
             sendServerMessage("You aren't allowed to add that permission!");
             return;
@@ -189,9 +214,10 @@ void AOClient::cmdAddPerms(int argc, QStringList argv)
         return;
     }
 
-    unsigned long long l_newperm = ACLFlags.value(argv[1]);
-    if ((l_newperm & l_user_acl) != 0) {
-        if (server->db_manager->updateACL(argv[0], l_newperm, true))
+    unsigned long long newperm = ACLFlags.value(argv[1]);
+
+    if ((newperm & user_acl) != 0) {
+        if (server->db_manager->updateACL(argv[0], newperm, true))
             sendServerMessage("Successfully added permission " + argv[1] + " to user " + argv[0]);
         else
             sendServerMessage(argv[0] + " wasn't found!");
@@ -203,14 +229,10 @@ void AOClient::cmdAddPerms(int argc, QStringList argv)
 
 void AOClient::cmdRemovePerms(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
+    unsigned long long user_acl = server->db_manager->getACL(moderator_name);
     argv[1] = argv[1].toUpper();
 
-    const QStringList l_keys = ACLFlags.keys();
-
-    if (!l_keys.contains(argv[1])) {
+    if (!ACLFlags.keys().contains(argv[1])) {
         sendServerMessage("That permission doesn't exist!");
         return;
     }
@@ -221,7 +243,7 @@ void AOClient::cmdRemovePerms(int argc, QStringList argv)
     }
 
     if (argv[1] == "SUPER") {
-        if (l_user_acl != ACLFlags.value("SUPER")) {
+        if (user_acl != ACLFlags.value("SUPER")) {
             // This has to be checked separately, because SUPER & anything will always be truthy
             sendServerMessage("You aren't allowed to remove that permission!");
             return;
@@ -232,9 +254,10 @@ void AOClient::cmdRemovePerms(int argc, QStringList argv)
         return;
     }
 
-    unsigned long long l_newperm = ACLFlags.value(argv[1]);
-    if ((l_newperm & l_user_acl) != 0) {
-        if (server->db_manager->updateACL(argv[0], l_newperm, false))
+    unsigned long long newperm = ACLFlags.value(argv[1]);
+
+    if ((newperm & user_acl) != 0) {
+        if (server->db_manager->updateACL(argv[0], newperm, false))
             sendServerMessage("Successfully removed permission " + argv[1] + " from user " + argv[0]);
         else
             sendServerMessage(argv[0] + " wasn't found!");
@@ -246,54 +269,52 @@ void AOClient::cmdRemovePerms(int argc, QStringList argv)
 
 void AOClient::cmdListUsers(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
+    QStringList users = server->db_manager->getUsers();
 
-    QStringList l_users = server->db_manager->getUsers();
-    sendServerMessage("All users:\n" + l_users.join("\n"));
+    sendServerMessage("All users:\n" + users.join("\n"));
 }
 
 void AOClient::cmdLogout(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-
-    if (!m_authenticated) {
+    if (!authenticated) {
         sendServerMessage("You are not logged in!");
         return;
     }
-    m_authenticated = false;
-    m_moderator_name = "";
+
+    authenticated = false;
+    moderator_name = "";
     sendPacket("AUTH", {"-1"}); // Client: "You were logged out."
 }
 
 void AOClient::cmdChangePassword(int argc, QStringList argv)
 {
-    QString l_username;
-    QString l_password;
+    QString username;
+    QString password;
+
     if (argc == 1) {
-        if (m_moderator_name.isEmpty()) {
+        if (moderator_name.isEmpty()) {
             sendServerMessage("You are not logged in.");
             return;
         }
-        l_username = m_moderator_name;
-        l_password = argv[0];
+
+        username = moderator_name;
+        password = argv[0];
     }
     else if (argc == 2 && checkAuth(ACLFlags.value("SUPER"))) {
-        l_username = argv[0];
-        l_password = argv[1];
+        username = argv[0];
+        password = argv[1];
     }
     else {
         sendServerMessage("Invalid command syntax.");
         return;
     }
 
-    if (!checkPasswordRequirements(l_username, l_password)) {
+    if (!checkPasswordRequirements(username, password)) {
         sendServerMessage("Password does not meet server requirements.");
         return;
     }
 
-    if (server->db_manager->updatePassword(l_username, l_password)) {
+    if (server->db_manager->updatePassword(username, password)) {
         sendServerMessage("Successfully changed password.");
     }
     else {

@@ -51,12 +51,11 @@ class AOClient : public QObject {
      * @param parent Qt-based parent, passed along to inherited constructor from QObject.
      */
     AOClient(Server* p_server, QTcpSocket* p_socket, QObject* parent = nullptr, int user_id = 0)
-        : QObject(parent), m_id(user_id), m_remote_ip(p_socket->peerAddress()), m_password(""),
-          m_joined(false), m_current_area(0), m_current_char(""), m_socket(p_socket), server(p_server),
-          is_partial(false), m_last_wtce_time(0) {
-        m_afk_timer = new QTimer;
-        m_afk_timer->setSingleShot(true);
-        connect(m_afk_timer, SIGNAL(timeout()), this, SLOT(onAfkTimeout()));
+        : QObject(parent), id(user_id), remote_ip(p_socket->peerAddress()), password(""),
+          joined(false), current_area(0), current_char(""), socket(p_socket), server(p_server),
+          is_partial(false), last_wtce_time(0), last_area_change_time(0), last_music_change_time(0), last5messagestime(), last5oocmessagestime()  {
+        afk_timer = new QTimer;
+        afk_timer->setSingleShot(true);
     };
 
     /**
@@ -74,15 +73,6 @@ class AOClient : public QObject {
      * @see #ipid
      */
     QString getIpid() const;
-
-    /**
-     * @brief Getter for the client's HWID.
-     *
-     * @return The HWID.
-     *
-     * @see #hwid
-     */
-    QString getHwid() const;
 
     /**
      * @brief Calculates the client's IPID based on a hashed version of its IP.
@@ -103,17 +93,17 @@ class AOClient : public QObject {
     /**
      * @brief The user ID of the client.
      */
-    int m_id;
+    int id;
 
     /**
      * @brief The IP address of the client.
      */
-    QHostAddress m_remote_ip;
+    QHostAddress remote_ip;
 
     /**
      * @brief The stored character password for the client, used to be able to select passworded characters.
      */
-    QString m_password;
+    QString password;
 
     /**
      * @brief True if the client is actually in the server.
@@ -124,78 +114,105 @@ class AOClient : public QObject {
      * The purpose of this variable is to determine if the user isn't just doing that, but has actually double-clicked the server, and
      * its client has sent the standard handshake packets, which does signify that the client intended to 'join' this server.
      */
-    bool m_joined;
+    bool joined;
 
     /**
      * @brief The ID of the area the client is currently in.
      */
-    int m_current_area;
+    int current_area;
 
     /**
      * @brief The internal name of the character the client is currently using.
      */
-    QString m_current_char;
+    QString current_char;
 
     /**
      * @brief The internal name of the character the client is iniswapped to.
      *
      * @note This will be the same as current_char if the client is not iniswapped.
      */
-    QString m_current_iniswap;
+    QString current_iniswap;
 
     /**
      * @brief If true, the client is a logged-in moderator.
      */
-    bool m_authenticated = false;
+    bool authenticated = false;
+
+    bool slient_mod = false;
 
     /**
      * @brief If using advanced authentication, this is the moderator name that the client has logged in with.
      */
-    QString m_moderator_name = "";
+    QString moderator_name = "";
 
     /**
      * @brief The out-of-character name of the client, generally the nickname of the user themself.
      */
-    QString m_ooc_name = "";
+    QString ooc_name = "";
 
     /**
      * @brief The custom showname of the client, used when "renaming" already existing characters in-character.
      */
-    QString m_showname = "";
+    QString showname = "";
 
     /**
      * @brief If true, the client is willing to receive global messages.
      *
      * @see AOClient::cmdG and AOClient::cmdToggleGlobal
      */
-    bool m_global_enabled = true;
+    bool global_enabled = true;
 
     /**
      * @brief If true, the client's messages will be sent in first-person mode.
      *
      * @see AOClient::cmdFirstPerson
      */
-    bool m_first_person = false;
+    bool first_person = false;
 
     /**
      * @brief If true, the client may not use in-character chat.
      */
-    bool m_is_muted = false;
+    bool is_muted = false;
   
     /**
      * @brief If true, the client may not use out-of-character chat.
      */
-    bool m_is_ooc_muted = false;
+    bool is_ooc_muted = false;
   
     /**
      * @brief If true, the client may not use the music list.
      */
-    bool m_is_dj_blocked = false;
+    bool is_dj_blocked = false;
   
     /**
      * @brief If true, the client may not use the judge controls.
      */
-    bool m_is_wtce_blocked = false;
+    bool is_wtce_blocked = false;
+
+    /**
+     * @brief If true, client movement in areas will be hidden.
+     */
+    bool sneaked = false;
+
+    /**
+     * @brief If true, the client may take taked characters.
+     */
+    bool take_taked_char = false;
+
+    /**
+     * @brief If true, the client will not be able to receive and send messages.
+     */
+    bool blinded = false;
+
+    /**
+     * @brief If true, the client will receive restrictions from WUSO.
+     */
+    bool wuso = false;
+
+    /**
+     * @briefIf true, the client can use Modcall.
+     */
+    bool usemodcall = true;
     
     /**
      * @brief Represents the client's client software, and its version.
@@ -215,7 +232,7 @@ class AOClient : public QObject {
      *
      * @see The struct itself for more details.
      */
-    ClientVersion m_version;
+    ClientVersion version;
 
     /**
       * @brief The authorisation bitflag, representing what permissions a client can have.
@@ -241,7 +258,10 @@ class AOClient : public QObject {
         {"BYPASS_LOCKS",    1ULL << 14},
         {"IGNORE_BGLIST",   1ULL << 15},
         {"SEND_NOTICE",     1ULL << 16},
-        {"JUKEBOX",         1ULL << 17},
+        {"WUSO",            1ULL << 17},
+        {"SNEAK",           1ULL << 18},
+        {"TAKETAKED",       1ULL << 19},
+        {"IPIDINFO",        1ULL << 20},
         {"SUPER",          ~0ULL      }
     };
 
@@ -249,79 +269,79 @@ class AOClient : public QObject {
     /**
      * @brief A list of 5 casing preferences (def, pro, judge, jury, steno)
      */
-    QList<bool> m_casing_preferences = {false, false, false, false, false};
+    QList<bool> casing_preferences = {false, false, false, false, false};
 
     /**
      * @brief If true, the client's in-character messages will have their word order randomised.
      */
-    bool m_is_shaken = false;
+    bool is_shaken = false;
 
     /**
      * @brief If true, the client's in-character messages will have their vowels (English alphabet only) removed.
      */
-    bool m_is_disemvoweled = false;
+    bool is_disemvoweled = false;
 
     /**
      * @brief If true, the client's in-character messages will be overwritten by a randomly picked predetermined message.
      */
-    bool m_is_gimped = false;
+    bool is_gimped = false;
 
     /**
      * @brief If true, the client will be marked as AFK in /getarea. Automatically applied when a configurable
      * amount of time has passed since the last interaction, or manually applied by /afk.
      */
-    bool m_is_afk = false;
+    bool is_afk = false;
 
     /**
      * @brief If true, the client will not recieve PM messages.
      */
-    bool m_pm_mute = false;
+    bool pm_mute = false;
 
     /**
      * @brief If true, the client will recieve advertisements.
      */
-    bool m_advert_enabled = true;
+    bool advert_enabled = true;
 
     /**
      * @brief If true, the client is restricted to only changing into certain characters.
      */
-    bool m_is_charcursed = false;
+    bool is_charcursed = false;
 
     /**
      * @brief Timer for tracking user interaction. Automatically restarted whenever a user interacts (i.e. sends any packet besides CH)
      */
-    QTimer* m_afk_timer;
+    QTimer* afk_timer;
 
     /**
      * @brief The list of char IDs a charcursed player is allowed to switch to.
      */
-    QList<int> m_charcurse_list;
+    QList<int> charcurse_list;
 
     /**
      * @brief Temporary client permission if client is allowed to save a testimony to server storage.
      */
-    bool m_testimony_saving = false;
-
-    /**
-     * @brief If true, the client's next OOC message will be interpreted as a moderator login.
-     */
-    bool m_is_logging_in = false;
-
-    /**
-     * @brief Checks if the client would be authorised to something based on its necessary permissions.
-     *
-     * @param acl_mask The permissions bitflag that the client's own permissions should be checked against.
-     *
-     * @return True if the client's permissions are high enough for `acl_mask`, or higher than it.
-     * False if the client is missing some permissions.
-     */
-    bool checkAuth(unsigned long long acl_mask);
+    bool testimony_saving = false;
 
   public slots:
     /**
      * @brief A slot for when the client disconnects from the server.
      */
     void clientDisconnected();
+
+    /**
+     * @brief A slot for when the client connects from the server.
+     */
+    void clientConnected();
+
+    /**
+     * @brief A slot for when the webAO client connects from the server.
+     */
+    void webclientConnected(QString ipid, QString ip);
+
+    /**
+     * @brief Changing the value of <owner=> to "all" when evidence is present.
+     */
+    bool evidencePresent(QString id);
 
     /**
      * @brief A slot for when the client sends data to the server.
@@ -345,16 +365,11 @@ class AOClient : public QObject {
      */
     void sendPacket(QString header);
 
-    /**
-     * @brief A slot for when the client's AFK timer runs out.
-     */
-    void onAfkTimeout();
-
   private:
     /**
      * @brief The TCP socket used to communicate with the client.
      */
-    QTcpSocket* m_socket;
+    QTcpSocket* socket;
 
     /**
      * @brief A pointer to the Server, used for updating server variables that depend on the client (e.g. amount of players in an area).
@@ -442,6 +457,36 @@ class AOClient : public QObject {
      * @param message The text of the message to send.
      */
     void sendServerBroadcast(QString message);
+
+    /**
+     * @brief The main function of the auto moderator.
+     */
+    void autoMod();
+
+    /**
+     * @brief The main function of an auto moderator for OOC chat.
+     */
+    void autoModOoc();
+
+    /**
+     * @brief An auxiliary function of the auto moderator, which is responsible for the kick of the player.
+     */
+    void autoKick();
+
+    /**
+     * @brief An auxiliary function of the auto moderator, which is responsible for the ban of the player.
+     */
+    void autoBan();
+
+    /**
+     * @brief Checks if the client would be authorised to something based on its necessary permissions.
+     *
+     * @param acl_mask The permissions bitflag that the client's own permissions should be checked against.
+     *
+     * @return True if the client's permissions are high enough for `acl_mask`, or higher than it.
+     * False if the client is missing some permissions.
+     */
+    bool checkAuth(unsigned long long acl_mask);
 
     /**
       * @name Packet headers
@@ -561,11 +606,25 @@ class AOClient : public QObject {
     void sendEvidenceList(AreaData* area);
 
     /**
+     * @brief Calls AOClient::updateEvidenceListHidCmNoCm() for every client in the current client's area.
+     *
+     * @param area The current client's area.
+     */
+    void sendEvidenceListHidCmNoCm(AreaData* area);
+
+    /**
      * @brief Updates the evidence list in the area for the client.
      *
      * @param area The client's area.
      */
     void updateEvidenceList(AreaData* area);
+
+    /**
+     * @brief Updates the evidence list for better performance of evidencePresent();
+     *
+     * @param area The client's area.
+     */
+    void updateEvidenceListHidCmNoCm(AreaData* area);
 
     /**
      * @brief Attempts to validate that hellish abomination that Attorney Online 2 calls an in-character packet.
@@ -610,7 +669,7 @@ class AOClient : public QObject {
      *
      * In general, the client assumes that this is a continuous block starting from 0.
      */
-    int m_char_id = -1;
+    int char_id = -1;
 
     /**
      * @brief The character ID of the other character that the client wants to pair up with.
@@ -619,7 +678,7 @@ class AOClient : public QObject {
      * Furthermore, the owner of that character ID must also do the reverse to this client, making their `pairing_with` equal
      * to this client's character ID.
      */
-    int m_pairing_with = -1;
+    int pairing_with = -1;
 
     /**
      * @brief The name of the emote last used by the client. No extension.
@@ -627,7 +686,7 @@ class AOClient : public QObject {
      * @details This is used for pairing mainly, for the server to be able to craft a smooth-looking transition from one
      * paired-up client talking to the next.
      */
-    QString m_emote = "";
+    QString emote = "";
 
     /**
      * @brief The amount the client was last offset by.
@@ -635,17 +694,17 @@ class AOClient : public QObject {
      * @details This used to be just a plain number ranging from -100 to 100, but then Crystal mangled it by building some extra data into it.
      * Cheers, love.
      */
-    QString m_offset = "";
+    QString offset = "";
 
     /**
      * @brief The last flipped state of the client.
      */
-    QString m_flipping = "";
+    QString flipping = "";
 
     /**
      * @brief The last reported position of the client.
      */
-    QString m_pos = "";
+    QString pos = "";
 
     ///@}
 
@@ -884,6 +943,17 @@ class AOClient : public QObject {
     void cmdSpectatable(int argc, QStringList argv);
 
     /**
+     * @brief Sets the area to spectatable without inviting everyone in area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     *
+     * @see AreaData::SPECTATABLE
+     */
+    void cmdAreaMute(int argc, QStringList argv);
+
+    /**
      * @brief Unlocks the area.
      *
      * @details No arguments.
@@ -929,6 +999,15 @@ class AOClient : public QObject {
      * @iscommand
      */
     void cmdAreaKick(int argc, QStringList argv);
+
+    /**
+     * @brief Kicks a client from the area, moving them to the desired area.
+     *
+     * @details Takes two argument, the **client's ID** to kick and desired area.
+     *
+     * @iscommand
+     */
+    void cmdModAreaKick(int argc, QStringList argv);
 
     /**
      * @brief Changes the background of the current area.
@@ -985,31 +1064,67 @@ class AOClient : public QObject {
     void cmdIgnoreBgList(int argc, QStringList argv);
 
     /**
-     * @brief Returns the area message in OOC. Double to set the current area message.
-     *
-     * @details See short description.
-     *
-     * @iscommand
-     */
-    void cmdAreaMessage(int argc, QStringList argv);
-
-    /**
-     * @brief Clears the areas message and disables automatic sending.
+     * @brief Disable/Enable messages when you move to areas or disconnect.
      *
      * @details No arguments.
      *
      * @iscommand
      */
-    void cmdClearAreaMessage(int argc, QStringList argv);
+    void cmdSneak(int argc, QStringList argv);
 
     /**
-     * @brief Toggles wether the client shows the area message when joining the current area.
+     * @brief Find out the current Evidence Mod in area.
      *
      * @details No arguments.
      *
      * @iscommand
      */
-    void cmdToggleAreaMessageOnJoin(int argc, QStringList argv);
+    void cmdCurrentEvimod(int argc, QStringList argv);
+
+    /**
+     * @brief Get a list of backgrounds.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdBgs(int argc, QStringList argv);
+
+    /**
+     * @brief Find out the current background in area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdCurBg(int argc, QStringList argv);
+
+    /**
+     * @brief Enable/disable floodguard in area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleFloodguardActuve(int argc, QStringList argv);
+
+    /**
+     * @brief Enable/disable Chill Mod in area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleChillMod(int argc, QStringList argv);
+
+    /**
+     * @brief Enable/disable Auto Mod in area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleAutoMod(int argc, QStringList argv);
 
     ///@}
 
@@ -1027,13 +1142,6 @@ class AOClient : public QObject {
      * @details No arguments.
      *
      * @iscommand
-     */
-    void cmdCommands(int argc, QStringList argv);
-
-    /**
-     * @brief Lists help information to the command requested. Includes syntax and brief explanation.
-     *
-     * @details Takes the command name as an argument.
      */
     void cmdHelp(int argc, QStringList argv);
 
@@ -1281,25 +1389,89 @@ class AOClient : public QObject {
      */
     void cmdNotice(int argc, QStringList argv);
 
-    /**
-     * @brief Pops up a notice for all clients in the server with a given message.
-     *
-     * @details Unlike cmdNotice, this command will send its notice to every client connected to the server.
-     *
-     * @see #cmdNotice
-     *
-     * @iscommand
-     */
-    void cmdNoticeGlobal(int argc, QStringList argv);
+     /**
+      * @brief Pops up a notice for all clients in the server with a given message.
+      *
+      * @details Unlike cmdNotice, this command will send its notice to every client connected to the server.
+      *
+      * @see #cmdNotice
+      *
+      * @iscommand
+      */
+     void cmdNoticeGlobal(int argc, QStringList argv);
 
-    /**
-     * @brief Removes all CMs from the current area.
-     *
-     * @details This command is a bandaid fix to the issue that clients may end up ghosting when improperly disconnected from the server.
-     *
-     * @iscommand
-     */
-    void cmdClearCM(int argc, QStringList argv);
+     /**
+      * @brief Get IPID information.
+      *
+      * @details The argument to this command is one - the client's IPID. This command gives the IP address and the date of "creation" of the IPID.
+      *
+      * @iscommand
+      */
+     void cmdIpidInfo(int argc, QStringList argv);
+
+     /**
+      * @brief Allow/deny yourself to take the taken characters.
+      *
+      * @details No arguments.
+      *
+      * @iscommand
+      */
+     void cmdTakeTakedChar(int argc, QStringList argv);
+
+     /**
+      * @brief Blind the targeted player from being able to see or talk IC/OOC.
+      *
+      * @details The only argument is the **target client's user ID**.
+      *
+      * @iscommand
+      *
+      * @see #blinded
+      */
+     void cmdBlind(int argc, QStringList argv);
+
+     /**
+      * @brief Undo effects of the /blind command.
+      *
+      * @details The only argument is the **target client's user ID**.
+      *
+      * @iscommand
+      *
+      * @see #blinded
+      */
+     void cmdUnBlind(int argc, QStringList argv);
+
+     /**
+      * @brief Hide/show the status of the moderator.
+      *
+      * @details No arguments.
+      *
+      * @see #slient_mod
+      *
+      * @iscommand
+      */
+     void cmdSneakMod(int argc, QStringList argv);
+
+     /**
+      * @brief Allow/deny WUSO Mod.
+      *
+      * @details No arguments.
+      *
+      * @see #wuso
+      *
+      * @iscommand
+      */
+     void cmdToggleWebUsersSpectateOnly(int argc, QStringList argv);
+
+     /**
+      * @brief Remove the WUSO action on the client.
+      *
+      * @details The only argument is the **target client's user ID**.
+      *
+      * @see #wuso
+      *
+      * @iscommand
+      */
+     void cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv);
 
     ///@}
 
@@ -1519,28 +1691,6 @@ class AOClient : public QObject {
     void cmdM(int argc, QStringList argv);
 
     /**
-     * @brief Sends out a global message that is marked with an `[M]` to mean it is coming from a moderator.
-     *
-     * @details The arguments are **the message** that the client wants to send.
-     *
-     * @iscommand
-     *
-     * @see AOClient::cmdG()
-     */
-    void cmdGM(int argc, QStringList argv);
-
-    /**
-     * @brief Sends out a local message that is marked with an `[M]` to mean it is coming from a moderator.
-     *
-     * @details The arguments are **the message** that the client wants to send.
-     *
-     * @iscommand
-     *
-     * @see AOClient::cmdLM()
-     */
-    void cmdLM(int argc, QStringList argv);
-
-    /**
      * @brief Replaces a target client's in-character messages with strings randomly selected from gimp.txt.
      *
      * @details The only argument is the **the target's ID** whom the client wants to gimp.
@@ -1604,15 +1754,6 @@ class AOClient : public QObject {
     void cmdMutePM(int argc, QStringList argv);
 
     /**
-     * @brief Toggles whether a client will recieve @ref cmdNeed "advertisement" messages.
-     *
-     * @details No arguments.
-     *
-     * @iscommand
-     */
-    void cmdToggleAdverts(int argc, QStringList argv);
-
-    /**
     * @brief Toggles whether this client is considered AFK.
     *
     * @details No arguments.
@@ -1640,33 +1781,7 @@ class AOClient : public QObject {
      * @iscommand
      */
     void cmdUnCharCurse(int argc, QStringList argv);
-
-    /**
-     * @brief Forces a client into the charselect screen.
-     *
-     * @details The only argument is the **target's ID** whom the client wants to force into charselect.
-     *
-     * @iscommand
-     */
     void cmdCharSelect(int argc, QStringList argv);
-
-    /**
-     * @brief Sends a message to an area that you a CM in.
-     *
-     * @details Usage: /a <area> <message>
-     *
-     * @iscommand
-     */
-    void cmdA(int argc, QStringList argv);
-
-    /**
-     * @brief Send a message to all areas that you are a CM in.
-     *
-     * @details Usage: /s <message>
-     *
-     * @iscommand
-     */
-    void cmdS(int argc, QStringList argv);
 
     /**
      * @brief Toggle whether the client's messages will be sent in first person mode.
@@ -1824,6 +1939,15 @@ class AOClient : public QObject {
     void cmdPlay(int argc, QStringList argv);
 
     /**
+     * @brief Plays music in the area once.
+     *
+     * @copydetails AOClient::cmdPlay
+     *
+     * @iscommand
+     */
+    void cmdPlayOnce(int argc, QStringList argv);
+
+    /**
      * @brief DJ-blocks a client.
      *
      * @details The only argument is the **target client's user ID**.
@@ -1860,13 +1984,6 @@ class AOClient : public QObject {
      * @details No arguments.
      */
     void cmdToggleMusic(int argc, QStringList argv);
-
-    /**
-     * @brief Toggles jukebox status in the current area.
-     *
-     * @details No arguments.
-     */
-    void cmdToggleJukebox(int argc, QStringList argv);
 
     ///@}
 
@@ -1955,7 +2072,6 @@ class AOClient : public QObject {
      * @return The parsed text, converted into their respective durations, summed up, then converted into seconds.
      */
     long long parseTime(QString input);
-    QString getReprimand(bool f_positive = false);
 
     /**
      * @brief Adds the last send IC-Message to QVector of the respective area.
@@ -1996,17 +2112,16 @@ class AOClient : public QObject {
      *
      * @return True if the password meets the requirements, otherwise false.
      */
-    bool checkPasswordRequirements(QString f_username, QString f_password);
+    bool checkPasswordRequirements(QString username, QString password);
 
-    /**
-     * @brief Sends a server notice.
-     *
-     * @param notice The notice to send out.
-     *
-     * @param global Whether or not the notice should be server-wide.
-     */
-    void sendNotice(QString f_notice, bool f_global = false);
-
+     /**
+      * @brief Sends a server notice.
+      *
+      * @param notice The notice to send out.
+      *
+      * @param global Whether or not the notice should be server-wide.
+      */
+   void sendNotice(QString notice, bool global = false);
     
     /**
      * @brief Checks if a testimony contains '<' or '>'.
@@ -2055,23 +2170,22 @@ class AOClient : public QObject {
       * See @ref CommandInfo "the type's documentation" for more details.
       */
     const QMap<QString, CommandInfo> commands {
-        {"login",              {ACLFlags.value("NONE"),         0, &AOClient::cmdLogin}},
+        {"login",              {ACLFlags.value("NONE"),         1, &AOClient::cmdLogin}},
         {"getareas",           {ACLFlags.value("NONE"),         0, &AOClient::cmdGetAreas}},
         {"getarea",            {ACLFlags.value("NONE"),         0, &AOClient::cmdGetArea}},
         {"ban",                {ACLFlags.value("BAN"),          3, &AOClient::cmdBan}},
         {"kick",               {ACLFlags.value("KICK"),         2, &AOClient::cmdKick}},
         {"changeauth",         {ACLFlags.value("SUPER"),        0, &AOClient::cmdChangeAuth}},
         {"rootpass",           {ACLFlags.value("SUPER"),        1, &AOClient::cmdSetRootPass}},
-        {"background",         {ACLFlags.value("NONE"),         1, &AOClient::cmdSetBackground}},
         {"bg",                 {ACLFlags.value("NONE"),         1, &AOClient::cmdSetBackground}},
         {"bglock",             {ACLFlags.value("BGLOCK"),       0, &AOClient::cmdBgLock}},
         {"bgunlock",           {ACLFlags.value("BGLOCK"),       0, &AOClient::cmdBgUnlock}},
         {"adduser",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddUser}},
-        {"listperms",          {ACLFlags.value("NONE"),         0, &AOClient::cmdListPerms}},
+        {"listperms",          {ACLFlags.value("MODIFY_USERS"), 0, &AOClient::cmdListPerms}},
         {"addperm",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddPerms}},
         {"removeperm",         {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdRemovePerms}},
         {"listusers",          {ACLFlags.value("MODIFY_USERS"), 0, &AOClient::cmdListUsers}},
-        {"logout",             {ACLFlags.value("NONE"),         0, &AOClient::cmdLogout}},
+        {"unmod",              {ACLFlags.value("NONE"),         0, &AOClient::cmdLogout}},
         {"pos",                {ACLFlags.value("NONE"),         1, &AOClient::cmdPos}},
         {"g",                  {ACLFlags.value("NONE"),         1, &AOClient::cmdG}},
         {"need",               {ACLFlags.value("NONE"),         1, &AOClient::cmdNeed}},
@@ -2084,31 +2198,27 @@ class AOClient : public QObject {
         {"uncm",               {ACLFlags.value("CM"),           0, &AOClient::cmdUnCM}},
         {"invite",             {ACLFlags.value("CM"),           1, &AOClient::cmdInvite}},
         {"uninvite",           {ACLFlags.value("CM"),           1, &AOClient::cmdUnInvite}},
-        {"lock",               {ACLFlags.value("CM"),           0, &AOClient::cmdLock}},
         {"area_lock",          {ACLFlags.value("CM"),           0, &AOClient::cmdLock}},
-        {"spectatable",        {ACLFlags.value("CM"),           0, &AOClient::cmdSpectatable}},
         {"area_spectate",      {ACLFlags.value("CM"),           0, &AOClient::cmdSpectatable}},
-        {"unlock",             {ACLFlags.value("CM"),           0, &AOClient::cmdUnLock}},
+        {"area_mute",          {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMute}},
         {"area_unlock",        {ACLFlags.value("CM"),           0, &AOClient::cmdUnLock}},
         {"timer",              {ACLFlags.value("CM"),           0, &AOClient::cmdTimer}},
         {"area",               {ACLFlags.value("NONE"),         1, &AOClient::cmdArea}},
-        {"play",               {ACLFlags.value("CM"),           1, &AOClient::cmdPlay}},
-        {"areakick",           {ACLFlags.value("CM"),           1, &AOClient::cmdAreaKick}},
+        {"play",               {ACLFlags.value("NONE"),         1, &AOClient::cmdPlay}},
         {"area_kick",          {ACLFlags.value("CM"),           1, &AOClient::cmdAreaKick}},
+        {"modarea_kick",       {ACLFlags.value("KICK"),         2, &AOClient::cmdModAreaKick}},
         {"randomchar",         {ACLFlags.value("NONE"),         0, &AOClient::cmdRandomChar}},
         {"switch",             {ACLFlags.value("NONE"),         1, &AOClient::cmdSwitch}},
         {"toggleglobal",       {ACLFlags.value("NONE"),         0, &AOClient::cmdToggleGlobal}},
         {"mods",               {ACLFlags.value("NONE"),         0, &AOClient::cmdMods}},
-        {"commands",           {ACLFlags.value("NONE"),         0, &AOClient::cmdCommands}},
+        {"help",               {ACLFlags.value("NONE"),         0, &AOClient::cmdHelp}},
         {"status",             {ACLFlags.value("NONE"),         1, &AOClient::cmdStatus}},
         {"forcepos",           {ACLFlags.value("CM"),           2, &AOClient::cmdForcePos}},
         {"currentmusic",       {ACLFlags.value("NONE"),         0, &AOClient::cmdCurrentMusic}},
         {"pm",                 {ACLFlags.value("NONE"),         2, &AOClient::cmdPM}},
-        {"evidence_mod",       {ACLFlags.value("EVI_MOD"),      1, &AOClient::cmdEvidenceMod}},
+        {"evidence_mod",       {ACLFlags.value("CM"),           1, &AOClient::cmdEvidenceMod}},
         {"motd",               {ACLFlags.value("NONE"),         0, &AOClient::cmdMOTD}},
-        {"announce",           {ACLFlags.value("ANNOUNCE"),     1, &AOClient::cmdAnnounce}},
         {"m",                  {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdM}},
-        {"gm",                 {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdGM}},
         {"mute",               {ACLFlags.value("MUTE"),         1, &AOClient::cmdMute}},
         {"unmute",             {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnMute}},
         {"bans",               {ACLFlags.value("BAN"),          0, &AOClient::cmdBans}},
@@ -2123,10 +2233,8 @@ class AOClient : public QObject {
         {"notecardclear",      {ACLFlags.value("NONE"),         0, &AOClient::cmdNoteCardClear}},
         {"notecard_clear",     {ACLFlags.value("NONE"),         0, &AOClient::cmdNoteCardClear}},
         {"8ball",              {ACLFlags.value("NONE"),         1, &AOClient::cmd8Ball}},
-        {"lm",                 {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdLM}},
         {"judgelog",           {ACLFlags.value("CM"),           0, &AOClient::cmdJudgeLog}},
         {"allowblankposting",  {ACLFlags.value("MODCHAT"),      0, &AOClient::cmdAllowBlankposting}},
-        {"allow_blankposting", {ACLFlags.value("MODCHAT"),      0, &AOClient::cmdAllowBlankposting}},
         {"gimp",               {ACLFlags.value("MUTE"),         1, &AOClient::cmdGimp}},
         {"ungimp",             {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnGimp}},
         {"baninfo",            {ACLFlags.value("BAN"),          1, &AOClient::cmdBanInfo}},
@@ -2143,49 +2251,45 @@ class AOClient : public QObject {
         {"shake",              {ACLFlags.value("MUTE"),         1, &AOClient::cmdShake}},
         {"unshake",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnShake}},
         {"forceimmediate",     {ACLFlags.value("CM"),           0, &AOClient::cmdForceImmediate}},
-        {"force_noint_pres",   {ACLFlags.value("CM"),           0, &AOClient::cmdForceImmediate}},
         {"allowiniswap",       {ACLFlags.value("CM"),           0, &AOClient::cmdAllowIniswap}},
-        {"allow_iniswap",      {ACLFlags.value("CM"),           0, &AOClient::cmdAllowIniswap}},
         {"afk",                {ACLFlags.value("NONE"),         0, &AOClient::cmdAfk}},
         {"savetestimony",      {ACLFlags.value("NONE"),         1, &AOClient::cmdSaveTestimony}},
         {"loadtestimony",      {ACLFlags.value("CM"),           1, &AOClient::cmdLoadTestimony}},
         {"permitsaving",       {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdPermitSaving}},
         {"mutepm",             {ACLFlags.value("NONE"),         0, &AOClient::cmdMutePM}},
-        {"toggleadverts",      {ACLFlags.value("NONE"),         0, &AOClient::cmdToggleAdverts}},
-        {"oocmute",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocMute}},
         {"ooc_mute",           {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocMute}},
-        {"oocunmute",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocUnMute}},
         {"ooc_unmute",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocUnMute}},
         {"blockwtce",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockWtce}},
         {"block_wtce",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockWtce}},
         {"unblockwtce",        {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockWtce}},
-        {"unblock_wtce",       {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockWtce}},
         {"blockdj",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockDj}},
-        {"block_dj",           {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockDj}},
         {"unblockdj",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockDj}},
-        {"unblock_dj",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockDj}},
         {"charcurse",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdCharCurse}},
         {"uncharcurse",        {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnCharCurse}},
         {"charselect",         {ACLFlags.value("NONE"),         0, &AOClient::cmdCharSelect}},
         {"togglemusic",        {ACLFlags.value("CM"),           0, &AOClient::cmdToggleMusic}},
-        {"a",                  {ACLFlags.value("NONE"),         2, &AOClient::cmdA}},
-        {"s",                  {ACLFlags.value("NONE"),         0, &AOClient::cmdS}},
         {"kickuid",            {ACLFlags.value("KICK"),         2, &AOClient::cmdKickUid}},
-        {"kick_uid",           {ACLFlags.value("KICK"),         2, &AOClient::cmdKickUid}},
         {"firstperson",        {ACLFlags.value("NONE"),         0, &AOClient::cmdFirstPerson}},
         {"updateban",          {ACLFlags.value("BAN"),          3, &AOClient::cmdUpdateBan}},
-        {"update_ban",         {ACLFlags.value("BAN"),          3, &AOClient::cmdUpdateBan}},
-        {"changepass",         {ACLFlags.value("NONE"),         1, &AOClient::cmdChangePassword}},
+        {"changepass",         {ACLFlags.value("SUPER"),        1, &AOClient::cmdChangePassword}},
         {"ignorebglist",       {ACLFlags.value("IGNORE_BGLIST"),0, &AOClient::cmdIgnoreBgList}},
-        {"ignore_bglist",      {ACLFlags.value("IGNORE_BGLIST"),0, &AOClient::cmdIgnoreBgList}},
         {"notice",             {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNotice}},
         {"noticeg",            {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNoticeGlobal}},
-        {"togglejukebox",      {ACLFlags.value("None"),         0, &AOClient::cmdToggleJukebox}},
-        {"help",               {ACLFlags.value("NONE"),         1, &AOClient::cmdHelp}},
-        {"clearcm",            {ACLFlags.value("KICK"),         0, &AOClient::cmdClearCM}},
-        {"togglemessage",      {ACLFlags.value("CM"),           0, &AOClient::cmdToggleAreaMessageOnJoin}},
-        {"clearmessage",       {ACLFlags.value("CM"),           0, &AOClient::cmdClearAreaMessage}},
-        {"areamessage",        {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMessage}}
+        {"ipidinfo",           {ACLFlags.value("IPIDINFO"),     1, &AOClient::cmdIpidInfo}},
+        {"sneak",              {ACLFlags.value("NONE"),         0, &AOClient::cmdSneak}},
+        {"taketaked",          {ACLFlags.value("TAKETAKED"),    0, &AOClient::cmdTakeTakedChar}},
+        {"currentevimod",      {ACLFlags.value("CM"),           0, &AOClient::cmdCurrentEvimod}},
+        {"bgs",                {ACLFlags.value("NONE"),         0, &AOClient::cmdBgs}},
+        {"blind",              {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlind}},
+        {"unblind",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlind}},
+        {"currentbg",          {ACLFlags.value("NONE"),         0, &AOClient::cmdCurBg}},
+        {"sneak_mod",          {ACLFlags.value("SNEAK"),        0, &AOClient::cmdSneakMod}},
+        {"togglefloodguard",   {ACLFlags.value("CM"),           0, &AOClient::cmdToggleFloodguardActuve}},
+        {"togglechillmod",     {ACLFlags.value("CM"),           0, &AOClient::cmdToggleChillMod}},
+        {"toggleautomod",      {ACLFlags.value("CM"),           0, &AOClient::cmdToggleAutoMod}},
+        {"togglewuso",         {ACLFlags.value("WUSO"),         0, &AOClient::cmdToggleWebUsersSpectateOnly}},
+        {"removewuso",         {ACLFlags.value("WUSO"),         1, &AOClient::cmdRemoveWebUsersSpectateOnly}},
+        {"play_once",          {ACLFlags.value("NONE"),         1, &AOClient::cmdPlayOnce}},
     };
 
     /**
@@ -2210,14 +2314,14 @@ class AOClient : public QObject {
      * @details Generated based on the client's own supplied hardware ID.
      * The client supplied hardware ID is generally a machine unique ID.
      */
-    QString m_hwid;
+    QString hwid;
 
     /**
      * @brief The IPID of the client.
      *
      * @details Generated based on the client's IP, but cannot be reversed to identify the client's IP.
      */
-    QString m_ipid;
+    QString ipid;
 
     /**
      * @brief The time in seconds since the client last sent a Witness Testimony / Cross Examination
@@ -2225,14 +2329,56 @@ class AOClient : public QObject {
      *
      * @details Used to filter out potential spam.
      */
-    long m_last_wtce_time;
+    long last_wtce_time;
+
+    /**
+     * @brief The time in seconds since the client last moved to another area.
+     *
+     * @details Used to filter out potential spam.
+     */
+    long last_area_change_time;
+
+    /**
+     * @brief The time in seconds since the client changed music for the last time.
+     *
+     * @details Used to filter out potential spam.
+     */
+    long last_music_change_time;
+
+    /**
+     * @brief The time in seconds since the client sent 5 messages to the IC chat.
+     *
+     * @details Used by an automoderator.
+     */
+    long last5messagestime[5] = {-5, -5, -5, -5, -5};
+
+    /**
+     * @brief The time in seconds since the client sent 5 messages to the OOC chat.
+     *
+     * @details Used by an automoderator.
+     */
+    long last5oocmessagestime[5] = {-5, -5, -5, -5, -5};
+
+    /**
+     * @brief Checking if the client sent messages to IC chat or not.
+     *
+     * @details Used to prevent receiving a penalty from the automoderator for sending the first message.
+     */
+    bool first_message = true;
+
+    /**
+     * @brief Checking if the client sent messages to OOC chat or not.
+     *
+     * @details Used to prevent receiving a penalty from the automoderator for sending the first message.
+     */
+    bool first_oocmessage = true;
 
     /**
      * @brief The text of the last in-character message that was sent by the client.
      *
      * @details Used to determine if the incoming message is a duplicate.
      */
-    QString m_last_message;
+    QString last_message;
 
     /**
      * @brief A helper function to add recorded packets to an area's judgelog.
@@ -2256,55 +2402,6 @@ class AOClient : public QObject {
      * @brief The size, in bytes, of the last data the client sent to the server.
      */
     int last_read = 0;
-
-    /**
-     * @brief A helper function for logging in a client as moderator.
-     *
-     * @param message The OOC message the client has sent.
-     */
-    void loginAttempt(QString message);
-
-  signals:
-
-    /**
-     * @brief Signal connected to universal logger. Sends IC chat usage to the logger.
-     */
-    void logIC(const QString& f_charName, const QString& f_oocName, const QString& f_ipid,
-               const QString& f_areaName, const QString &f_message);
-
-    /**
-     * @brief Signal connected to universal logger. Sends OOC chat usage to the logger.
-     */
-    void logOOC(const QString& f_charName, const QString& f_oocName, const QString& f_ipid,
-                const QString& f_areaName, const QString& f_message);
-
-    /**
-     * @brief Signal connected to universal logger. Sends login attempt to the logger.
-     */
-    void logLogin(const QString& f_charName, const QString& f_oocName, const QString& f_moderatorName,
-                  const QString& f_ipid, const QString &f_areaName, const bool& f_success);
-
-    /**
-     * @brief Signal connected to universal logger. Sends command usage to the logger.
-     */
-    void logCMD(const QString& f_charName, const QString &f_ipid, const QString& f_oocName, const QString f_command,
-                const QStringList f_args, const QString f_areaName);
-
-    /**
-     * @brief Signal connected to universal logger. Sends player kick information to the logger.
-     */
-    void logKick(const QString& f_moderator, const QString& f_targetIPID, const QString& f_reason);
-
-    /**
-     * @brief Signal connected to universal logger. Sends ban information to the logger.
-     */
-    void logBan(const QString& f_moderator, const QString& f_targetIPID, const QString &f_duration, const QString& f_reason);
-
-    /**
-     * @brief Signal connected to universal logger. Sends modcall information to the logger, triggering a write of the buffer
-     *        when modcall logging is used.
-     */
-    void logModcall(const QString& f_charName, const QString &f_ipid, const QString& f_oocName, const QString& f_areaName);
 };
 
 #endif // AOCLIENT_H

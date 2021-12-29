@@ -16,42 +16,39 @@
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/server.h"
+#include "include/logger.h"
 
 Server::Server(int p_port, int p_ws_port, QObject* parent) :
     QObject(parent),
-    m_player_count(0),
+    player_count(0),
     port(p_port),
     ws_port(p_ws_port)
 {
     server = new QTcpServer(this);
     connect(server, SIGNAL(newConnection()), this, SLOT(clientConnected()));
 
-    proxy = new WSProxy(port, ws_port, this);
-    if(ws_port != -1)
-        proxy->start();
     timer = new QTimer();
 
     db_manager = new DBManager();
 
-    //We create it, even if its not used later on.
-    discord = new Discord(this);
-
-    logger = new ULogger(this);
-    connect(this, &Server::logConnectionAttempt,
-        logger, &ULogger::logConnectionAttempt);
 }
 
 void Server::start()
 {
-    QString bind_ip = ConfigManager::bindIP();
+    QSettings config("config/config.ini", QSettings::IniFormat);
+    config.beginGroup("Options");
+    QString bind_ip = config.value("ip", "all").toString();
     QHostAddress bind_addr;
+
     if (bind_ip == "all")
         bind_addr = QHostAddress::Any;
     else
         bind_addr = QHostAddress(bind_ip);
+
     if (bind_addr.protocol() != QAbstractSocket::IPv4Protocol && bind_addr.protocol() != QAbstractSocket::IPv6Protocol && bind_addr != QHostAddress::Any) {
         qDebug() << bind_ip << "is an invalid IP address to listen on! Server not starting, check your config.";
     }
+
     if (!server->listen(bind_addr, port)) {
         qDebug() << "Server error:" << server->errorString();
     }
@@ -59,82 +56,131 @@ void Server::start()
         qDebug() << "Server listening on" << port;
     }
     
-    //Checks if any Discord webhooks are enabled.
-    handleDiscordIntegration();
+    if (ConfigManager::discordWebhookEnabled()) {
+        discord = new Discord(this);
+        connect(this, &Server::modcallWebhookRequest,
+                discord, &Discord::onModcallWebhookRequested);
+        connect(this, &Server::banWebhookRequest,
+                discord, &Discord::onBanWebhookRequested);
+    }
 
-    //Construct modern advertiser if enabled in config
     if (ConfigManager::advertiseHTTPServer()) {
         httpAdvertiserTimer = new QTimer(this);
         httpAdvertiser = new HTTPAdvertiser();
 
         connect(httpAdvertiserTimer, &QTimer::timeout,
                 httpAdvertiser, &HTTPAdvertiser::msAdvertiseServer);
-        connect(this, &Server::updatePlayerCount,
-                httpAdvertiser, &HTTPAdvertiser::updatePlayerCount);
+        connect(this, &Server::setHTTPConfiguration,
+                httpAdvertiser, &HTTPAdvertiser::setAdvertiserSettings);
         connect(this, &Server::updateHTTPConfiguration,
                 httpAdvertiser, &HTTPAdvertiser::updateAdvertiserSettings);
-        emit updatePlayerCount(m_player_count);
-        httpAdvertiser->msAdvertiseServer();
+        setHTTPAdvertiserConfig();
         httpAdvertiserTimer->start(300000);
     }
 
-    //Get characters from config file
-    m_characters = ConfigManager::charlist();
+    proxy = new WSProxy(port, ws_port, this);
 
-    //Get musiclist from config file
-    m_music_list = ConfigManager::musiclist();
+    if(ws_port != -1)
+        proxy->start();
 
-    //Get backgrounds from config file
-    m_backgrounds = ConfigManager::backgrounds();
+    QFile char_list("config/characters.txt");
+    char_list.open(QIODevice::ReadOnly | QIODevice::Text);
 
-    //Assembles the area list
-    m_area_names = ConfigManager::sanitizedAreaNames();
-    QStringList raw_area_names = ConfigManager::rawAreaNames();
-    for (int i = 0; i < raw_area_names.length(); i++) {
-        QString area_name = raw_area_names[i];
-        AreaData* l_area = new AreaData(area_name, i);
-        m_areas.insert(i, l_area);
-        connect(l_area, &AreaData::playJukeboxSong,
-                this, QOverload<AOPacket,int>::of(&Server::broadcast));
+    while (!char_list.atEnd()) {
+        characters.append(char_list.readLine().trimmed());
     }
 
-    //Loads the command help information. This is not stored inside the server.
-    ConfigManager::loadCommandHelp();
-    
+    char_list.close();
+
+    QFile music_file("config/music.txt");
+    music_file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    while (!music_file.atEnd()) {
+        music_list.append(music_file.readLine().trimmed());
+    }
+
+    music_file.close();
+
+    if(music_list[0].contains(".")) // Add a default category if none exists
+        music_list.insert(0, "==Music==");
+
+    QFile bg_file("config/backgrounds.txt");
+    bg_file.open(QIODevice::ReadOnly | QIODevice::Text);
+
+    while (!bg_file.atEnd()) {
+        backgrounds.append(bg_file.readLine().trimmed());
+    }
+
+    bg_file.close();
+
+    QSettings areas_ini("config/areas.ini", QSettings::IniFormat);
+    area_names = areas_ini.childGroups(); // invisibly does a lexicographical sort, because Qt is great like that
+    std::sort(area_names.begin(), area_names.end(), [] (const QString &a, const QString &b) {return a.split(":")[0].toInt() < b.split(":")[0].toInt();});
+    QStringList sanitized_area_names;
+    QStringList raw_area_names = area_names;
+
+    for (QString area_name : area_names) {
+        QStringList name_split = area_name.split(":");
+        name_split.removeFirst();
+        QString area_name_sanitized = name_split.join(":");
+        sanitized_area_names.append(area_name_sanitized);
+    }
+
+    area_names = sanitized_area_names;    
+
+    for (int i = 0; i < raw_area_names.length(); i++) {
+        QString area_name = raw_area_names[i];
+        areas.insert(i, new AreaData(area_name, i));
+    }
+
     //Get IP bans
     m_ipban_list = ConfigManager::iprangeBans();
 
-    //Rate-Limiter for IC-Chat
     connect(&next_message_timer, SIGNAL(timeout()), this, SLOT(allowMessage()));
+
+    uid = new QVector<bool>(ConfigManager::maxPlayers(), false);
 }
 
 void Server::clientConnected()
 {
     QTcpSocket* socket = server->nextPendingConnection();
-    int user_id;
-    QList<int> user_ids;
-    for (AOClient* client : qAsConst(m_clients)) {
-        user_ids.append(client->m_id);
+    int user_id = uid->indexOf(false);
+
+    if (user_id == -1) {
+        qWarning("Player limit exceeded!");
+        socket->flush();
+        socket->close();
+        return;
     }
-    for (user_id = 0; user_id <= m_player_count; user_id++) {
-        if (user_ids.contains(user_id))
-            continue;
-        else
-            break;
+    // This should be impossible. If it does somehow happen, raise a warning and grab a new UID.
+        else if (uid->data()[user_id] == true) {
+            qWarning("A client attempted to take a taken UID!");
+            user_id = uid->indexOf(false);
+            if (user_id == -1 || uid->data()[user_id == true]) {
+                qWarning("An error occured when assigning UID. Client could not find a valid ID.");
+                socket->flush();
+                socket->close();
+                return;
+            }
     }
+
+    uid->data()[user_id] = true;
     AOClient* client = new AOClient(this, socket, this, user_id);
 
     int multiclient_count = 1;
     bool is_at_multiclient_limit = false;
+
     client->calculateIpid();
+    client->clientConnected();
     auto ban = db_manager->isIPBanned(client->getIpid());
     bool is_banned = ban.first;
-    for (AOClient* joined_client : qAsConst(m_clients)) {
-        if (client->m_remote_ip.isEqual(joined_client->m_remote_ip))
+
+    for (AOClient* joined_client : clients) {
+        if (client->remote_ip.isEqual(joined_client->remote_ip))
             multiclient_count++;
     }
 
-    if (multiclient_count > ConfigManager::multiClientLimit() && !client->m_remote_ip.isLoopback()) // TODO: make this configurable
+    if (multiclient_count > ConfigManager::multiClientLimit() && !client->remote_ip.isLoopback()) // TODO: make this configurable
         is_at_multiclient_limit = true;
 
     if (is_banned) {
@@ -142,6 +188,7 @@ void Server::clientConnected()
         AOPacket ban_reason("BD", {reason});
         socket->write(ban_reason.toUtf8());
     }
+
     if (is_banned || is_at_multiclient_limit) {
         socket->flush();
         client->deleteLater();
@@ -149,7 +196,7 @@ void Server::clientConnected()
         return;
     }
 
-    QHostAddress l_remote_ip = client->m_remote_ip;
+    QHostAddress l_remote_ip = client->remote_ip;
     if (l_remote_ip.protocol() == QAbstractSocket::IPv6Protocol) {
         l_remote_ip = parseToIPv4(l_remote_ip);
     }
@@ -163,20 +210,22 @@ void Server::clientConnected()
         return;
     }
 
-    m_clients.append(client);
+    clients.append(client);
+
     connect(socket, &QTcpSocket::disconnected, client,
             &AOClient::clientDisconnected);
     connect(socket, &QTcpSocket::disconnected, this, [=] {
-        m_clients.removeAll(client);
+        clients.removeAll(client);
         client->deleteLater();
     });
+
     connect(socket, &QTcpSocket::readyRead, client, &AOClient::clientData);
 
     AOPacket decryptor("decryptor", {"NOENCRYPT"}); // This is the infamous workaround for
                                                     // tsuserver4. It should disable fantacrypt
                                                     // completely in any client 2.4.3 or newer
     client->sendPacket(decryptor);
-    hookupLogger(client);
+
 #ifdef NET_DEBUG
     qDebug() << client->remote_ip.toString() << "connected";
 #endif
@@ -185,7 +234,8 @@ void Server::clientConnected()
 void Server::updateCharsTaken(AreaData* area)
 {
     QStringList chars_taken;
-    for (const QString &cur_char : qAsConst(m_characters)) {
+
+    for (QString cur_char : characters) {
         chars_taken.append(area->charactersTaken().contains(getCharID(cur_char))
                                ? QStringLiteral("-1")
                                : QStringLiteral("0"));
@@ -193,9 +243,9 @@ void Server::updateCharsTaken(AreaData* area)
 
     AOPacket response_cc("CharsCheck", chars_taken);
 
-    for (AOClient* client : qAsConst(m_clients)) {
-        if (client->m_current_area == area->index()){
-            if (!client->m_is_charcursed)
+    for (AOClient* client : clients) {
+        if (client->current_area == area->index()){
+            if (!client->is_charcursed)
                 client->sendPacket(response_cc);
             else {
                 QStringList chars_taken_cursed = getCursedCharsTaken(client, chars_taken);
@@ -209,12 +259,14 @@ void Server::updateCharsTaken(AreaData* area)
 QStringList Server::getCursedCharsTaken(AOClient* client, QStringList chars_taken)
 {
     QStringList chars_taken_cursed;
+
     for (int i = 0; i < chars_taken.length(); i++) {
-        if (!client->m_charcurse_list.contains(i))
+        if (!client->charcurse_list.contains(i))
             chars_taken_cursed.append("-1");
         else
             chars_taken_cursed.append(chars_taken.value(i));
     }
+
     return chars_taken_cursed;
 }
 
@@ -229,102 +281,81 @@ QHostAddress Server::parseToIPv4(QHostAddress f_remote_ip)
     return l_remote_ip;
 }
 
-void Server::reloadSettings()
-{
-    ConfigManager::reloadSettings();
-    emit reloadRequest(ConfigManager::serverName(), ConfigManager::serverDescription());
-    emit updateHTTPConfiguration();
-    handleDiscordIntegration();
-    logger->loadLogtext();
-    m_music_list = ConfigManager::musiclist();
-    m_ipban_list = ConfigManager::iprangeBans();
-}
-
 void Server::broadcast(AOPacket packet, int area_index)
 {
-    for (AOClient* client : qAsConst(m_clients)) {
-        if (client->m_current_area == area_index)
+    for (AOClient* client : clients) {
+        if (client->current_area == area_index && !client->blinded)
             client->sendPacket(packet);
     }
 }
 
 void Server::broadcast(AOPacket packet)
 {
-    for (AOClient* client : qAsConst(m_clients)) {
+    for (AOClient* client : clients) {
+        if (!client->blinded)
         client->sendPacket(packet);
-    }
-}
-
-void Server::broadcast(AOPacket packet, TARGET_TYPE target)
-{
-    for (AOClient* l_client : qAsConst(m_clients)) {
-        switch (target) {
-        case TARGET_TYPE::MODCHAT:
-            if (l_client->checkAuth(l_client->ACLFlags.value("MODCHAT"))) {
-                l_client->sendPacket(packet);
-            }
-            break;
-        case TARGET_TYPE::ADVERT:
-            if (l_client->m_advert_enabled) {
-                l_client->sendPacket(packet);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}
-
-void Server::broadcast(AOPacket packet, AOPacket other_packet, TARGET_TYPE target)
-{
-    switch (target) {
-    case TARGET_TYPE::AUTHENTICATED:
-        for (AOClient* client : qAsConst(m_clients)){
-            if (client->m_authenticated) {
-                client->sendPacket(other_packet);
-            }
-            else {
-                client->sendPacket(packet);
-            }
-        }
-    default:
-        //Unimplemented, so not handled.
-        break;
     }
 }
 
 QList<AOClient*> Server::getClientsByIpid(QString ipid)
 {
     QList<AOClient*> return_clients;
-    for (AOClient* client : qAsConst(m_clients)) {
+
+    for (AOClient* client : clients) {
         if (client->getIpid() == ipid)
             return_clients.append(client);
     }
+
     return return_clients;
 }
 
 AOClient* Server::getClientByID(int id)
 {
-    for (AOClient* client : qAsConst(m_clients)) {
-        if (client->m_id == id)
+    for (AOClient* client : clients) {
+        if (client->id == id)
             return client;
     }
+
     return nullptr;
 }
 
 int Server::getCharID(QString char_name)
 {
-    for (const QString &character : qAsConst(m_characters)) {
+    for (QString character : characters) {
         if (character.toLower() == char_name.toLower()) {
-            return m_characters.indexOf(QRegExp(character, Qt::CaseInsensitive));
+            return characters.indexOf(QRegExp(character, Qt::CaseInsensitive));
         }
     }
+
     return -1; // character does not exist
 }
 
-QQueue<QString> Server::getAreaBuffer(const QString &f_areaName)
+void Server::setHTTPAdvertiserConfig()
 {
-    return logger->buffer(f_areaName);
+    advertiser_config config;
+
+    config.name = ConfigManager::serverName();
+    config.description = ConfigManager::serverDescription();
+    config.port = ConfigManager::serverPort();
+    config.ws_port = ConfigManager::webaoPort();
+    config.players = ConfigManager::maxPlayers();
+    config.masterserver = ConfigManager::advertiserHTTPIP();
+    config.debug = ConfigManager::advertiserHTTPDebug();
+
+    emit setHTTPConfiguration(config);
+  }
+
+  void Server::updateHTTPAdvertiserConfig()
+  {
+      update_advertiser_config config;
+
+      config.name = ConfigManager::serverName();
+      config.description = ConfigManager::serverDescription();
+      config.players = ConfigManager::maxPlayers();
+      config.masterserver = ConfigManager::advertiserHTTPIP();
+      config.debug = ConfigManager::advertiserHTTPDebug();
+
+      emit updateHTTPConfiguration(config);
 }
 
 void Server::allowMessage()
@@ -332,44 +363,14 @@ void Server::allowMessage()
     can_send_ic_messages = true;
 }
 
-void Server::handleDiscordIntegration()
+void Server::freeUID(const int id)
 {
-     // Prevent double connecting by preemtively disconnecting them.
-    disconnect(this, nullptr, discord, nullptr);
-
-    if (ConfigManager::discordWebhookEnabled()) {
-        if (ConfigManager::discordModcallWebhookEnabled())
-            connect(this, &Server::modcallWebhookRequest,
-                    discord, &Discord::onModcallWebhookRequested);
-
-        if (ConfigManager::discordBanWebhookEnabled())
-            connect(this, &Server::banWebhookRequest,
-                    discord, &Discord::onBanWebhookRequested);
-
-        if (ConfigManager::discordUptimeEnabled())
-            discord->startUptimeTimer();
-        else
-            discord->stopUptimeTimer();
-    }
-    return;
+    uid->data()[id] = false;
 }
 
-void Server::hookupLogger(AOClient* client)
+void Server::resizeUIDs()
 {
-    connect(client, &AOClient::logIC,
-            logger, &ULogger::logIC);
-    connect(client, &AOClient::logOOC,
-            logger, &ULogger::logOOC);
-    connect(client, &AOClient::logLogin,
-            logger, &ULogger::logLogin);
-    connect(client, &AOClient::logCMD,
-            logger, &ULogger::logCMD);
-    connect(client, &AOClient::logBan,
-            logger, &ULogger::logBan);
-    connect(client, &AOClient::logKick,
-            logger, &ULogger::logKick);
-    connect(client, &AOClient::logModcall,
-            logger, &ULogger::logModcall);
+    uid->resize(ConfigManager::maxPlayers());
 }
 
 bool Server::isIPBanned(QHostAddress f_remote_IP)
@@ -386,9 +387,10 @@ bool Server::isIPBanned(QHostAddress f_remote_IP)
 
 Server::~Server()
 {
-    for (AOClient* client : qAsConst(m_clients)) {
+    for (AOClient* client : clients) {
         client->deleteLater();
     }
+
     server->deleteLater();
     proxy->deleteLater();
     discord->deleteLater();

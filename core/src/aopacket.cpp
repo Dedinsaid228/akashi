@@ -29,6 +29,7 @@ AOPacket::AOPacket(QString p_packet)
         return;
 
     QStringList packet_contents = p_packet.split("#");
+
     if (p_packet.at(0) == '#') {
         // The header is encrypted with FantaCrypt
         // This should never happen with AO2 2.4.3 or newer
@@ -40,17 +41,22 @@ AOPacket::AOPacket(QString p_packet)
     else {
         header = packet_contents[0];
     }
+
     packet_contents.removeFirst(); // Remove header
+    if (header != "HI")
     packet_contents.removeLast();  // Remove anything trailing after delimiter
+
     contents = packet_contents;
 }
 
 QString AOPacket::toString()
 {
     QString ao_packet = header;
+
     for (int i = 0; i < contents.length(); i++) {
         ao_packet += "#" + contents[i];
     }
+
     ao_packet += "#%";
 
     return ao_packet;

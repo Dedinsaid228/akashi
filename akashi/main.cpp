@@ -35,8 +35,8 @@ void cleanup() {
 int main(int argc, char* argv[])
 {
     QCoreApplication app(argc, argv);
-    QCoreApplication::setApplicationName("akashi");
-    QCoreApplication::setApplicationVersion("elderberry (1.5)");
+    QCoreApplication::setApplicationName("kakashi");
+    QCoreApplication::setApplicationVersion("1.0");
     std::atexit(cleanup);
 
     // Verify server configuration is sound.

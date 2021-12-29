@@ -20,14 +20,15 @@
 
 #define DB_VERSION 1
 
+#include <QDebug>
 #include <QDateTime>
 #include <QHostAddress>
 #include <QMessageAuthenticationCode>
+#include <QString>
 #include <QSqlDatabase>
 #include <QSqlDriver>
 #include <QSqlError>
 #include <QSqlQuery>
-#include <QFileInfo>
 
 /**
  * @brief A class used to handle database interaction.
@@ -39,8 +40,7 @@
  * differently than the average user.
  * This comes in two forms, when the user's client is banned, and when the user is a moderator.
  */
-class DBManager : public QObject {
-    Q_OBJECT
+class DBManager{
 public:
     /**
      * @brief Constructor for the DBManager class.
@@ -227,6 +227,47 @@ public:
     QList<BanInfo> getBanInfo(QString lookup_type, QString id);
 
     /**
+     * @brief Details about automoderator actions.
+     */
+    struct automod {
+        QString ipid; //!< User's IPID.
+        unsigned long date; //!< Date of receipt of the last punishment from the automoderator.
+        QString action; //!< The action taken by the automoderator.
+        int haznum; //!< User hazard level. 0/1 - low (the user will be muted), 2 - medium (the user will be kicked), 3 - high (the user will be banned).
+    };
+
+    /**
+     * @brief Returns the hazard level of the user.
+     */
+    int getHazNum(QString ipid);
+
+    /**
+     * @brief Returns the date when the punishment was last received.
+     */
+    long getHazNumDate(QString ipid);
+
+    /**
+     * @brief Registers a punishment from the automoderator into the database.
+     */
+    void addHazNum(automod num);
+
+    /**
+     * @brief Updates a punishment from the automoderator.
+     */
+    void updateHazNum(QString ipid, long date);
+
+    /**
+     * @overload
+     */
+    void updateHazNum(QString ipid, int haznum);
+
+    /**
+     * @overload
+     */
+    void updateHazNum(QString ipid, QString action);
+
+
+    /**
      * @brief Updates a ban.
      *
      * @param ban_id The ID of the ban to update.
@@ -249,6 +290,30 @@ public:
      * @return True if the password change was successful.
      */
     bool updatePassword(QString username, QString password);
+
+    /**
+     * @brief Details about user's IPID.
+     */
+    struct idipinfo {
+        QString ipid; //!< User's IPID.
+        QString ip; //!< User's IP.
+        QString date; //!< The date the IPID was "created".
+    };
+
+    /**
+     * @brief Registers a IPID into the database.
+     */
+    void ipidip(QString ipid, QString ip, QString date);
+
+    /**
+     * @brief Gets information on a IPID.
+     */
+    QList<DBManager::idipinfo> getIpidInfo(QString ipid);
+
+    /**
+     * @brief Returns true if the IPID does not exist in the database.
+     */
+    bool ipidExist(QString ipid);
 
 private:
     /**

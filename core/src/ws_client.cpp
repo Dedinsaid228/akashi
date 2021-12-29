@@ -26,7 +26,6 @@ void WSClient::onWsData(QString message)
 void WSClient::onTcpData()
 {
     QByteArray tcp_message = tcp_socket->readAll();
-
     if (!tcp_message.endsWith("#%")) {
         partial_packet.append(tcp_message);
         is_segmented = true;
@@ -39,11 +38,10 @@ void WSClient::onTcpData()
         partial_packet.clear();
         is_segmented = false;
     }
-
     // Workaround for WebAO bug needing every packet in its own message
     QStringList all_packets = QString::fromUtf8(tcp_message).split("%");
     all_packets.removeLast(); // Remove empty space after final delimiter
-    for(const QString &packet : qAsConst(all_packets)) {
+    for(QString packet : all_packets) {
         web_socket->sendTextMessage(packet + "%");
     }
 }

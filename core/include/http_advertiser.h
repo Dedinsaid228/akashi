@@ -20,7 +20,25 @@
 
 #include <QtNetwork>
 #include <QObject>
-#include "include/config_manager.h"
+
+//Don't question this. It needs to be here for some reason.
+struct advertiser_config {
+    QString name;
+    QString description;
+    int port;
+    int ws_port;
+    int players;
+    QUrl masterserver;
+    bool debug;
+};
+
+struct update_advertiser_config {
+    QString name;
+    QString description;
+    int players;
+    QUrl masterserver;
+    bool debug;
+};
 
 /**
  * @brief Represents the advertiser of the server. Sends current server information to masterserver.
@@ -51,17 +69,19 @@ public slots:
      * @brief Reads the information send as a reply for further error handling.
      * @param reply Response data from the masterserver. Information contained is send to the console if debug is enabled.
      */
-    void msRequestFinished(QNetworkReply *f_reply);
+    void msRequestFinished(QNetworkReply *reply);
 
     /**
-     * @brief Updates the playercount of the server in the advertiser.
+     * @brief Sets the values being advertised to masterserver.
+     * @param config Configuration struct for the advertiser. Always includes ALL settings.
      */
-    void updatePlayerCount(int f_current_players);
+    void setAdvertiserSettings(advertiser_config config);
 
     /**
-     * @brief Updates advertisement values
+     * @brief Sets the updated values being advertiser to masterserver.
+     * @param config Configuration struct for the advertiser. Only includes partial information, as ports can't be changed.
      */
-    void updateAdvertiserSettings();
+    void updateAdvertiserSettings(update_advertiser_config config);
 
 private:
 
@@ -74,11 +94,6 @@ private:
      * @brief Name of the server send to the masterserver. Changing this will change the display name in the serverlist
      */
     QString m_name;
-
-    /**
-     * @brief Optional hostname of the server. Can either be an IP or a DNS name. Disabled automatic IP detection of ms3.
-     */
-    QString m_hostname;
 
     /**
      * @brief Description of the server that is displayed in the client when the server is selected.

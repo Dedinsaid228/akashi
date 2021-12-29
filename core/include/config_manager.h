@@ -29,13 +29,7 @@
 #include <QSettings>
 #include <QUrl>
 #include <QMetaEnum>
-#include <QElapsedTimer>
 #include <QHostAddress>
-
-//JSON loading requirements
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
 
 /**
  * @brief The config file handler class.
@@ -49,76 +43,6 @@ class ConfigManager {
      * @return True if the server configuration was verified, false otherwise.
      */
     static bool verifyServerConfig();
-
-    /**
-     * @brief Returns the IP the TCP Server binds to.
-     *
-     * @return See short description
-     */
-    static QString bindIP();
-
-    /**
-     * @brief Returns the character list of the server.
-     *
-     * @return See short description.
-     */
-    static QStringList charlist();
-
-    /**
-     * @brief Returns the a QStringList of the available backgrounds.
-     *
-     * @return See short description.
-     */
-    static QStringList backgrounds();
-
-    /**
-     * @brief Returns a QStringlist of the available songs.
-     *
-     * @return See short description.
-     */
-    static QStringList musiclist();
-
-    /**
-     * @brief Loads help information into m_help_information.
-     *
-     * @return See short description.
-     */
-    static void loadCommandHelp();
-
-    /**
-     * @brief Returns the duration of a song in the songlist.
-     * @param The name of the song where duration is requested
-     * @return The duration of the song
-     */
-    static int songInformation(const QString& f_songName);
-
-    /**
-     * @brief Returns the content of
-     *
-     * @return See short description.
-     */
-    static QSettings* areaData();
-
-    /**
-     * @brief Returns a sanitized QStringList of the areas.
-     *
-     * @return See short description.
-     */
-    static QStringList sanitizedAreaNames();
-
-    /**
-     * @brief Returns the raw arealist
-     *
-     * @return See short description.
-     */
-    static QStringList rawAreaNames();
-
-    /**
-     * @brief Returns a list of the IPrange bans.
-     *
-     * @return See short description.
-     */
-    static QStringList iprangeBans();
 
     /**
      * @brief Returns true if the server should advertise to the master server.
@@ -219,6 +143,13 @@ class ConfigManager {
     static DataTypes::LogType loggingType();
 
     /**
+     * @brief Returns a list of the IPrange bans.
+     *
+     * @return See short description.
+     */
+    static QStringList iprangeBans();
+
+    /**
      * @brief Returns true if the server should advertise to the master server.
      *
      * @return See short description.
@@ -238,6 +169,8 @@ class ConfigManager {
      * @return See short description.
      */
     static int maxCharacters();
+
+    static int maxCharactersChillMod();
 
     /**
      * @brief Returns the duration of the message floodguard.
@@ -268,39 +201,32 @@ class ConfigManager {
     static int diceMaxDice();
 
     /**
-     * @brief Returns true if the discord webhook integration is enabled.
+     * @brief Returns true if the discord webhook is enabled.
      *
      * @return See short description.
      */
     static bool discordWebhookEnabled();
 
     /**
-     * @brief Returns true if the discord modcall webhook is enabled.
-     *
-     * @return See short description.
-     */
-    static bool discordModcallWebhookEnabled();
-
-    /**
      * @brief Returns the discord webhook URL.
      *
      * @return See short description.
      */
-    static QString discordModcallWebhookUrl();
+    static QString discordWebhookUrl();
 
     /**
      * @brief Returns the discord webhook content.
      *
      * @return See short description.
      */
-    static QString discordModcallWebhookContent();
+    static QString discordWebhookContent();
 
     /**
      * @brief Returns true if the discord webhook should send log files.
      *
      * @return See short description.
      */
-    static bool discordModcallWebhookSendFile();
+    static bool discordWebhookSendFile();
 
     /**
      * @brief Returns true if the discord ban webhook is enabled.
@@ -308,37 +234,6 @@ class ConfigManager {
      * @return See short description.
      */
     static bool discordBanWebhookEnabled();
-    
-    /**
-     * @brief Returns the Discord Ban Webhook URL.
-     *
-     * @return See short description.
-     */
-    static QString discordBanWebhookUrl();
-
-    /**
-     * @brief Returns if the Webhook sends an alive message.
-     */
-    static bool discordUptimeEnabled();
-
-    /**
-     * @brief Returns the time between posting.
-     */
-    static int discordUptimeTime();
-
-    /**
-     * @brief Returns the Discord Uptime Webhook URL.
-     * 
-     * @return See short description.
-     */
-    static QString discordUptimeWebhookUrl();
-
-    /**
-     * @brief Returns a user configurable color code for the embeed object.s
-     *
-     * @return See short description.
-     */
-    static QString discordWebhookColor();
 
     /**
      * @brief Returns true if password requirements should be enforced.
@@ -390,20 +285,18 @@ class ConfigManager {
     static bool passwordCanContainUsername();
 
     /**
-     * @brief Returns the logstring for the specified logtype.
-     *
-     * @param Name of the logstring we want.
+     * @brief Returns a number indicating the number of seconds in which the automoderator is unresponsive to the client's behavior.
      *
      * @return See short description.
      */
-    static QString LogText(QString f_logtype);
+    static int autoModTrigger();
 
     /**
-     * @brief Returns the duration before a client is considered AFK.
+     * @brief Returns the duration of the ban given by the automoderator.
      *
      * @return See short description.
      */
-    static int afkTimeout();
+    static QString autoModBanDuration();
 
     /**
      * @brief Returns a list of magic 8 ball answers.
@@ -411,20 +304,6 @@ class ConfigManager {
      * @return See short description.
      */
     static QStringList magic8BallAnswers();
-
-    /**
-     * @brief Returns a list of praises.
-     *
-     * @return See short description.
-     */
-    static QStringList praiseList();
-
-    /**
-     * @brief Returns a list of reprimands.
-     *
-     * @return See short description.
-     */
-    static QStringList reprimandsList();
 
     /**
      * @brief Returns the server gimp list.
@@ -448,32 +327,6 @@ class ConfigManager {
      */
     static QUrl advertiserHTTPIP();
 
-    /**
-     * @brief Returns an optional hostname paramemter for the advertiser.
-     * If used allows user to set a custom IP or domain name.
-     */
-    static QString advertiserHostname();
-
-    /**
-     * @brief Returns the uptime of the server in miliseconds.
-     */
-    static qint64 uptime();
-
-    /**
-     * @brief A struct that contains the help information for a command.
-     *        It's split in the syntax and the explanation text.
-     */
-     struct help {
-        QString usage;
-        QString text;
-    };
-
-    /**
-     * @brief Returns a struct with the help information of the command.
-     *
-     * @return See short description.
-     */
-    static help commandHelp(QString f_command_name);
 
     /**
      * @brief Sets the server's authorization type.
@@ -488,6 +341,20 @@ class ConfigManager {
      * @param f_motd The MOTD to set.
      */
     static void setMotd(const QString f_motd);
+
+    /**
+     * @brief Returns true if WUSO is enabled.
+     *
+     * @return See short description.
+     */
+    static bool webUsersSpectableOnly();
+
+    /**
+     * @brief Enable/disable WUSO.
+     *
+     * @return See short description.
+     */
+    static void webUsersSpectableOnlyToggle();
 
     /**
      * @brief Reload the server configuration.
@@ -518,8 +385,6 @@ private:
      */
     struct CommandSettings {
         QStringList magic_8ball; //!< Contains answers for /8ball, found in config/text/8ball.txt
-        QStringList praises; //!< Contains command praises, found in config/text/praises.txt
-        QStringList reprimands; //!< Contains command reprimands, found in config/text/reprimands.txt
         QStringList gimps; //!< Contains phrases for /gimp, found in config/text/gimp.txt
     };
 
@@ -532,36 +397,6 @@ private:
      * @brief Stores all server configuration values.
      */
     static QSettings* m_settings;
-
-    /**
-     * @brief Stores all discord webhook configuration values.
-     */
-    static QSettings* m_discord;
-
-    /**
-     * @brief Stores all of the area valus.
-     */
-    static QSettings* m_areas;
-
-    /**
-     * @brief Stores all adjustable logstrings.
-     */
-    static QSettings* m_logtext;
-
-    /**
-     * @brief Pointer to QElapsedTimer to track the uptime of the server.
-     */
-    static QElapsedTimer* m_uptimeTimer;
-
-    /**
-     * @brief Contains the musiclist with time durations.
-     */
-    static QHash<QString,float>* m_musicList;
-
-    /**
-     * @brief QHash containing the help information for all commands registered to the server.
-     */
-    static QHash<QString,help>* m_commands_help;
 
     /**
      * @brief Returns a stringlist with the contents of a .txt file from config/text/.
