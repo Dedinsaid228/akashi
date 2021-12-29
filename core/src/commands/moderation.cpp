@@ -268,7 +268,7 @@ void AOClient::cmdUnBan(int argc, QStringList argv)
 
 void AOClient::cmdAbout(int argc, QStringList argv)
 {
-    sendServerMessage("akashi by: \n scatterflower \n Salanto \n in1tiate \n mangosarentliterature \n Github: https://github.com/AttorneyOnline/akashi \n kakashi by Dedinsaid228. \n Based on akashi coconut.");
+    sendServerMessage("akashi by: \n scatterflower \n Salanto \n in1tiate \n mangosarentliterature \n Github: https://github.com/AttorneyOnline/akashi \n kakashi by Dedinsaid228. \n Based on akashi coconut. \n Github: https://github.com/Dedinsaid228/kakashi");
 }
 
 void AOClient::cmdMute(int argc, QStringList argv)
