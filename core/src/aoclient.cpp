@@ -220,11 +220,11 @@ void AOClient::changeArea(int new_area)
 
     if (!sneaked) {
         if (showname.isEmpty() && current_char.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
         else if (showname.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
         else
-            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
      }
 
     if (current_char != "") {
@@ -269,11 +269,11 @@ void AOClient::changeArea(int new_area)
 
     if (!sneaked) {
         if (showname.isEmpty() && current_char.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
         else if (showname.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
         else
-            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " has disconnected.");
+            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
      }
 
     server->areas.value(current_area)->LogChangeArea(current_char, ipid, hwid, showname, ooc_name, server->area_names[old_area] + " -> " + server->area_names[current_area], QString::number(id));
