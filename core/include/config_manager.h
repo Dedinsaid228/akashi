@@ -299,6 +299,13 @@ class ConfigManager {
     static QString autoModBanDuration();
 
     /**
+     * @brief Returns the time after which one warn is removed.
+     *
+     * @return See short description.
+     */
+    static QString autoModWarnTerm();
+
+    /**
      * @brief Returns a list of magic 8 ball answers.
      *
      * @return See short description.

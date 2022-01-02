@@ -248,7 +248,7 @@ void AOClient::changeArea(int new_area)
     sendPacket("HP", {"1", QString::number(server->areas[new_area]->defHP())});
     sendPacket("HP", {"2", QString::number(server->areas[new_area]->proHP())});
     sendPacket("BN", {server->areas[new_area]->background()});
-    sendPacket("MS", {"chat", "-", " ", "thinking", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "0", "||"});
+    sendPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"});
 
     if (character_taken && take_taked_char == false) {
         sendPacket("DONE");
@@ -512,10 +512,33 @@ void AOClient::autoMod()
        return;
     }
 
+    long warnterm = parseTime(ConfigManager::autoModWarnTerm());
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - last_warn_time > warnterm && warn != 0) {
+        warn--;
+        last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    }
+
+    qDebug() << warn;
+
     int calmdowntime = last5messagestime[4] - last5messagestime[0];
     int triggertime = ConfigManager::autoModTrigger();
 
     if (calmdowntime < triggertime && !first_message) {
+
+        if (warn < 2) {
+            warn++;
+            qDebug() << warn;
+            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - warn) + " more warn, then you will be punished.");
+            last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+            last5messagestime[0] = -5;
+            last5messagestime[1] = -5;
+            last5messagestime[2] = -5;
+            last5messagestime[3] = -5;
+            last5messagestime[4] = -5;
+            return;
+        }
+
         AreaData* area = server->areas[current_area];
         int haznum = server->db_manager->getHazNum(ipid);
 
@@ -587,10 +610,31 @@ void AOClient::autoModOoc()
        return;
     }
 
+    long warnterm = parseTime(ConfigManager::autoModWarnTerm());
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - last_warn_time > warnterm && warn != 0) {
+        warn--;
+        last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    }
+
     int calmdowntime = last5oocmessagestime[4] - last5oocmessagestime[0];
     int triggertime = ConfigManager::autoModTrigger();
 
     if (calmdowntime < triggertime && !first_oocmessage) {
+
+        if (warn < 2) {
+            warn++;
+            qDebug() << warn;
+            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - warn) + " more warn, then you will be punished.");
+            last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+            last5oocmessagestime[0] = -5;
+            last5oocmessagestime[1] = -5;
+            last5oocmessagestime[2] = -5;
+            last5oocmessagestime[3] = -5;
+            last5oocmessagestime[4] = -5;
+            return;
+        }
+
         AreaData* area = server->areas[current_area];
         int haznum = server->db_manager->getHazNum(ipid);
 

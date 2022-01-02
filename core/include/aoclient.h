@@ -2360,6 +2360,20 @@ class AOClient : public QObject {
     long last5oocmessagestime[5] = {-5, -5, -5, -5, -5};
 
     /**
+     * @brief The number of warns the client has.
+     *
+     * @details Used by an automoderator.
+     */
+    int warn = 0;
+
+    /**
+     * @brief The time in seconds since the client received warn.
+     *
+     * @details Used by an automoderator.
+     */
+    long last_warn_time;
+
+    /**
      * @brief Checking if the client sent messages to IC chat or not.
      *
      * @details Used to prevent receiving a penalty from the automoderator for sending the first message.

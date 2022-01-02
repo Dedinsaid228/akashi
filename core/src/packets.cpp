@@ -35,7 +35,7 @@ void AOClient::pktHardwareId(AreaData* area, int argc, QStringList argv, AOPacke
         return;
     }
 
-    sendPacket("ID", {QString::number(id), "akashi", QCoreApplication::applicationVersion()});
+    sendPacket("ID", {QString::number(id), "kakashi", QCoreApplication::applicationVersion()});
 }
 
 void AOClient::pktSoftwareId(AreaData* area, int argc, QStringList argv, AOPacket packet)
@@ -118,8 +118,8 @@ void AOClient::pktLoadingDone(AreaData* area, int argc, QStringList argv, AOPack
     //Here lies OPPASS, the genius of FanatSors who send the modpass to everyone in plain text.
     sendPacket("DONE");
     sendPacket("BN", {area->background()});
-    sendPacket("MS", {"chat", "-", " ", "thinking", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "0", "||"});
-  
+    sendPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"});
+
     sendServerMessage("=== MOTD ===\r\n" + ConfigManager::motd() + "\r\n=============");
 
     fullArup(); // Give client all the area data

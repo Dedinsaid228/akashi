@@ -389,8 +389,7 @@ void AOClient::cmdSetBackground(int argc, QStringList argv)
         if (server->backgrounds.contains(f_background), Qt::CaseInsensitive || area->ignoreBgList() == true) {
             area->setBackground(f_background);
             server->broadcast(AOPacket("BN", {f_background}), current_area);
-            server->broadcast(AOPacket("MS", {"chat", "-", " ", "thinking", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "-^(b)thinking^(a)thinking^", "0", "||"}));
-
+            server->broadcast(AOPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"}), current_area);
             if (showname.isEmpty() && current_char.isEmpty())
                 sendServerMessageArea("[" + QString::number(id) + "] " + "Spectator changed the background to " + f_background);
             else if (showname.isEmpty())

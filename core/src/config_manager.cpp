@@ -403,6 +403,11 @@ QString ConfigManager::autoModBanDuration()
     return m_settings->value("Options/automodbanduration", "7d").toString();
 }
 
+QString ConfigManager::autoModWarnTerm()
+{
+    return m_settings->value("Options/automodwarnterm", "30m").toString();
+}
+
 void ConfigManager::setAuthType(const DataTypes::AuthType f_auth)
 {
     m_settings->setValue("Options/auth", fromDataType<DataTypes::AuthType>(f_auth).toLower());
