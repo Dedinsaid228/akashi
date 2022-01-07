@@ -2340,7 +2340,6 @@ class AOClient : public QObject {
         {"ooc_mute",           {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocMute}},
         {"ooc_unmute",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocUnMute}},
         {"blockwtce",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockWtce}},
-        {"block_wtce",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockWtce}},
         {"unblockwtce",        {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockWtce}},
         {"blockdj",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockDj}},
         {"unblockdj",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockDj}},
