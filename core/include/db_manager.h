@@ -20,15 +20,14 @@
 
 #define DB_VERSION 1
 
-#include <QDebug>
 #include <QDateTime>
 #include <QHostAddress>
 #include <QMessageAuthenticationCode>
-#include <QString>
 #include <QSqlDatabase>
 #include <QSqlDriver>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QFileInfo>
 
 /**
  * @brief A class used to handle database interaction.
@@ -40,12 +39,13 @@
  * differently than the average user.
  * This comes in two forms, when the user's client is banned, and when the user is a moderator.
  */
-class DBManager{
+class DBManager : public QObject {
+    Q_OBJECT
 public:
     /**
      * @brief Constructor for the DBManager class.
      *
-     * @details Creates a database file at `config/akashi.db`, and creates two tables in it:
+     * @details Creates a database file at `logs/akashi.db`, and creates two tables in it:
      * one for banned clients, and one for authorised users / moderators.
      */
     DBManager();

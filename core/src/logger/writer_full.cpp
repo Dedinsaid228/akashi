@@ -15,49 +15,38 @@
 //    You should have received a copy of the GNU Affero General Public License      //
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
-#include "include/ws_proxy.h"
+#include "include/logger/writer_full.h"
 
-WSProxy::WSProxy(int p_local_port, int p_ws_port, QObject* parent) :
-    QObject(parent),
-    local_port(p_local_port),
-    ws_port(p_ws_port)
+WriterFull::WriterFull(QObject* parent) :
+    QObject(parent)
 {
-    server = new QWebSocketServer(QLatin1String(""),
-                                  QWebSocketServer::NonSecureMode, this);
-    connect(server, &QWebSocketServer::newConnection, this,
-            &WSProxy::wsConnected);
-}
-
-void WSProxy::start()
-{
-    if(!server->listen(QHostAddress::Any, ws_port)) {
-        qDebug() << "WebSocket proxy failed to start: " << server->errorString();
-    } else {
-        qDebug() << "WebSocket proxy listening";
+    l_dir.setPath("logs/");
+    if (!l_dir.exists()) {
+        l_dir.mkpath(".");
     }
 }
 
-void WSProxy::wsConnected()
+void WriterFull::flush(const QString f_entry)
 {
-    QWebSocket* new_ws = server->nextPendingConnection();
-    QTcpSocket* new_tcp = new QTcpSocket(this);
-    WSClient* client = new WSClient(new_tcp, new_ws, this);
-    clients.append(client);
+    l_logfile.setFileName("logs/server.log");
 
-    connect(new_ws, &QWebSocket::textMessageReceived, client, &WSClient::onWsData);
-    connect(new_tcp, &QTcpSocket::readyRead, client, &WSClient::onTcpData);
-    connect(new_ws, &QWebSocket::disconnected, client, &WSClient::onWsDisconnect);
-    connect(new_tcp, &QTcpSocket::disconnected, this, [=] {
-        client->onTcpDisconnect();
-        clients.removeAll(client);
-        client->deleteLater();
-    });
-    connect(new_tcp, &QTcpSocket::connected, client, &WSClient::onTcpConnect);
-
-    new_tcp->connectToHost(QHostAddress::LocalHost, local_port);
+    if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        QTextStream file_stream(&l_logfile);
+        file_stream.setCodec("UTF-8");
+        file_stream << f_entry;
+    }
+    l_logfile.close();
 }
 
-WSProxy::~WSProxy()
+void WriterFull::flush(const QString f_entry, const QString f_area_name)
 {
-    server->deleteLater();
-}
+    l_logfile.setFileName(QString("logs/%1_%2.log").arg(f_area_name, QDate::currentDate().toString("yyyy-MM-dd")));
+
+    if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        QTextStream file_stream(&l_logfile);
+        file_stream.setCodec("UTF-8");
+        file_stream << f_entry;
+    }
+    l_logfile.close();
+};
+

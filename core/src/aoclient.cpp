@@ -19,66 +19,64 @@
 
 void AOClient::clientData()
 {
-    if (last_read + socket->bytesAvailable() > 30720) { // Client can send a max of 30KB to the server over two sequential reads
-        socket->close();
+    if (last_read + m_socket->bytesAvailable() > 30720) { // Client can send a max of 30KB to the server over two sequential reads
+        m_socket->close();
     }
 
     if (last_read == 0) { // i.e. this is the first packet we've been sent
-        if (!socket->waitForConnected(1000)) {
-            socket->close();
+        if (!m_socket->waitForConnected(1000)) {
+            m_socket->close();
         }
     }
 
-    QString data = QString::fromUtf8(socket->readAll());
-    last_read = data.size();
+    QString l_data = QString::fromUtf8(m_socket->readAll());
+    last_read = l_data.size();
 
     if (is_partial) {
-        data = partial_packet + data;
+        l_data = partial_packet + l_data;
     }
-    if (!data.endsWith("%")) {
+    if (!l_data.endsWith("%")) {
         is_partial = true;
     }
 
-    QStringList all_packets = data.split("%");
-    all_packets.removeLast(); // Remove the entry after the last delimiter
+    QStringList l_all_packets = l_data.split("%");
+    l_all_packets.removeLast(); // Remove the entry after the last delimiter
 
-    for (QString single_packet : all_packets) {
-        AOPacket packet(single_packet);
-        handlePacket(packet);
+    for (const QString &l_single_packet : qAsConst(l_all_packets)) {
+        AOPacket l_packet(l_single_packet);
+        handlePacket(l_packet);
     }
 }
 void AOClient::clientDisconnected()
 {
 #ifdef NET_DEBUG
-    qDebug() << remote_ip.toString() << "disconnected";
+    qDebug() << m_remote_ip.toString() << "disconnected";
 #endif
 
-    server->areas.value(current_area)->LogDisconnect(current_char, ipid, hwid, showname, ooc_name, QString::number(id));
-    server->freeUID(id);
+    server->freeUID(m_id);
 
-    if (joined) {
-        server->player_count--;
-        server->areas[current_area]->clientLeftArea(server->getCharID(current_char));
+    if (m_joined) {
+        server->m_player_count--;
+        emit server->updatePlayerCount(server->m_player_count);
+        server->m_areas[m_current_area]->clientLeftArea(server->getCharID(m_current_char));
         arup(ARUPType::PLAYER_COUNT, true);
 
-        if (!sneaked) {
-            if (showname.isEmpty() && current_char.isEmpty())
-                sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator has disconnected.");
-            else if (showname.isEmpty())
-                sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " has disconnected.");
-            else
-                sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " has disconnected.");
-         }
+        QString l_sender_name = getSenderName(m_id);
+
+        if (!m_sneaked)
+            sendServerMessageArea ("[" + QString::number(m_id) + "] " + l_sender_name + " has disconnected.");
+
+        emit logDisconnect(m_current_char, m_ipid, m_ooc_name, server->m_area_names[m_current_area], QString::number(m_id), m_hwid);
     }
 
-    if (current_char != "") {
-        server->updateCharsTaken(server->areas[current_area]);
+    if (m_current_char != "") {
+        server->updateCharsTaken(server->m_areas[m_current_area]);
     }
 
     bool l_updateLocks = false;
 
-    for (AreaData* area : server->areas) {
-        l_updateLocks = l_updateLocks || area->removeOwner(id);
+    for (AreaData* area : qAsConst(server->m_areas)) {
+        l_updateLocks = l_updateLocks || area->removeOwner(m_id);
     }
 
     if (l_updateLocks)
@@ -88,70 +86,48 @@ void AOClient::clientDisconnected()
 
 void AOClient::clientConnected()
 {
-    server->areas.value(current_area)->LogConnect(ipid);
-    server->db_manager->ipidip(ipid, remote_ip.toString().replace("::ffff:",""), QDateTime::currentDateTimeUtc().toString("dd-MM-yyyy"));
+    server->db_manager->ipidip(m_ipid, m_remote_ip.toString().replace("::ffff:",""), QDateTime::currentDateTime().toString("dd-MM-yyyy"));
 
-    long haznumdate = server->db_manager->getHazNumDate(ipid);
-    long currentdate = QDateTime::currentDateTime().toSecsSinceEpoch();
+    long l_haznumdate = server->db_manager->getHazNumDate(m_ipid);
+    long l_currentdate = QDateTime::currentDateTime().toSecsSinceEpoch();
 
-    if (haznumdate == 0)
+    if (l_haznumdate == 0)
         return;
 
-    if ((currentdate - haznumdate) > 604752) {
-        int haznumnew = server->db_manager->getHazNum(ipid) - 1;
+    if ((l_currentdate - l_haznumdate) > 604752) { // If about a week or more has passed since the last punishment from the automoderator.
+        int l_haznumnew = server->db_manager->getHazNum(m_ipid) - 1;
 
-        if (haznumnew < 1)
+        if (l_haznumnew < 1)
             return;
 
-        server->db_manager->updateHazNum(ipid, currentdate);
-        server->db_manager->updateHazNum(ipid, haznumnew);
-    }
-}
-
-void AOClient::webclientConnected(QString ipid, QString ip)
-{
-    server->db_manager->ipidip(ipid, remote_ip.toString().replace("::ffff:",""),  QDateTime::currentDateTimeUtc().toString("dd-MM-yyyy"));
-
-    long haznumdate = server->db_manager->getHazNumDate(ipid);
-    long currentdate = QDateTime::currentDateTime().toSecsSinceEpoch();
-
-    if (haznumdate == 0)
-        return;
-
-    if ((currentdate - haznumdate) > 604752) {
-        int haznumnew = server->db_manager->getHazNum(ipid) - 1;
-
-        if (haznumnew < 1)
-            return;
-
-        server->db_manager->updateHazNum(ipid, currentdate);
-        server->db_manager->updateHazNum(ipid, haznumnew);
+        server->db_manager->updateHazNum(m_ipid, l_currentdate);
+        server->db_manager->updateHazNum(m_ipid, l_haznumnew);
     }
 }
 
 bool AOClient::evidencePresent(QString id)
 {
-    AreaData* area = server->areas[current_area];
+    AreaData* l_area = server->m_areas[m_current_area];
 
-    if (area->eviMod() != AreaData::EvidenceMod::HIDDEN_CM)
+    if (l_area->eviMod() != AreaData::EvidenceMod::HIDDEN_CM)
         return false;
 
-    int idvalid = id.toInt() - 1;
+    int l_idvalid = id.toInt() - 1;
 
-    if (idvalid < 0)
+    if (l_idvalid < 0)
         return false;
 
-    QList<AreaData::Evidence> area_evidence = area->evidence();
-    QRegularExpression regex("<owner=(.*?)>");
-    QRegularExpressionMatch match = regex.match(area_evidence[idvalid].description);
+    QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
+    QRegularExpression l_regex("<owner=(.*?)>");
+    QRegularExpressionMatch l_match = l_regex.match(l_area_evidence[l_idvalid].description);
 
-    if (match.hasMatch()) {
-        QStringList owners = match.captured(1).split(",");
-        QString description = area_evidence[idvalid].description.replace(owners[0], "all");
-        AreaData::Evidence evi = {area_evidence[idvalid].name, description, area_evidence[idvalid].image};
+    if (l_match.hasMatch()) {
+        QStringList l_owners = l_match.captured(1).split(",");
+        QString l_description = l_area_evidence[l_idvalid].description.replace(l_owners[0], "all");
+        AreaData::Evidence l_evi = {l_area_evidence[l_idvalid].name, l_description, l_area_evidence[l_idvalid].image};
 
-        area->replaceEvidence(idvalid, evi);
-        sendEvidenceList(area);
+        l_area->replaceEvidence(l_idvalid, l_evi);
+        sendEvidenceList(l_area);
         return true;
     }
 
@@ -163,165 +139,141 @@ void AOClient::handlePacket(AOPacket packet)
 #ifdef NET_DEBUG
     qDebug() << "Received packet:" << packet.header << ":" << packet.contents << "args length:" << packet.contents.length();
 #endif
-    AreaData* area = server->areas[current_area];
-    PacketInfo info = packets.value(packet.header, {false, 0, &AOClient::pktDefault});
+    QString l_sender_name = getSenderName(m_id);
+    AreaData* l_area = server->m_areas[m_current_area];
+    PacketInfo l_info = packets.value(packet.header, {false, 0, &AOClient::pktDefault});
 
     if (packet.contents.join("").size() > 16384) {
         return;
     }
 
-    if (!checkAuth(info.acl_mask)) {
+    if (!checkAuth(l_info.acl_mask)) {
         return;
     }
 
     if (packet.header != "CH" && packet.header != "CT") {
-        if (is_afk)
+        if (m_is_afk)
         {
             sendServerMessage("You are no longer AFK. Welcome back!");
-
-            if (current_char.isEmpty() && showname.isEmpty())
-                sendServerMessageArea("[" + QString::number(id) + "] Spectator are no longer AFK.");
-            else if (showname.isEmpty())
-                sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " are no longer AFK.");
-            else
-                sendServerMessageArea("[" + QString::number(id) + "] " + showname + " are no longer AFK.");
+            sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " are no longer AFK.");
         }
-        is_afk = false;
+        m_is_afk = false;
     }
 
-    if (packet.contents.length() < info.minArgs) {
+    if (packet.contents.length() < l_info.minArgs) {
 #ifdef NET_DEBUG
-        qDebug() << "Invalid packet args length. Minimum is" << info.minArgs << "but only" << packet.contents.length() << "were given.";
+        qDebug() << "Invalid packet args length. Minimum is" << l_info.minArgs << "but only" << packet.contents.length() << "were given.";
 #endif
         return;
     }
 
-    (this->*(info.action))(area, packet.contents.length(), packet.contents, packet);
+    (this->*(l_info.action))(l_area, packet.contents.length(), packet.contents, packet);
 }
 
 void AOClient::changeArea(int new_area)
 {
-    const int old_area = current_area;
+    const int l_old_area = m_current_area;
 
-    if (current_area == new_area) {
-        sendServerMessage("You are already in area " + server->area_names[current_area]);
+    if (m_current_area == new_area) {
+        sendServerMessage("You are already in area " + server->m_area_names[m_current_area]);
         return;
     }
-    if (server->areas[new_area]->lockStatus() == AreaData::LockStatus::LOCKED && !server->areas[new_area]->invited.contains(id) && !checkAuth(ACLFlags.value("BYPASS_LOCKS"))) {
-        sendServerMessage("Area " + server->area_names[new_area] + " is locked.");
+
+    if (server->m_areas[new_area]->lockStatus() == AreaData::LockStatus::LOCKED && !server->m_areas[new_area]->invited().contains(m_id) && !checkAuth(ACLFlags.value("BYPASS_LOCKS"))) {
+        sendServerMessage("Area " + server->m_area_names[new_area] + " is locked.");
         return;
-    }    
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - last_area_change_time <= 2) {
+    }
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_area_change_time <= 2) {
         sendServerMessage("You change area very often!");
         return;
     }
 
-    last_area_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    m_last_area_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
 
-    if (!sneaked) {
-        if (showname.isEmpty() && current_char.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
-        else if (showname.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
-        else
-            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " moved to " + "[" + QString::number(new_area) + "] " + server->area_names[new_area]);
-     }
+    QString l_sender_name = getSenderName(m_id);
 
-    if (current_char != "") {
-        server->areas[current_area]->changeCharacter(server->getCharID(current_char), -1);
-        server->updateCharsTaken(server->areas[current_area]);
+    if (!m_sneaked)
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " moved to " + "[" + QString::number(new_area) + "] " + server->m_area_names[new_area]);
+
+    if (m_current_char != "") {
+        server->m_areas[m_current_area]->changeCharacter(server->getCharID(m_current_char), -1);
+        server->updateCharsTaken(server->m_areas[m_current_area]);
     }
 
-    server->areas[current_area]->clientLeftArea(char_id);
-    bool character_taken = false;
+    server->m_areas[m_current_area]->clientLeftArea(m_char_id);
+    bool l_character_taken = false;
 
-    if (server->areas[new_area]->charactersTaken().contains(server->getCharID(current_char))) {
-        current_char = "";
-        char_id = -1;
-        character_taken = true;
+    if (server->m_areas[new_area]->charactersTaken().contains(server->getCharID(m_current_char))) {
+        m_current_char = "";
+        m_char_id = -1;
+        l_character_taken = true;
     }
 
-    server->areas[new_area]->clientJoinedArea(char_id);
-    current_area = new_area;
+    server->m_areas[new_area]->clientJoinedArea(m_char_id);
+    m_current_area = new_area;
     arup(ARUPType::PLAYER_COUNT, true);
-    sendEvidenceList(server->areas[new_area]);
-    sendPacket("HP", {"1", QString::number(server->areas[new_area]->defHP())});
-    sendPacket("HP", {"2", QString::number(server->areas[new_area]->proHP())});
-    sendPacket("BN", {server->areas[new_area]->background()});
+    sendEvidenceList(server->m_areas[new_area]);
+    sendPacket("HP", {"1", QString::number(server->m_areas[new_area]->defHP())});
+    sendPacket("HP", {"2", QString::number(server->m_areas[new_area]->proHP())});
+    sendPacket("BN", {server->m_areas[new_area]->background()});
     sendPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"});
 
-    if (character_taken && take_taked_char == false) {
+    if (l_character_taken && m_take_taked_char == false) {
         sendPacket("DONE");
     }
 
-    for (QTimer* timer : server->areas[current_area]->timers()) {
-        int timer_id = server->areas[current_area]->timers().indexOf(timer) + 1;
-        if (timer->isActive()) {
-            sendPacket("TI", {QString::number(timer_id), "2"});
-            sendPacket("TI", {QString::number(timer_id), "0", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(timer->remainingTime())))});
+    const QList<QTimer*> l_timers = server->m_areas[m_current_area]->timers();
+    for (QTimer* l_timer : l_timers) {
+        int l_timer_id = server->m_areas[m_current_area]->timers().indexOf(l_timer) + 1;
+        if (l_timer->isActive()) {
+            sendPacket("TI", {QString::number(l_timer_id), "2"});
+            sendPacket("TI", {QString::number(l_timer_id), "0", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(l_timer->remainingTime())))});
         }
         else {
-            sendPacket("TI", {QString::number(timer_id), "3"});
+            sendPacket("TI", {QString::number(l_timer_id), "3"});
         }
     }
 
-    sendServerMessage("You moved to area " + server->area_names[current_area]);
+    sendServerMessage("You moved to area " + server->m_area_names[m_current_area]);
 
-    if (!sneaked) {
-        if (showname.isEmpty() && current_char.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + "Spectator enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
-        else if (showname.isEmpty())
-            sendServerMessageArea ("[" + QString::number(id) + "] " + current_char + " enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
-        else
-            sendServerMessageArea ("[" + QString::number(id) + "] " + showname + " enters from " + "[" + QString::number(old_area) + "] " + server->area_names[old_area]);
-     }
+    if (server->m_areas[m_current_area]->sendAreaMessageOnJoin())
+        sendServerMessage(server->m_areas[m_current_area]->areaMessage());
 
-    server->areas.value(current_area)->LogChangeArea(current_char, ipid, hwid, showname, ooc_name, server->area_names[old_area] + " -> " + server->area_names[current_area], QString::number(id));
+    if (!m_sneaked)
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " enters from " + "[" + QString::number(l_old_area) + "] " + server->m_area_names[l_old_area]);
 
-    if (server->areas[current_area]->lockStatus() == AreaData::LockStatus::SPECTATABLE)
-        sendServerMessage("Area " + server->area_names[current_area] + " is spectate-only; to chat IC you will need to be invited by the CM.");
+    if (server->m_areas[m_current_area]->lockStatus() == AreaData::LockStatus::SPECTATABLE)
+        sendServerMessage("Area " + server->m_area_names[m_current_area] + " is spectate-only; to chat IC you will need to be invited by the CM.");
+
+    emit logChangeArea((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),server->m_area_names[l_old_area] + " -> " + server->m_area_names[new_area], QString::number(m_id), m_hwid);
 }
 
 bool AOClient::changeCharacter(int char_id)
 {
-    AreaData* area = server->areas[current_area];
+    QString const l_old_char = m_current_char;
+    AreaData* l_area = server->m_areas[m_current_area];
 
-    if (char_id >= server->characters.length())
+    if (char_id >= server->m_characters.length())
         return false;
 
-    if (is_charcursed && !charcurse_list.contains(char_id)) {
+    if (m_is_charcursed && !m_charcurse_list.contains(char_id)) {
         return false;
     }
 
-    if (take_taked_char == true) {
-        bool l_successfulChange = area->changeCharacter(server->getCharID(current_char), char_id, true);
-
-        if (char_id < 0) {
-            current_char = "";
-        }
-
-        if (l_successfulChange == true) {
-            QString char_selected = server->characters[char_id];
-            current_char = char_selected;
-            pos = "";
-            server->updateCharsTaken(area);
-            sendPacket("PV", {QString::number(id), "CID", QString::number(char_id)});
-            return true;
-        }
-    }
-
-    bool l_successfulChange = area->changeCharacter(server->getCharID(current_char), char_id, false);
+    bool l_successfulChange = l_area->changeCharacter(server->getCharID(m_current_char), char_id, m_take_taked_char);
 
     if (char_id < 0) {
-        current_char = "";
+        m_current_char = "";
     }
 
     if (l_successfulChange == true) {
-        QString char_selected = server->characters[char_id];
-        current_char = char_selected;
-        pos = "";
-        server->updateCharsTaken(area);
-        sendPacket("PV", {QString::number(id), "CID", QString::number(char_id)});
+        QString char_selected = server->m_characters[char_id];
+        m_current_char = char_selected;
+        m_pos = "";
+        server->updateCharsTaken(l_area);
+        sendPacket("PV", {QString::number(m_id), "CID", QString::number(char_id)});
+        emit logChangeChar((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),l_old_char + " -> " + m_current_char, QString::number(m_id), m_hwid);
         return true;
     }
 
@@ -335,78 +287,75 @@ void AOClient::changePosition(QString new_pos)
         return;
     }
 
-    pos = new_pos;
+    m_pos = new_pos;
 
-    sendServerMessage("Position changed to " + pos + ".");
-    sendPacket("SP", {pos});
+    sendServerMessage("Position changed to " + m_pos + ".");
+    sendPacket("SP", {m_pos});
 }
 
 void AOClient::handleCommand(QString command, int argc, QStringList argv)
 {
-    CommandInfo info = commands.value(command, {false, -1, &AOClient::cmdDefault});
+    CommandInfo l_info = commands.value(command, {false, -1, &AOClient::cmdDefault});
 
-    if (!checkAuth(info.acl_mask)) {
+    if (!checkAuth(l_info.acl_mask)) {
         sendServerMessage("You do not have permission to use that command.");
         return;
     }
 
-    if (argc < info.minArgs) {
+    if (argc < l_info.minArgs) {
         sendServerMessage("Invalid command syntax.");
         return;
     }
 
-    (this->*(info.action))(argc, argv);
+    (this->*(l_info.action))(argc, argv);
 }
 
 void AOClient::arup(ARUPType type, bool broadcast)
 {
-    QStringList arup_data;
-    arup_data.append(QString::number(type));
+    QStringList l_arup_data;
+    l_arup_data.append(QString::number(type));
 
-    for (AreaData* area : server->areas) {
+    for (AreaData* l_area : qAsConst(server->m_areas)) {
         switch(type) {
             case ARUPType::PLAYER_COUNT: {
-                arup_data.append(QString::number(area->playerCount()));
+                l_arup_data.append(QString::number(l_area->playerCount()));
                 break;
             }
             case ARUPType::STATUS: {
-                QString area_status = QVariant::fromValue(area->status()).toString().replace("_", "-"); // LOOKING_FOR_PLAYERS to LOOKING-FOR-PLAYERS
+                QString l_area_status = QVariant::fromValue(l_area->status()).toString().replace("_", "-"); // LOOKING_FOR_PLAYERS to LOOKING-FOR-PLAYERS
 
-                if (area_status == "IDLE") {
-                    arup_data.append("");
+                if (l_area_status == "IDLE") {
+                    l_arup_data.append("");
                     break;
                 }
 
-                arup_data.append(area_status);
+                l_arup_data.append(l_area_status);
                 break;
             }
         case ARUPType::CM: {
-            if (area->owners.isEmpty())
-                arup_data.append("");
+            if (l_area->owners().isEmpty())
+                l_arup_data.append("");
             else {
-                QStringList area_owners;
-                for (int owner_id : area->owners) {
-                    AOClient* owner = server->getClientByID(owner_id);
+                QStringList l_area_owners;
+                const QList<int> l_owner_ids = l_area->owners();
+                for (int l_owner_id : l_owner_ids) {
+                    AOClient* l_owner = server->getClientByID(l_owner_id);
+                    QString l_sender_name = getSenderName(l_owner->m_id);
 
-                    if (owner->showname.isEmpty() && owner->current_char.isEmpty())
-                        area_owners.append("[" + QString::number(owner->id) + "] " + "Spectator");
-                    else if (owner->showname.isEmpty())
-                        area_owners.append("[" + QString::number(owner->id) + "] " + owner->current_char);
-                    else
-                        area_owners.append("[" + QString::number(owner->id) + "] " + owner->showname);
+                    l_area_owners.append("[" + QString::number(l_owner->m_id) + "] " + l_sender_name);
                 }
-                arup_data.append(area_owners.join(", "));
+                l_arup_data.append(l_area_owners.join(", "));
                 }
                 break;
             }
             case ARUPType::LOCKED: {
-                QString lock_status = QVariant::fromValue(area->lockStatus()).toString();
-                if (lock_status == "FREE") {
-                    arup_data.append("");
+                QString l_lock_status = QVariant::fromValue(l_area->lockStatus()).toString();
+                if (l_lock_status == "FREE") {
+                    l_arup_data.append("");
                     break;
                 }
 
-                arup_data.append(lock_status);
+                l_arup_data.append(l_lock_status);
                 break;
             }
             default: {
@@ -416,9 +365,9 @@ void AOClient::arup(ARUPType type, bool broadcast)
     }
 
     if (broadcast)
-        server->broadcast(AOPacket("ARUP", arup_data));
+        server->broadcast(AOPacket("ARUP", l_arup_data));
     else
-        sendPacket("ARUP", arup_data);
+        sendPacket("ARUP", l_arup_data);
 }
 
 void AOClient::fullArup() {
@@ -441,8 +390,8 @@ void AOClient::sendPacket(AOPacket packet)
     if (packet.header != "LE")
         packet.contents.replaceInStrings("&", "<and>");
 
-    socket->write(packet.toUtf8());
-    socket->flush();
+    m_socket->write(packet.toUtf8());
+    m_socket->flush();
 }
 
 void AOClient::sendPacket(QString header, QStringList contents)
@@ -465,9 +414,9 @@ void AOClient::calculateIpid()
 
     QCryptographicHash hash(QCryptographicHash::Md5); // Don't need security, just hashing for uniqueness
 
-    hash.addData(remote_ip.toString().toUtf8());
+    hash.addData(m_remote_ip.toString().toUtf8());
 
-    ipid = hash.result().toHex().right(8); // Use the last 8 characters (4 bytes)
+    m_ipid = hash.result().toHex().right(8); // Use the last 8 characters (4 bytes)
 }
 
 void AOClient::sendServerMessage(QString message)
@@ -477,7 +426,7 @@ void AOClient::sendServerMessage(QString message)
 
 void AOClient::sendServerMessageArea(QString message)
 {
-    server->broadcast(AOPacket("CT", {ConfigManager::serverName(), message, "1"}), current_area);
+    server->broadcast(AOPacket("CT", {ConfigManager::serverName(), message, "1"}), m_current_area);
 }
 
 void AOClient::sendServerBroadcast(QString message)
@@ -485,277 +434,232 @@ void AOClient::sendServerBroadcast(QString message)
     server->broadcast(AOPacket("CT", {ConfigManager::serverName(), message, "1"}));
 }
 
-void AOClient::autoMod()
+void AOClient::autoMod(bool ic_chat)
 {
-    if (last5messagestime[0] == -5) {
-       last5messagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    if (last5messagestime[1] == -5) {
-       last5messagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    if (last5messagestime[2] == -5) {
-       last5messagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    if (last5messagestime[3] == -5) {
-       last5messagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    if (last5messagestime[4] == -5) {
-       last5messagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    long warnterm = parseTime(ConfigManager::autoModWarnTerm());
-
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - last_warn_time > warnterm && warn != 0) {
-        warn--;
-        last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-    }
-
-    qDebug() << warn;
-
-    int calmdowntime = last5messagestime[4] - last5messagestime[0];
-    int triggertime = ConfigManager::autoModTrigger();
-
-    if (calmdowntime < triggertime && !first_message) {
-
-        if (warn < 2) {
-            warn++;
-            qDebug() << warn;
-            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - warn) + " more warn, then you will be punished.");
-            last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-            last5messagestime[0] = -5;
-            last5messagestime[1] = -5;
-            last5messagestime[2] = -5;
-            last5messagestime[3] = -5;
-            last5messagestime[4] = -5;
+    if (ic_chat) {
+        if (m_last5messagestime[0] == -5) {
+            m_last5messagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
             return;
         }
 
-        AreaData* area = server->areas[current_area];
-        int haznum = server->db_manager->getHazNum(ipid);
-
-        if (haznum == 0 || haznum == 1) {
-           AOClient* target = server->getClientByID(id);
-
-           area->logCmdAdvanced("Auto Mod", "", "", "MUTE", "Muted UID: " + QString::number(target->id), "", "", "");
-
-           target->is_muted = true;
-           DBManager::automod num;
-           num.ipid = ipid;
-           num.date = QDateTime::currentDateTime().toSecsSinceEpoch();
-           num.action = "MUTE";
-           num.haznum = 2;
-
-           if (haznum == 0)
-              server->db_manager->addHazNum(num);
-           else {
-               long date = num.date;
-
-               server->db_manager->updateHazNum(ipid, date);
-               server->db_manager->updateHazNum(ipid, num.action);
-               server->db_manager->updateHazNum(ipid, num.haznum);
-           }
+        if (m_last5messagestime[1] == -5) {
+            m_last5messagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
+            return;
         }
-      else if (haznum == 2) {
+
+         if (m_last5messagestime[2] == -5) {
+             m_last5messagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
+             return;
+        }
+
+         if (m_last5messagestime[3] == -5) {
+             m_last5messagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
+             return;
+        }
+
+        if (m_last5messagestime[4] == -5) {
+            m_last5messagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
+            return;
+        }
+}
+    else {
+        if (m_last5oocmessagestime[0] == -5) {
+           m_last5oocmessagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
+           return;
+        }
+
+        if (m_last5oocmessagestime[1] == -5) {
+           m_last5oocmessagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
+           return;
+        }
+
+        if (m_last5oocmessagestime[2] == -5) {
+           m_last5oocmessagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
+           return;
+        }
+
+        if (m_last5oocmessagestime[3] == -5) {
+           m_last5oocmessagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
+           return;
+        }
+
+        if (m_last5oocmessagestime[4] == -5) {
+           m_last5oocmessagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
+           return;
+        }
+    }
+
+    long l_warnterm = parseTime(ConfigManager::autoModWarnTerm());
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_warn_time > l_warnterm && m_warn != 0) {
+        m_warn--;
+        m_last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    }
+
+    int l_calmdowntime = m_last5messagestime[4] - m_last5messagestime[0];
+    int l_ooccalmdowntime = m_last5oocmessagestime[4] - m_last5oocmessagestime[0];
+    int l_triggertime = ConfigManager::autoModTrigger();
+    bool l_punishment = false;
+
+    if (ic_chat) {
+        if (l_calmdowntime < l_triggertime && !m_first_message)
+            l_punishment = true;
+    }
+    else {
+        if (l_ooccalmdowntime < l_triggertime && !m_first_oocmessage)
+            l_punishment = true;
+    }
+
+    if (l_punishment) {
+
+        if (m_warn < 2) {
+            m_warn++;
+            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - m_warn) + " more warn, then you will be punished.");
+            m_last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+            clearLastMessages(ic_chat);
+            return;
+        }
+
+        int l_haznum = server->db_manager->getHazNum(m_ipid);
+
+        if (l_haznum == 0 || l_haznum == 1)
+           autoMute(ic_chat, l_haznum);
+      else if (l_haznum == 2)
            autoKick();
-        }
-
-      else if (haznum == 3) {
-          autoBan();
-       }
+      else if (l_haznum == 3)
+           autoBan();
   }
 
-    if (first_message)
-        first_message = !first_message;
+    if (ic_chat) {
+        if (m_first_message)
+            m_first_message = !m_first_message;
+    }
+    else {
+        if (m_first_oocmessage)
+            m_first_oocmessage = !m_first_oocmessage;
+    }
 
-    last5messagestime[0] = -5;
-    last5messagestime[1] = -5;
-    last5messagestime[2] = -5;
-    last5messagestime[3] = -5;
-    last5messagestime[4] = -5;
+    clearLastMessages(ic_chat);
 }
 
-void AOClient::autoModOoc()
+void AOClient::clearLastMessages(bool ic_chat)
 {
-    if (last5oocmessagestime[0] == -5) {
-       last5oocmessagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
+    if (ic_chat) {
+        m_last5messagestime[0] = -5;
+        m_last5messagestime[1] = -5;
+        m_last5messagestime[2] = -5;
+        m_last5messagestime[3] = -5;
+        m_last5messagestime[4] = -5;
     }
-
-    if (last5oocmessagestime[1] == -5) {
-       last5oocmessagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
+    else {
+        m_last5oocmessagestime[0] = -5;
+        m_last5oocmessagestime[1] = -5;
+        m_last5oocmessagestime[2] = -5;
+        m_last5oocmessagestime[3] = -5;
+        m_last5oocmessagestime[4] = -5;
     }
+}
 
-    if (last5oocmessagestime[2] == -5) {
-       last5oocmessagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
+void AOClient::autoMute(bool ic_chat, int haznum)
+{
+    AOClient* target = server->getClientByID(m_id);
+
+    if (ic_chat)
+        target->m_is_muted = true;
+    else
+        target->m_is_ooc_muted = true;
+
+    DBManager::automod l_num;
+    l_num.ipid = m_ipid;
+    l_num.date = QDateTime::currentDateTime().toSecsSinceEpoch();
+    l_num.action = "MUTE";
+    l_num.haznum = 2;
+
+    if (haznum == 0)
+       server->db_manager->addHazNum(l_num);
+    else {
+        long date = l_num.date;
+
+        emit logCMD("Automoderator","", "","MUTE","Muted UID: " + QString::number(target->m_id),server->m_areas[m_current_area]->name(), "", "");
+        server->db_manager->updateHazNum(m_ipid, date);
+        server->db_manager->updateHazNum(m_ipid, l_num.action);
+        server->db_manager->updateHazNum(m_ipid, l_num.haznum);
     }
-
-    if (last5oocmessagestime[3] == -5) {
-       last5oocmessagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    if (last5oocmessagestime[4] == -5) {
-       last5oocmessagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
-       return;
-    }
-
-    long warnterm = parseTime(ConfigManager::autoModWarnTerm());
-
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - last_warn_time > warnterm && warn != 0) {
-        warn--;
-        last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-    }
-
-    int calmdowntime = last5oocmessagestime[4] - last5oocmessagestime[0];
-    int triggertime = ConfigManager::autoModTrigger();
-
-    if (calmdowntime < triggertime && !first_oocmessage) {
-
-        if (warn < 2) {
-            warn++;
-            qDebug() << warn;
-            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - warn) + " more warn, then you will be punished.");
-            last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-            last5oocmessagestime[0] = -5;
-            last5oocmessagestime[1] = -5;
-            last5oocmessagestime[2] = -5;
-            last5oocmessagestime[3] = -5;
-            last5oocmessagestime[4] = -5;
-            return;
-        }
-
-        AreaData* area = server->areas[current_area];
-        int haznum = server->db_manager->getHazNum(ipid);
-
-        if (haznum == 0) {
-           AOClient* target = server->getClientByID(id);
-
-           area->logCmdAdvanced("Auto Mod", "", "", "OOC MUTE", "Muted UID: " + QString::number(target->id), "", "", "");
-
-           target->is_ooc_muted = true;
-           DBManager::automod num;
-           num.ipid = ipid;
-           num.date = QDateTime::currentDateTime().toSecsSinceEpoch();
-           num.action = "OOC MUTE";
-           num.haznum = 2;
-
-           if (haznum == 0)
-              server->db_manager->addHazNum(num);
-           else {
-               long date = num.date;
-
-               server->db_manager->updateHazNum(ipid, date);
-               server->db_manager->updateHazNum(ipid, num.action);
-               server->db_manager->updateHazNum(ipid, num.haznum);
-           }
-        }
-      else if (haznum == 2) {
-           autoKick();
-        }
-
-      else if (haznum == 3) {
-          autoBan();
-       }
-  }
-
-    if (first_oocmessage)
-        first_oocmessage = !first_oocmessage;
-
-    last5oocmessagestime[0] = -5;
-    last5oocmessagestime[1] = -5;
-    last5oocmessagestime[2] = -5;
-    last5oocmessagestime[3] = -5;
-    last5oocmessagestime[4] = -5;
 }
 
 void AOClient::autoKick()
 {
-    AreaData* area = server->areas[current_area];
-
-    for (AOClient* client : server->getClientsByIpid(ipid)) {
-        client->sendPacket("KK", {"You were kicked by a Auto Mod."});
-        client->socket->close();
+    const QList<AOClient*> l_targets = server->getClientsByIpid(m_ipid);
+    for (AOClient* l_client : l_targets) {
+        l_client->sendPacket("KK", {"You were kicked by a automoderator."});
+        l_client->m_socket->close();
     }
 
-    area->logCmdAdvanced("Auto Mod", "", "", "KICK", "Kicked IPID: " + ipid, "", "", "");
+    emit logKick("Automoderator", m_ipid, "You were kicked by a automoderator.", "", "");
+    long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
+    QString l_action = "KICK";
+    int l_haznum = 3;
 
-    long date = QDateTime::currentDateTime().toSecsSinceEpoch();
-    QString action = "KICK";
-    int haznum = 3;
-
-    server->db_manager->updateHazNum(ipid, date);
-    server->db_manager->updateHazNum(ipid, action);
-    server->db_manager->updateHazNum(ipid, haznum);
+    server->db_manager->updateHazNum(m_ipid, l_date);
+    server->db_manager->updateHazNum(m_ipid, l_action);
+    server->db_manager->updateHazNum(m_ipid, l_haznum);
 }
 
 void AOClient::autoBan()
 {
-    AreaData* area = server->areas[current_area];
+    DBManager::BanInfo l_ban;
 
-    DBManager::BanInfo ban;
+    long long l_duration_seconds = 0;
+    QString l_duration_ban = ConfigManager::autoModBanDuration();
 
-    long long duration_seconds = 0;
-    QString duration_ban = ConfigManager::autoModBanDuration();
-
-    if (duration_ban == "perma")
-        duration_seconds = -2;
+    if (l_duration_ban == "perma")
+        l_duration_seconds = -2;
     else
-        duration_seconds = parseTime(duration_ban);
+        l_duration_seconds = parseTime(l_duration_ban);
 
-    if (duration_seconds == -1) {
-        qDebug() << "ERROR: Invalid ban time format for Auto Mod! Format example: 1h30m";
+    if (l_duration_seconds == -1) {
+        qDebug() << "ERROR: Invalid ban time format for automoderator! Format example: 1h30m";
         return;
     }
 
-    ban.duration = duration_seconds;
-    ban.ipid = ipid;
-    ban.reason = "You were banned by a Auto Mod.";
-    ban.moderator = "Auto Mod";
-    ban.time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    l_ban.duration = l_duration_seconds;
+    l_ban.ipid = m_ipid;
+    l_ban.reason = "You were banned by a automoderator.";
+    l_ban.moderator = "Automoderator";
+    l_ban.time = QDateTime::currentDateTime().toSecsSinceEpoch();
     bool ban_logged = false;
 
-    for (AOClient* client : server->getClientsByIpid(ban.ipid)) {
+    const QList<AOClient*> l_targets = server->getClientsByIpid(l_ban.ipid);
+    for (AOClient* l_client : l_targets) {
         if (!ban_logged) {
-            ban.ip = client->remote_ip;
-            ban.hdid = client->hwid;
-            server->db_manager->addBan(ban);
+            l_ban.ip = l_client->m_remote_ip;
+            l_ban.hdid = l_client->m_hwid;
+            server->db_manager->addBan(l_ban);
             ban_logged = true;
         }
 
-        QString ban_duration;
+        QString l_ban_duration;
 
-        if (!(ban.duration == -2)) {
-            ban_duration = QDateTime::fromSecsSinceEpoch(ban.time).addSecs(ban.duration).toString("dd/MM/yyyy, hh:mm");
+        if (!(l_ban.duration == -2)) {
+            l_ban_duration = QDateTime::fromSecsSinceEpoch(l_ban.time).addSecs(l_ban.duration).toString("dd/MM/yyyy, hh:mm");
         }
         else {
-            ban_duration = "The heat death of the universe.";
+            l_ban_duration = "The heat death of the universe.";
         }
 
-        int ban_id = server->db_manager->getBanID(ban.ip);
-        client->sendPacket("KB", {ban.reason + "\nID: " + QString::number(ban_id) + "\nUntil: " + ban_duration});
-        client->socket->close();
+        int l_ban_id = server->db_manager->getBanID(l_ban.ip);
+        l_client->sendPacket("KB", {l_ban.reason + "\nID: " + QString::number(l_ban_id) + "\nUntil: " + l_ban_duration});
+        l_client->m_socket->close();
 
+        emit logBan(l_ban.moderator,l_ban.ipid,l_ban_duration,l_ban.reason, "","");
         if (ConfigManager::discordBanWebhookEnabled())
-            emit server->banWebhookRequest(ban.ipid, ban.moderator, ban_duration, ban.reason, ban_id);
+            emit server->banWebhookRequest(l_ban.ipid, l_ban.moderator, l_ban_duration, l_ban.reason, l_ban_id);
 
-        area->logCmdAdvanced("Auto Mod", "", "", "BAN", "Ban ID: " + QString::number(ban_id), "", "", "");
+        long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
+        QString l_action = "BAN";
 
-        long date = QDateTime::currentDateTime().toSecsSinceEpoch();
-        QString action = "BAN";
-
-        server->db_manager->updateHazNum(ipid, date);
-        server->db_manager->updateHazNum(ipid, action);
+        server->db_manager->updateHazNum(m_ipid, l_date);
+        server->db_manager->updateHazNum(m_ipid, l_action);
     }
 }
 
@@ -766,20 +670,20 @@ bool AOClient::checkAuth(unsigned long long acl_mask)
 #endif
     if (acl_mask != ACLFlags.value("NONE")) {
         if (acl_mask == ACLFlags.value("CM")) {
-            AreaData* area = server->areas[current_area];
-            if (area->owners.contains(id))
+            AreaData* l_area = server->m_areas[m_current_area];
+            if (l_area->owners().contains(m_id))
                 return true;
         }
-        else if (!authenticated) {
+        else if (!m_authenticated) {
             return false;
         }
         switch (ConfigManager::authType()) {
         case DataTypes::AuthType::SIMPLE:
-            return authenticated;
+            return m_authenticated;
             break;
         case DataTypes::AuthType::ADVANCED:
-            unsigned long long user_acl = server->db_manager->getACL(moderator_name);
-            return (user_acl & acl_mask) != 0;
+            unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
+            return (l_user_acl & acl_mask) != 0;
             break;
         }
     }
@@ -787,10 +691,12 @@ bool AOClient::checkAuth(unsigned long long acl_mask)
 }
 
 
-QString AOClient::getIpid() const { return ipid; }
+QString AOClient::getIpid() const { return m_ipid; }
+
+QString AOClient::getHwid() const { return m_hwid; }
 
 Server* AOClient::getServer() { return server; }
 
 AOClient::~AOClient() {
-    socket->deleteLater();
+    m_socket->deleteLater();
 }

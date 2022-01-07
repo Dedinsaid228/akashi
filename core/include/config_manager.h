@@ -29,6 +29,7 @@
 #include <QSettings>
 #include <QUrl>
 #include <QMetaEnum>
+#include <QElapsedTimer>
 #include <QHostAddress>
 
 /**
@@ -43,6 +44,54 @@ class ConfigManager {
      * @return True if the server configuration was verified, false otherwise.
      */
     static bool verifyServerConfig();
+
+    /**
+     * @brief Returns the IP the TCP Server binds to.
+     *
+     * @return See short description
+     */
+    static QString bindIP();
+
+    /**
+     * @brief Returns the character list of the server.
+     *
+     * @return See short description.
+     */
+    static QStringList charlist();
+
+    /**
+     * @brief Returns the a QStringList of the available backgrounds.
+     *
+     * @return See short description.
+     */
+    static QStringList backgrounds();
+
+    /**
+     * @brief Returns a QStringlist of the available songs.
+     *
+     * @return See short description.
+     */
+    static QStringList musiclist();
+
+    /**
+     * @brief Returns the content of
+     * @return
+     */
+    static QSettings *areaData();
+
+    /**
+     * @brief Returns a sanitized QStringList of the areas.
+     *
+     * @return See short description.
+     */
+    static QStringList sanitizedAreaNames();
+
+    /**
+     * @brief Returns the raw arealist
+     *
+     * @return See short description.
+     */
+    static QStringList rawAreaNames();
 
     /**
      * @brief Returns true if the server should advertise to the master server.
@@ -201,32 +250,39 @@ class ConfigManager {
     static int diceMaxDice();
 
     /**
-     * @brief Returns true if the discord webhook is enabled.
+     * @brief Returns true if the discord webhook integration is enabled.
      *
      * @return See short description.
      */
     static bool discordWebhookEnabled();
 
     /**
+     * @brief Returns true if the discord modcall webhook is enabled.
+     *
+     * @return See short description.
+     */
+    static bool discordModcallWebhookEnabled();
+
+    /**
      * @brief Returns the discord webhook URL.
      *
      * @return See short description.
      */
-    static QString discordWebhookUrl();
+    static QString discordModcallWebhookUrl();
 
     /**
      * @brief Returns the discord webhook content.
      *
      * @return See short description.
      */
-    static QString discordWebhookContent();
+    static QString discordModcallWebhookContent();
 
     /**
      * @brief Returns true if the discord webhook should send log files.
      *
      * @return See short description.
      */
-    static bool discordWebhookSendFile();
+    static bool discordModcallWebhookSendFile();
 
     /**
      * @brief Returns true if the discord ban webhook is enabled.
@@ -234,6 +290,37 @@ class ConfigManager {
      * @return See short description.
      */
     static bool discordBanWebhookEnabled();
+
+    /**
+     * @brief Returns the Discord Ban Webhook URL.
+     *
+     * @return See short description.
+     */
+    static QString discordBanWebhookUrl();
+
+    /**
+      * @brief Returns if the Webhook sends an alive message.
+      */
+    static bool discordUptimeEnabled();
+
+     /**
+       * @brief Returns the time between posting.
+       */
+    static int discordUptimeTime();
+
+     /**
+       * @brief Returns the Discord Uptime Webhook URL.
+       *
+       * @return See short description.
+       */
+    static QString discordUptimeWebhookUrl();
+
+    /**
+     * @brief Returns a user configurable color code for the embeed object.s
+     *
+     * @return See short description.
+     */
+    static QString discordWebhookColor();
 
     /**
      * @brief Returns true if password requirements should be enforced.
@@ -285,6 +372,15 @@ class ConfigManager {
     static bool passwordCanContainUsername();
 
     /**
+     * @brief Returns the logstring for the specified logtype.
+     *
+     * @param Name of the logstring we want.
+     *
+     * @return See short description.
+     */
+    static QString LogText(QString f_logtype);
+
+    /**
      * @brief Returns a number indicating the number of seconds in which the automoderator is unresponsive to the client's behavior.
      *
      * @return See short description.
@@ -333,6 +429,17 @@ class ConfigManager {
      * @brief Returns the IP or URL of the masterserver.
      */
     static QUrl advertiserHTTPIP();
+
+    /**
+     * @brief Returns an optional hostname paramemter for the advertiser.
+     * If used allows user to set a custom IP or domain name.
+     */
+    static QString advertiserHostname();
+
+    /**
+     * @brief Returns the uptime of the server in miliseconds.
+     */
+    static qint64 uptime();
 
 
     /**
@@ -404,6 +511,26 @@ private:
      * @brief Stores all server configuration values.
      */
     static QSettings* m_settings;
+
+    /**
+     * @brief Stores all discord webhook configuration values.
+     */
+    static QSettings* m_discord;
+
+    /**
+     * @brief Stores all of the area valus.
+     */
+    static QSettings* m_areas;
+
+    /**
+     * @brief Stores all adjustable logstrings.
+     */
+    static QSettings* m_logtext;
+
+    /**
+     * @brief Pointer to QElapsedTimer to track the uptime of the server.
+     */
+    static QElapsedTimer* m_uptimeTimer;
 
     /**
      * @brief Returns a stringlist with the contents of a .txt file from config/text/.

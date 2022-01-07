@@ -26,38 +26,35 @@ AreaData::AreaData(QString p_name, int p_index) :
     m_status(IDLE),
     m_locked(FREE),
     m_document("No document."),
+    m_area_message("No area message set."),
     m_defHP(10),
     m_proHP(10),
     m_statement(0),
     m_judgelog(),
     m_lastICMessage(),
-    m_lastICMessageOwner()
+    m_lastICMessageOwner(),
+    m_send_area_message(false)
 {
     QStringList name_split = p_name.split(":");
     name_split.removeFirst();
     m_name = name_split.join(":");
-    QSettings areas_ini("config/areas.ini", QSettings::IniFormat);
-    areas_ini.setIniCodec("UTF-8");
-    areas_ini.beginGroup(p_name);
-    m_background = areas_ini.value("background", "gs4").toString();
-    m_isProtected = areas_ini.value("protected_area", "false").toBool();
-    m_iniswapAllowed = areas_ini.value("iniswap_allowed", "true").toBool();
-    m_bgLocked = areas_ini.value("bg_locked", "false").toBool();
-    m_eviMod = QVariant(areas_ini.value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
-    m_blankpostingAllowed = areas_ini.value("blankposting_allowed","true").toBool();
-    m_forceImmediate = areas_ini.value("force_immediate", "false").toBool();
-    toggle_music = areas_ini.value("toggle_music", "true").toBool();
-    m_shownameAllowed = areas_ini.value("shownames_allowed", "true").toBool();
-    m_ignoreBgList = areas_ini.value("ignore_bglist", "false").toBool();
-    m_floodguardactive = areas_ini.value("floodguard_active", "false").toBool();
-    m_chillMod = areas_ini.value("chillmod", "false").toBool();
-    m_autoMod = areas_ini.value("automod", "false").toBool();
-    areas_ini.endGroup();
-    int log_size = ConfigManager::logBuffer();
-    DataTypes::LogType l_logType = ConfigManager::loggingType();
-    if (log_size == 0)
-        log_size = 500;
-    m_logger = new Logger(m_name, log_size, l_logType);
+    QSettings* areas_ini = ConfigManager::areaData();
+    areas_ini->setIniCodec("UTF-8");
+    areas_ini->beginGroup(p_name);
+    m_background = areas_ini->value("background", "gs4").toString();
+    m_isProtected = areas_ini->value("protected_area", "false").toBool();
+    m_iniswapAllowed = areas_ini->value("iniswap_allowed", "true").toBool();
+    m_bgLocked = areas_ini->value("bg_locked", "false").toBool();
+    m_eviMod = QVariant(areas_ini->value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
+    m_blankpostingAllowed = areas_ini->value("blankposting_allowed","true").toBool();
+    m_forceImmediate = areas_ini->value("force_immediate", "false").toBool();
+    m_toggleMusic = areas_ini->value("toggle_music", "true").toBool();
+    m_shownameAllowed = areas_ini->value("shownames_allowed", "true").toBool();
+    m_ignoreBgList = areas_ini->value("ignore_bglist", "false").toBool();
+    m_chillMod = areas_ini->value("chillmod", "false").toBool();
+    m_autoMod = areas_ini->value("automod", "false").toBool();
+    m_floodguardactive = areas_ini->value("floodguard_active", "false").toBool();
+    areas_ini->endGroup();
     QTimer* timer1 = new QTimer();
     m_timers.append(timer1);
     QTimer* timer2 = new QTimer();
@@ -98,25 +95,24 @@ void AreaData::clientJoinedArea(int f_charId)
     }
 }
 
-QList<int> AreaData::findOwner() const
+QList<int> AreaData::owners() const
 {
-    return owners;
+    return m_owners;
 }
-
 void AreaData::addOwner(int f_clientId)
 {
-    owners.append(f_clientId);
-    invited.append(f_clientId);
+    m_owners.append(f_clientId);
+    m_invited.append(f_clientId);
 }
 
 bool AreaData::removeOwner(int f_clientId)
 {
-    const QList<int> lastowners = owners;
+    const QList<int> lastowners = m_owners;
 
-    owners.removeAll(f_clientId);
-    invited.removeAll(f_clientId);
+    m_owners.removeAll(f_clientId);
+    m_invited.removeAll(f_clientId);
 
-    if (!lastowners.isEmpty() && owners.isEmpty() && m_locked != AreaData::FREE) {
+    if (!lastowners.isEmpty() && m_owners.isEmpty() && m_locked != AreaData::FREE) {
         m_locked = AreaData::FREE;
         return true;
     }
@@ -161,21 +157,21 @@ void AreaData::spectatable()
 
 bool AreaData::invite(int f_clientId)
 {
-    if (invited.contains(f_clientId)) {
+    if (m_invited.contains(f_clientId)) {
         return false;
     }
 
-    invited.append(f_clientId);
+    m_invited.append(f_clientId);
     return true;
 }
 
 bool AreaData::uninvite(int f_clientId)
 {
-    if (!invited.contains(f_clientId)) {
+    if (!m_invited.contains(f_clientId)) {
          return false;
     }
 
-    invited.removeAll(f_clientId);
+    m_invited.removeAll(f_clientId);
     return true;
 }
 
@@ -271,98 +267,24 @@ bool AreaData::changeStatus(const QString &f_newStatus_r)
     return false;
 }
 
-/*QList<int> AreaData::invited() const
+QList<int> AreaData::invited() const
 {
     return m_invited;
-}*/
+}
 
 bool AreaData::isMusicAllowed() const
 {
-    return toggle_music;
+    return m_toggleMusic;
 }
 
 void AreaData::toggleMusic()
 {
-    toggle_music = !toggle_music;
-}
-
-void AreaData::log(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r,
-                   const AOPacket &f_packet_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
-{
-    auto l_header = f_packet_r.header;
-
-    if (l_header == "MS") {
-        m_logger->logIC(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(4), f_showname_r, f_oocname_r, f_uid_r);
-    }
-    else if (l_header == "CT") {
-        m_logger->logOOC(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(1), f_showname_r, f_oocname_r, f_uid_r);
-    }
-    else if (l_header == "ZZ") {
-        m_logger->logModcall(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_packet_r.contents.at(0), f_showname_r, f_oocname_r, f_uid_r);
-    }
-}
-
-void AreaData::logLogin(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r, bool f_success,
-                        const QString& f_modname_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
-{
-    m_logger->logLogin(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_success, f_modname_r, f_showname_r, f_oocname_r, f_uid_r);
-}
-
-void AreaData::logCmd(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r, const QString &f_command_r,
-                      const QStringList &f_cmdArgs_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const
-{
-    m_logger->logCmd(f_clientName_r, f_clientIpid_r, f_clientHwid_r, f_command_r, f_cmdArgs_r, f_showname_r, f_oocname_r, f_uid_r);
-}
-
-void AreaData::logCmdAdvanced(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_type_r, const QString& f_message_r,
-                              const QString& f_hwid_r, const QString& f_showname_r, const QString& f_oocname_r, const QString& f_uid_r)
-{
-    m_logger->logCmdAdvanced(f_charName_r, f_ipid_r, f_type_r, f_message_r,
-                             f_hwid_r, f_showname_r, f_oocname_r, f_uid_r);
-}
-
-void AreaData::LogDisconnect(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                             const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r)
-{
-    m_logger->LogDisconnecting(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_uid_r);
-}
-
-void AreaData::LogConnect(const QString &f_ipid_r)
-{
-    m_logger->LogConnect(f_ipid_r);
-}
-
-void AreaData::LogMusic(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                        const QString& f_showname_r, const QString& f_oocname_r, const QString& f_music_r, const QString &f_uid_r)
-{
-        m_logger->LogMusic(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_music_r, f_uid_r);
-}
-
-void AreaData::LogChangeChar(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                             const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r, const QString &f_oldCharName_r)
-{
-    m_logger->LogChangeChar(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_uid_r, f_oldCharName_r);
-}
-
-void AreaData::LogChangeArea(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                             const QString& f_showname_r, const QString& f_oocname_r, const QString& f_area_r, const QString &f_uid_r)
-{
-    m_logger->LogChangeArea(f_charName_r, f_ipid_r, f_hwid_r, f_showname_r, f_oocname_r, f_area_r, f_uid_r);
-}
-
-void AreaData::flushLogs() const
-{
-    m_logger->flush();
+    m_toggleMusic = !m_toggleMusic;
 }
 
 void AreaData::setEviMod(const EvidenceMod &f_eviMod_r)
 {
     m_eviMod = f_eviMod_r;
-}
-
-QQueue<QString> AreaData::buffer() const
-{
-    return m_logger->buffer();
 }
 
 void AreaData::setTestimonyRecording(const TestimonyRecording &f_testimonyRecording_r)
@@ -513,6 +435,33 @@ QStringList AreaData::getNotecards()
     return l_notecards;
 }
 
+QString AreaData::musicPlayerBy() const
+{
+    return m_musicPlayedBy;
+}
+
+void AreaData::setMusicPlayedBy(const QString& f_music_player)
+{
+    m_musicPlayedBy = f_music_player;
+}
+
+void AreaData::changeMusic(const QString &f_source_r, const QString &f_newSong_r)
+{
+    m_currentMusic = f_newSong_r;
+    m_musicPlayedBy = f_source_r;
+}
+
+QString AreaData::currentMusic() const
+{
+    return m_currentMusic;
+}
+
+void AreaData::setCurrentMusic(QString f_current_song)
+{
+    m_currentMusic = f_current_song;
+}
+
+
 int AreaData::proHP() const
 {
     return m_proHP;
@@ -540,6 +489,24 @@ QString AreaData::document() const
 void AreaData::changeDoc(const QString &f_newDoc_r)
 {
     m_document = f_newDoc_r;
+}
+
+QString AreaData::areaMessage() const
+{
+    return m_area_message;
+}
+
+bool AreaData::sendAreaMessageOnJoin() const
+{
+    return m_send_area_message;
+}
+
+void AreaData::changeAreaMessage(const QString& f_newMessage_r)
+{
+    if(f_newMessage_r.isEmpty())
+        m_area_message = "No area message set.";
+    else
+        m_area_message = f_newMessage_r;
 }
 
 bool AreaData::bgLocked() const
@@ -585,6 +552,11 @@ bool AreaData::ignoreBgList()
 void AreaData::toggleIgnoreBgList()
 {
     m_ignoreBgList = !m_ignoreBgList;
+}
+
+void AreaData::toggleAreaMessageJoin()
+{
+    m_send_area_message = !m_send_area_message;
 }
 
 bool AreaData::floodguardActive()

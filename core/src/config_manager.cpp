@@ -17,14 +17,20 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/config_manager.h"
 
+#include <include/config_manager.h>
+
 QSettings* ConfigManager::m_settings = new QSettings("config/config.ini", QSettings::IniFormat);
+QSettings* ConfigManager::m_discord = new QSettings("config/discord.ini", QSettings::IniFormat);
 ConfigManager::CommandSettings* ConfigManager::m_commands = new CommandSettings();
+QSettings* ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings::IniFormat);
+QSettings* ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
+QElapsedTimer* ConfigManager::m_uptimeTimer = new QElapsedTimer;
 
 bool ConfigManager::verifyServerConfig()
 {
     // Verify directories
     QStringList l_directories{"config/", "config/text/"};
-    for (QString l_directory : l_directories) {
+    for (const QString &l_directory : l_directories) {
         if (!dirExists(QFileInfo(l_directory))) {
                 qCritical() << l_directory + " does not exist!";
                 return false;
@@ -33,8 +39,8 @@ bool ConfigManager::verifyServerConfig()
 
     // Verify config files
     QStringList l_config_files{"config/config.ini", "config/areas.ini", "config/backgrounds.txt", "config/characters.txt", "config/music.txt",
-                              "config/text/8ball.txt", "config/text/gimp.txt"};
-    for (QString l_file : l_config_files) {
+                              "config/discord.ini", "config/text/8ball.txt", "config/text/gimp.txt"};
+    for (const QString &l_file : l_config_files) {
         if (!fileExists(QFileInfo(l_file))) {
             qCritical() << l_file + " does not exist!";
             return false;
@@ -90,7 +96,78 @@ bool ConfigManager::verifyServerConfig()
     m_commands->magic_8ball = (loadConfigFile("8ball"));
     m_commands->gimps = (loadConfigFile("gimp"));
 
+    m_uptimeTimer->start();
+
     return true;
+}
+
+QString ConfigManager::bindIP()
+{
+    return m_settings->value("Options/bind_ip","all").toString();
+}
+
+QStringList ConfigManager::charlist()
+{
+    QStringList l_charlist;
+    QFile l_file("config/characters.txt");
+    l_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    while (!l_file.atEnd()) {
+        l_charlist.append(l_file.readLine().trimmed());
+    }
+    l_file.close();
+
+    return l_charlist;
+}
+
+QStringList ConfigManager::backgrounds()
+{
+    QStringList l_backgrounds;
+    QFile l_file("config/backgrounds.txt");
+    l_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    while (!l_file.atEnd()) {
+        l_backgrounds.append(l_file.readLine().trimmed());
+    }
+    l_file.close();
+
+    return l_backgrounds;
+}
+
+QStringList ConfigManager::musiclist()
+{
+    QStringList l_music_list;
+    QFile l_file("config/music.txt");
+    l_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    while (!l_file.atEnd()) {
+        l_music_list.append(l_file.readLine().trimmed());
+    }
+    l_file.close();
+    if(l_music_list[0].contains(".")) // Add a default category if none exists
+        l_music_list.insert(0, "==Music==");
+    return l_music_list;
+}
+
+QSettings* ConfigManager::areaData()
+{
+    return m_areas;
+}
+
+QStringList ConfigManager::sanitizedAreaNames()
+{
+    QStringList l_area_names = m_areas->childGroups(); // invisibly does a lexicographical sort, because Qt is great like that
+    std::sort(l_area_names.begin(), l_area_names.end(), [] (const QString &a, const QString &b) {return a.split(":")[0].toInt() < b.split(":")[0].toInt();});
+    QStringList l_sanitized_area_names;
+    for (const QString &areaName : qAsConst(l_area_names)) {
+        QStringList l_nameSplit = areaName.split(":");
+        l_nameSplit.removeFirst();
+        QString l_area_name_sanitized = l_nameSplit.join(":");
+        l_sanitized_area_names.append(l_area_name_sanitized);
+    }
+    return l_sanitized_area_names;
+}
+
+QStringList ConfigManager::rawAreaNames()
+{
+    return m_areas->childGroups();
 }
 
 QStringList ConfigManager::iprangeBans()
@@ -108,19 +185,21 @@ QStringList ConfigManager::iprangeBans()
 void ConfigManager::reloadSettings()
 {
     m_settings->sync();
+    m_discord->sync();
+    m_logtext->sync();
 }
 
 QStringList ConfigManager::loadConfigFile(const QString filename)
 {
     QStringList stringlist;
-    QFile file("config/text/" + filename + ".txt");
-    file.open(QIODevice::ReadOnly | QIODevice::Text);
+    QFile l_file("config/text/" + filename + ".txt");
+    l_file.open(QIODevice::ReadOnly | QIODevice::Text);
 
-    while (!(file.atEnd())) {
-        stringlist.append(file.readLine().trimmed());
+    while (!(l_file.atEnd())) {
+        stringlist.append(l_file.readLine().trimmed());
     }
 
-    file.close();
+    l_file.close();
     return stringlist;
 }
 
@@ -319,27 +398,63 @@ int ConfigManager::diceMaxDice()
 
 bool ConfigManager::discordWebhookEnabled()
 {
-    return m_settings->value("Discord/webhook_enabled", false).toBool();
+    return m_discord->value("Discord/webhook_enabled", false).toBool();
 }
 
-QString ConfigManager::discordWebhookUrl()
+bool ConfigManager::discordModcallWebhookEnabled()
 {
-    return m_settings->value("Discord/webhook_url", "").toString();
+    return m_discord->value("Discord/webhook_modcall_enabled", false).toBool();
 }
 
-QString ConfigManager::discordWebhookContent()
+QString ConfigManager::discordModcallWebhookUrl()
 {
-    return m_settings->value("Discord/webhook_content", "").toString();
+    return m_discord->value("Discord/webhook_modcall_url", "").toString();
 }
 
-bool ConfigManager::discordWebhookSendFile()
+QString ConfigManager::discordModcallWebhookContent()
 {
-    return m_settings->value("Discord/webhook_sendfile", false).toBool();
+    return m_discord->value("Discord/webhook_modcall_content", "").toString();
+}
+
+bool ConfigManager::discordModcallWebhookSendFile()
+{
+    return m_discord->value("Discord/webhook_modcall_sendfile", false).toBool();
 }
 
 bool ConfigManager::discordBanWebhookEnabled()
 {
-    return m_settings->value("Discord/webhook_ban_enabled", false).toBool();
+    return m_discord->value("Discord/webhook_ban_enabled", false).toBool();
+}
+
+QString ConfigManager::discordBanWebhookUrl()
+{
+    return m_discord->value("Discord/webhook_ban_url", "").toString();
+}
+
+bool ConfigManager::discordUptimeEnabled()
+{
+    return m_discord->value("Discord/webhook_uptime_enabled","false").toBool();
+}
+
+int ConfigManager::discordUptimeTime()
+{
+    bool ok;
+    int l_aliveTime = m_discord->value("Discord/webhook_uptime_time","60").toInt(&ok);
+    if (!ok) {
+        qWarning("alive_time is not an int");
+        l_aliveTime = 60;
+    }
+    return l_aliveTime;
+}
+
+QString ConfigManager::discordUptimeWebhookUrl()
+{
+    return m_discord->value("Discord/webhook_uptime_url", "").toString();
+}
+
+QString ConfigManager::discordWebhookColor()
+{
+    return m_discord->value("Discord/webhook_color","13312842").toString();
 }
 
 bool ConfigManager::passwordRequirements()
@@ -393,6 +508,11 @@ bool ConfigManager::passwordCanContainUsername()
     return m_settings->value("Password/pass_can_contain_username", false).toBool();
 }
 
+QString ConfigManager::LogText(QString f_logtype)
+{
+    return m_logtext->value("LogConfiguration/" + f_logtype,"").toString();
+}
+
 int ConfigManager::autoModTrigger()
 {
     return m_settings->value("Options/automodtrigseconds", 3).toInt();
@@ -438,6 +558,16 @@ QUrl ConfigManager::advertiserHTTPIP()
     return m_settings->value("ModernAdvertiser/ms_ip","").toUrl();
 }
 
+QString ConfigManager::advertiserHostname()
+{
+    return m_settings->value("ModernAdvertiser/hostname","").toString();
+}
+
+qint64 ConfigManager::uptime()
+{
+    return m_uptimeTimer->elapsed();
+}
+
 void ConfigManager::setMotd(const QString f_motd)
 {
     m_settings->setValue("Options/motd", f_motd);
@@ -451,7 +581,6 @@ bool ConfigManager::webUsersSpectableOnly()
 void ConfigManager::webUsersSpectableOnlyToggle()
 {
     m_settings->setValue("Options/wuso", !webUsersSpectableOnly());
-    qDebug() << webUsersSpectableOnly();
 }
 
 bool ConfigManager::fileExists(const QFileInfo &f_file)

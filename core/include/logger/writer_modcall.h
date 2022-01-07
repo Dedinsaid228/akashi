@@ -15,49 +15,54 @@
 //    You should have received a copy of the GNU Affero General Public License      //
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
-#include "include/ws_proxy.h"
+#ifndef WRITER_MODCALL_H
+#define WRITER_MODCALL_H
+#include <QObject>
+#include <QFile>
+#include <QDir>
+#include <QDateTime>
+#include <QTextStream>
+#include <QQueue>
 
-WSProxy::WSProxy(int p_local_port, int p_ws_port, QObject* parent) :
-    QObject(parent),
-    local_port(p_local_port),
-    ws_port(p_ws_port)
+
+/**
+ * @brief A class to handle file interaction when writing the modcall buffer.
+ */
+class WriterModcall : public QObject
 {
-    server = new QWebSocketServer(QLatin1String(""),
-                                  QWebSocketServer::NonSecureMode, this);
-    connect(server, &QWebSocketServer::newConnection, this,
-            &WSProxy::wsConnected);
-}
+    Q_OBJECT
+public:
+    /**
+     * @brief Constructor for modcall logwriter
+     *
+     * @param QObject pointer to the parent object.
+     */
+    WriterModcall(QObject* parent = nullptr);;
 
-void WSProxy::start()
-{
-    if(!server->listen(QHostAddress::Any, ws_port)) {
-        qDebug() << "WebSocket proxy failed to start: " << server->errorString();
-    } else {
-        qDebug() << "WebSocket proxy listening";
-    }
-}
+    /**
+     * @brief Deconstructor for modcall logwriter.
+     *
+     * @details Doesn't really do anything, but its here for completeness sake.
+     */
+    virtual ~WriterModcall() {}
 
-void WSProxy::wsConnected()
-{
-    QWebSocket* new_ws = server->nextPendingConnection();
-    QTcpSocket* new_tcp = new QTcpSocket(this);
-    WSClient* client = new WSClient(new_tcp, new_ws, this);
-    clients.append(client);
+    /**
+     * @brief Function to write area buffer into a logfile.
+     * @param QQueue of the area that will be written into the logfile.
+     * @param Name of the area for the filename.
+     */
+    void flush(const QString f_area_name, QQueue<QString> f_buffer);
 
-    connect(new_ws, &QWebSocket::textMessageReceived, client, &WSClient::onWsData);
-    connect(new_tcp, &QTcpSocket::readyRead, client, &WSClient::onTcpData);
-    connect(new_ws, &QWebSocket::disconnected, client, &WSClient::onWsDisconnect);
-    connect(new_tcp, &QTcpSocket::disconnected, this, [=] {
-        client->onTcpDisconnect();
-        clients.removeAll(client);
-        client->deleteLater();
-    });
-    connect(new_tcp, &QTcpSocket::connected, client, &WSClient::onTcpConnect);
+private:
+    /**
+     * @brief Filename of the logfile used.
+     */
+    QFile l_logfile;
 
-    new_tcp->connectToHost(QHostAddress::LocalHost, local_port);
-}
+    /**
+     * @brief Directory where logfiles will be stored.
+     */
+    QDir l_dir;
+};
 
-WSProxy::~WSProxy()
-{
-    server->deleteLater();
-}
+#endif //WRITER_MODCALL_H

@@ -20,6 +20,17 @@
 DBManager::DBManager() :
     DRIVER("QSQLITE")
 {
+    const QString db_filename = "logs/akashi.db";
+    QFileInfo db_info(db_filename);
+    if (!db_info.exists()) {
+        qWarning().noquote() << tr("Database Info: Database not found. Attempting to create new database.");
+    }
+    else {
+        //We should only check if a file is readable/writeable when it actually exists.
+        if(!db_info.isReadable() || !db_info.isWritable())
+            qCritical() << tr("Database Error: Missing permissions. Check if \"%1\" is writable.").arg(db_filename);
+    }
+
     db = QSqlDatabase::addDatabase(DRIVER);
     db.setDatabaseName("logs/akashi.db");
 
@@ -33,6 +44,10 @@ DBManager::DBManager() :
     QSqlQuery create_ipidip_table("CREATE TABLE IF NOT EXISTS ipidip ('ID' INTEGER, 'IPID' TEXT, 'IP' TEXT, 'CREATED' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_automod_table("CREATE TABLE IF NOT EXISTS automod ('ID' INTEGER, 'IPID' TEXT, 'DATE' TEXT, 'ACTION' TEXT, 'HAZNUM' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT))");
 
+    create_ban_table.exec();
+    create_user_table.exec();
+    create_ipidip_table.exec();
+    create_automod_table.exec();
 
     if (db_version != DB_VERSION)
         updateDB(db_version);
@@ -531,6 +546,7 @@ void DBManager::updateDB(int current_version)
     switch (current_version) {
     case 0:
         QSqlQuery("ALTER TABLE bans ADD COLUMN MODERATOR TEXT");
+        Q_FALLTHROUGH();
     case 1:
         QSqlQuery ("PRAGMA user_version = " + QString::number(DB_VERSION));
         break;
@@ -582,7 +598,6 @@ QList<DBManager::idipinfo> DBManager::getIpidInfo(QString ipid)
 {
     QList<idipinfo> return_list;
     QSqlQuery query;
-    QList<idipinfo> invalid;
 
     query.prepare("SELECT * FROM IPIDIP WHERE IPID = ?");
     query.addBindValue(ipid);

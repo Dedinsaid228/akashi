@@ -22,6 +22,9 @@
 
 void AOClient::cmdDefault(int argc, QStringList argv)
 {
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+
     sendServerMessage("Invalid command.");
     return;
 }
@@ -29,8 +32,8 @@ void AOClient::cmdDefault(int argc, QStringList argv)
 QStringList AOClient::buildAreaList(int area_idx)
 {
     QStringList entries;
-    QString area_name = server->area_names[area_idx];
-    AreaData* area = server->areas[area_idx];
+    QString area_name = server->m_area_names[area_idx];
+    AreaData* area = server->m_areas[area_idx];
 
     if (area->playerCount() == 0)
         return entries;
@@ -51,24 +54,24 @@ QStringList AOClient::buildAreaList(int area_idx)
 
     entries.append("[" + QString::number(area->playerCount()) + " users][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
 
-    for (AOClient* client : server->clients) {
-        if (client->current_area == area_idx && client->joined) {
-            QString char_entry = "[" + QString::number(client->id) + "] " + client->current_char;
-            if (client->current_char == "")
+    for (AOClient* client : qAsConst(server->m_clients)) {
+        if (client->m_current_area == area_idx && client->m_joined) {
+            QString char_entry = "[" + QString::number(client->m_id) + "] " + client->m_current_char;
+            if (client->m_current_char == "")
                 char_entry += "Spectator";
-            if (area->owners.contains(client->id))
+            if (area->owners().contains(client->m_id))
                 char_entry.insert(0, "[CM]");
-            if (client->showname != "")
-                char_entry += " (" + client->showname + ")";
-            if (client->pos != "" && client->current_char != "")
-                char_entry += " <" + client->pos + "> ";
-            if (authenticated)
-                char_entry += " (" + client->getIpid() + "): " + client->ooc_name;
-            if (!authenticated && area->owners.contains(id))
-                char_entry += ": " + client->ooc_name;
-            if (client->authenticated && !client->slient_mod)
+            if (client->m_showname != "")
+                char_entry += " (" + client->m_showname + ")";
+            if (client->m_pos != "" && client->m_current_char != "")
+                char_entry += " <" + client->m_pos + "> ";
+            if (m_authenticated)
+                char_entry += " (" + client->getIpid() + "): " + client->m_ooc_name;
+            if (!m_authenticated && area->owners().contains(m_id))
+                char_entry += ": " + client->m_ooc_name;
+            if (client->m_authenticated && !client->m_sneak_mod)
                char_entry.insert(0, "[M]");
-            if (client->is_afk)
+            if (client->m_is_afk)
                 char_entry.insert(0, "[AFK]");
             entries.append(char_entry);
         }
@@ -92,62 +95,59 @@ int AOClient::genRand(int min, int max)
 
 void AOClient::diceThrower(int argc, QStringList argv, bool p_roll)
 {
-    int sides = 6;
-    int dice = 1;
+    QString l_sender_name = getSenderName(m_id);
+    int l_sides = 6;
+    int l_dice = 1;
     QStringList results;
 
     if (argc >= 1)
-        sides = qBound(1, argv[0].toInt(), ConfigManager::diceMaxValue());
+        l_sides = qBound(1, argv[0].toInt(), ConfigManager::diceMaxValue());
 
     if (argc == 2)
-        dice = qBound(1, argv[1].toInt(), ConfigManager::diceMaxDice());
+        l_dice = qBound(1, argv[1].toInt(), ConfigManager::diceMaxDice());
 
-    for (int i = 1; i <= dice; i++) {
-        results.append(QString::number(AOClient::genRand(1, sides)));
+    for (int i = 1; i <= l_dice; i++) {
+        results.append(QString::number(AOClient::genRand(1, l_sides)));
     }
 
     QString total_results = results.join(" ");
 
     if (p_roll) {
-        sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
+        sendServerMessage("You rolled a " + QString::number(l_dice) + "d" + QString::number(l_sides) + ". Results: " + total_results);
         return;
     }
 
-    if (showname.isEmpty() && current_char.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
-    else if (showname.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
-    else
-        sendServerMessageArea("[" + QString::number(id) + "] " + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(l_dice) + "d" + QString::number(l_sides) + ". Results: " + total_results);
+
 }
 
 QString AOClient::getAreaTimer(int area_idx, int timer_idx)
 {
-    AreaData* area = server->areas[area_idx];
-    QTimer* timer;
-    QString timer_name = (timer_idx == 0) ? "Global timer" : "Timer " + QString::number(timer_idx);
+    AreaData* l_area = server->m_areas[area_idx];
+    QTimer* l_timer;
+    QString l_timer_name = (timer_idx == 0) ? "Global timer" : "Timer " + QString::number(timer_idx);
 
     if (timer_idx == 0)
-        timer = server->timer;
+        l_timer = server->timer;
     else if (timer_idx > 0 && timer_idx <= 4)
-        timer = area->timers().at(timer_idx - 1);
+        l_timer = l_area->timers().at(timer_idx - 1);
     else
         return "Invalid timer ID.";
 
-    if (timer->isActive()) {
-        QTime current_time = QTime(0,0).addMSecs(timer->remainingTime());
+    if (l_timer->isActive()) {
+        QTime current_time = QTime(0,0).addMSecs(l_timer->remainingTime());
 
-        return timer_name + " is at " + current_time.toString("hh:mm:ss.zzz");
+        return l_timer_name + " is at " + current_time.toString("hh:mm:ss.zzz");
     }
     else {
-        return timer_name + " is inactive.";
+        return l_timer_name + " is inactive.";
     }
 }
 
 long long AOClient::parseTime(QString input)
 {
-    QRegularExpression regex("(?:(?:(?<year>.*?)y)*(?:(?<week>.*?)w)*(?:(?<day>.*?)d)*(?:(?<hr>.*?)h)*(?:(?<min>.*?)m)*(?:(?<sec>.*?)s)*)");
-    QRegularExpressionMatch match = regex.match(input);
+    QRegularExpression l_regex("(?:(?:(?<year>.*?)y)*(?:(?<week>.*?)w)*(?:(?<day>.*?)d)*(?:(?<hr>.*?)h)*(?:(?<min>.*?)m)*(?:(?<sec>.*?)s)*)");
+    QRegularExpressionMatch match = l_regex.match(input);
     QString str_year, str_week, str_hour, str_day, str_minute, str_second;
     int year, week, day, hour, minute, second;
 
@@ -158,11 +158,11 @@ long long AOClient::parseTime(QString input)
     str_minute = match.captured("min");
     str_second = match.captured("sec");
 
-    bool is_well_formed = false;
+    bool l_is_well_formed = false;
     QString concat_str(str_year + str_week + str_day + str_hour + str_minute + str_second);
-    concat_str.toInt(&is_well_formed);
+    concat_str.toInt(&l_is_well_formed);
 
-    if (!is_well_formed) {
+    if (!l_is_well_formed) {
         return -1;
     }
 
@@ -173,73 +173,133 @@ long long AOClient::parseTime(QString input)
     minute = str_minute.toInt();
     second = str_second.toInt();
 
-    long long total = 0;
-    total += 31622400 * year;
-    total += 604800 * week;
-    total += 86400 * day;
-    total += 3600 * hour;
-    total += 60 * minute;
-    total += second;
+    long long l_total = 0;
+    l_total += 31622400 * year;
+    l_total += 604800 * week;
+    l_total += 86400 * day;
+    l_total += 3600 * hour;
+    l_total += 60 * minute;
+    l_total += second;
 
-    if (total < 0)
+    if (l_total < 0)
         return -1;
 
-    return total;
+    return l_total;
 }
 
-bool AOClient::checkPasswordRequirements(QString username, QString password)
+bool AOClient::checkPasswordRequirements(QString f_username, QString f_password)
 {
-    QString decoded_password = decodeMessage(password);
+    QString l_decoded_password = decodeMessage(f_password);
 
     if (!ConfigManager::passwordRequirements())
         return true;
 
-    if (ConfigManager::passwordMinLength() > decoded_password.length())
+    if (ConfigManager::passwordMinLength() > l_decoded_password.length())
         return false;
 
-    if (ConfigManager::passwordMaxLength() < decoded_password.length() && ConfigManager::passwordMaxLength() != 0)
+    if (ConfigManager::passwordMaxLength() < l_decoded_password.length() && ConfigManager::passwordMaxLength() != 0)
         return false;
 
     else if (ConfigManager::passwordRequireMixCase()) {
-        if (decoded_password.toLower() == decoded_password)
+        if (l_decoded_password.toLower() == l_decoded_password)
             return false;
 
-        if (decoded_password.toUpper() == decoded_password)
+        if (l_decoded_password.toUpper() == l_decoded_password)
             return false;
     }
     else if (ConfigManager::passwordRequireNumbers()) {
         QRegularExpression regex("[0123456789]");
-        QRegularExpressionMatch match = regex.match(decoded_password);
+        QRegularExpressionMatch match = regex.match(l_decoded_password);
 
         if (!match.hasMatch())
             return false;
     }
     else if (ConfigManager::passwordRequireSpecialCharacters()) {
         QRegularExpression regex("[~!@#$%^&*_-+=`|\\(){}\[]:;\"'<>,.?/]");
-        QRegularExpressionMatch match = regex.match(decoded_password);
+        QRegularExpressionMatch match = regex.match(l_decoded_password);
 
         if (!match.hasMatch())
             return false;
     }
     else if (!ConfigManager::passwordCanContainUsername()) {
 
-        if (decoded_password.contains(username))
+        if (l_decoded_password.contains(f_username))
             return false;
     }
     return true;
 }
 
-void AOClient::sendNotice(QString notice, bool global)
+void AOClient::sendNotice(QString f_notice, bool f_global)
 {
-    QString message = "A moderator sent this ";
-    message += (global ? "server-wide " : "");
-    message += "notice:\n\n" + notice;
+    QString l_message = "A moderator sent this ";
+    l_message += (f_global ? "server-wide " : "");
+    l_message += "notice:\n\n" + f_notice;
 
-    sendServerMessageArea(message);
-    AOPacket packet("BB", {message});
+    sendServerMessageArea(l_message);
+    AOPacket l_packet("BB", {l_message});
 
-    if (global)
-        server->broadcast(packet);
+    if (f_global)
+        server->broadcast(l_packet);
     else
-        server->broadcast(packet, current_area);
+        server->broadcast(l_packet, m_current_area);
+
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NOTICE",f_notice,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+}
+
+void AOClient::playMusic(QStringList f_args, bool f_once)
+{
+    if (m_is_dj_blocked) {
+        sendServerMessage("You are blocked from changing the music.");
+        return;
+    }
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_music_change_time <= 2) {
+        sendServerMessage("You change music a lot!");
+        return;
+    }
+
+    m_last_music_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
+    AreaData* l_area = server->m_areas[m_current_area];
+
+    if (l_area->isMusicAllowed() == false && !checkAuth(ACLFlags.value("CM"))) {
+        sendServerMessage("Music is disabled in this area.");
+        return;
+    }
+
+    QString l_song = f_args.join(" ");
+
+    if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be//")) {
+        sendServerMessage("You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.");
+        return;
+    }
+
+    if (!l_song.startsWith("http")) {
+        sendServerMessage("Unknown http source. Maybe you forgot to copy the link along with http:// or https://");
+        return;
+    }
+
+    QString l_sender_name = getSenderName(m_id);
+    QString l_play_once;
+
+    if (f_once)
+        l_play_once = "0";
+    else
+        l_play_once = "1";
+
+    AOPacket music_change("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
+    server->broadcast(music_change, m_current_area);
+    l_area->changeMusic(l_sender_name, l_song);
+    emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),l_song, QString::number(m_id), m_hwid);
+}
+
+QString AOClient::getSenderName(int f_uid)
+{
+    AOClient* l_target = server->getClientByID(f_uid);
+
+    if (l_target->m_showname.isEmpty() && l_target->m_current_char.isEmpty())
+        return "Spectator";
+    else if (l_target->m_showname.isEmpty())
+        return l_target->m_current_char;
+    else
+        return l_target->m_showname;
 }

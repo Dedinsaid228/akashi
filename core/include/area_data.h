@@ -18,7 +18,6 @@
 #ifndef AREA_DATA_H
 #define AREA_DATA_H
 
-#include "logger.h"
 #include "aopacket.h"
 #include "config_manager.h"
 
@@ -68,8 +67,8 @@ class AreaData : public QObject {
       LOOKING_FOR_PLAYERS, //!< Something is being planned in the area, but it needs more players.
       RECESS, //!< The area is currently taking a break from casing, but will continue later.
       GAMING, //!< The users inside the area are playing some game outside of AO, and are using the area to communicate.
-      ERP,
-      YABLACHKI
+      ERP, //!< Comic status, never mind.
+      YABLACHKI //!< Uh... I'll just leave this here: https://www.youtube.com/watch?v=K4tsKL7WlgM
     };
 
     /// Exposes the metadata of the Status enum.
@@ -237,7 +236,7 @@ class AreaData : public QObject {
      *
      * @see #m_owners
      */
-    QList<int> owners;
+    QList<int> owners() const;
 
     /**
      * @brief Adds a client to the list of onwers for the area.
@@ -439,7 +438,7 @@ class AreaData : public QObject {
      *
      * @return A list of client IDs.
      */
-    QList<int> invited;
+    QList<int> invited() const;
 
     /**
      * @brief Invites a client to the area.
@@ -537,6 +536,29 @@ class AreaData : public QObject {
     void changeDoc(const QString& f_newDoc_r);
 
     /**
+     * @brief Returns the message of the area.
+     *
+     * @return See short description.
+     *
+     * @see #m_area_message
+     */
+    QString areaMessage() const;
+
+    /**
+     * @brief Returns if the area's message should be sent when a user joins the area.
+     *
+     * @return See short description.
+     */
+    bool sendAreaMessageOnJoin() const;
+
+    /**
+     * @brief Changes the area message in the area.
+     *
+     * @param f_newMessage_r The new message.
+     */
+    void changeAreaMessage(const QString& f_newMessage_r);
+
+    /**
      * @brief Returns the value of the Confidence bar for the defence's side.
      *
      * @return The value of the Confidence bar in units of 10%.
@@ -562,6 +584,50 @@ class AreaData : public QObject {
      * Will be clamped between 0 and 10, inclusive on both sides.
      */
     void changeHP(AreaData::Side f_side, int f_newHP);
+
+    /**
+     * @brief Returns the music currently being played in the area.
+     *
+     * @return See short description.
+     *
+     * @see #m_currentMusic
+     */
+    QString currentMusic() const;
+
+    /**
+     * @brief Sets the music currently being played in the area.
+     *
+     * @param Name of the song being played.
+     *
+     * @see #m_currentMusic
+     */
+    void setCurrentMusic(QString f_current_song);
+
+    /**
+     * @brief Returns the showname of the client who played the music in the area.
+     *
+     * @return See short description.
+     *
+     * @see #m_musicPlayedBy
+     */
+    QString musicPlayerBy() const;
+
+    /**
+     * @brief Sets the showname of the client who played the music in the area.
+     *
+     * @param Showname of the client.
+     *
+     * @see #m_musicPlayedBy
+     */
+    void setMusicPlayedBy(const QString& f_music_player);
+
+    /**
+     * @brief Changes the music being played in the area.
+     *
+     * @param f_source_r The showname of the client who initiated the music change.
+     * @param f_newSong_r The name of the new song that is going to be played in the area.
+     */
+    void changeMusic(const QString& f_source_r, const QString& f_newSong_r);
 
     /**
      * @brief Returns the evidence mod in the area.
@@ -760,90 +826,6 @@ class AreaData : public QObject {
     void toggleMusic();
 
     /**
-     * @brief Logs a packet in the area's logger.
-     *
-     * @details Logs IC, OOC and modcall packets. Anything else is discarded.
-     *
-     * This function is a convenience function over the Logger's log functions.
-     *
-     * If you wish to log a login attempt, use logLogin() instead.
-     *
-     * @param f_clientName_r The showname of the packet sender's character.
-     * @param f_clientIpid_r The IPID of the packet sender.
-     * @param f_packet_r The packet that was sent.
-     */
-    void log(const QString& f_clientName_r, const QString& f_clientIpid_r, const QString& f_clientHwid_r,
-             const AOPacket& f_packet_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const;
-
-    /**
-     * @brief Logs a moderator login attempt.
-     *
-     * @details This is not a duplicated function! When a client uses the `/login` command to log in, the command call
-     * itself is logged with logCmd(), but the outcome of that call is logged here.
-     *
-     * If there was a way to login *without* the command, only this would be logged.
-     *
-     * @param f_clientName_r The showname of the login attempt sender's character.
-     * @param f_clientIpid_r The IPID of the client attempting login.
-     * @param f_success The outcome of the login attempt.
-     * @param f_modname_r The moderator name the client attempted to log in with.
-     */
-    void logLogin(const QString &f_clientName_r, const QString &f_clientIpid_r, const QString& f_clientHwid_r,
-                  bool f_success, const QString& f_modname_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const;
-
-    /**
-     * @brief Logs a command in the area logger.
-     *
-     * @details When a client sends any packet containing `/`, it is sent to this function instead of log().
-     *
-     * @param f_clientName_r The showname of the command sender's character.
-     * @param f_clientIpid_r The IPID of the command sender.
-     * @param f_command_r The command that was sent.
-     * @param f_cmdArgs_r The arguments of the command
-     */
-    void logCmd(const QString& f_clientName_r, const QString& f_clientIpid_r, const QString& f_clientHwid_r, const QString& f_command_r,
-                const QStringList& f_cmdArgs_r, const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r) const;
-
-    void logCmdAdvanced(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_type_r, const QString& f_message_r,
-                        const QString& f_hwid_r, const QString& f_showname_r, const QString& f_oocname_r, const QString& f_uid_r);
-
-    /**
-     * @brief Logs a disconnect in the area logger.
-     *
-     * @param f_charName_r The showname of the command sender's character.
-     * @param f_ipid_r The IPID of the command sender.
-     * @param f_hwid_r The command that was sent.
-     * @param f_cmdArgs_r The arguments of the command
-     */
-    void LogDisconnect(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                       const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r);
-
-    void LogConnect(const QString& f_ipid_r);
-
-    void LogMusic(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r, const QString& f_showname_r,
-                  const QString& f_oocname_r, const QString& f_music_r, const QString &f_uid_r);
-
-    void LogChangeChar(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                       const QString& f_showname_r, const QString& f_oocname_r, const QString &f_uid_r, const QString &f_oldCharName_r);
-
-    void LogChangeArea(const QString& f_charName_r, const QString& f_ipid_r, const QString& f_hwid_r,
-                       const QString& f_showname_r, const QString& f_oocname_r, const QString& f_area_r, const QString &f_uid_r);
-
-    /**
-     * @brief Convenience function over Logger::flush().
-     */
-    void flushLogs() const;
-
-    /**
-     * @brief Returns a copy of the underlying logger's buffer.
-     *
-     * @return See short description.
-     *
-     * @see #m_ignoreBgList
-     */
-    QQueue<QString> buffer() const;
-
-    /**
      * @brief Returns whether the BG list is ignored in this araa.
      *
      * @return See short description.
@@ -855,42 +837,52 @@ class AreaData : public QObject {
      */
     void toggleIgnoreBgList();
 
+    /**
+     * @brief Toggles whether the area message is sent upon joining the area.
+     */
+    void toggleAreaMessageJoin();
+
+    /**
+     * @brief Return whether floodguard is active in this area.
+     *
+     * @return See short description.
+     *
+     * @see #m_floodguardactive
+     */
     bool floodguardActive();
 
+    /**
+     * @brief Toggles whether the floodguard is active in this area.
+     */
     void toggleFloodguardActive();
 
+    /**
+     * @brief Return whether Chill Mod is active in this area.
+     *
+     * @return See short description.
+     *
+     * @see #m_chillmod
+     */
     bool chillMod();
 
+    /**
+     * @brief Toggles whether the Chill Mod is active in this area.
+     */
     void toggleChillMod();
 
+    /**
+     * @brief Return whether automoderator is active in this area.
+     *
+     * @return See short description.
+     *
+     * @see #m_automod
+     */
     bool autoMod();
 
+    /**
+     * @brief Toggles whether the automoderator is active in this area.
+     */
     void toggleAutoMod();
-
-    /**
-     * @brief The title of the music currently being played in the area.
-     *
-     * @details Title is a path to the music file, with the starting point on
-     * `base/sounds/music/` clientside, with file extension.
-     */
-    QString current_music;
-
-    /**
-     * @brief The name of the client (or client's character) that started the currently playing music.
-     */
-    QString music_played_by;
-
-    /**
-     * @brief Whether or not music is allowed in this area. If false, only CMs can change the music.
-     */
-    bool toggle_music;
-
-    /**
-     * @brief The status of the area's accessibility to clients.
-     *
-     * @see LockStatus
-     */
-    LockStatus m_locked;
 
 private:
     /**
@@ -947,6 +939,13 @@ private:
     QList<int> m_invited;
 
     /**
+     * @brief The status of the area's accessibility to clients.
+     *
+     * @see LockStatus
+     */
+    LockStatus m_locked;
+
+    /**
      * @brief The background of the area.
      *
      * @details Represents a directory's name in `base/background/` clientside.
@@ -988,6 +987,14 @@ private:
     QString m_document;
 
     /**
+     * @brief The message of the area.
+     *
+     * @details The area message has multiple purposes. It can be used to provide general information for
+     * RP or guidance for players joining the area. Unlike document it can be sent on area join. Like a MOTD, but for the area.
+     */
+    QString m_area_message;
+
+    /**
      * @brief The Confidence Gauge's value for the Defence side.
      *
      * @details Unit is 10%, and the values range from 0 (= 0%) to 10 (= 100%).
@@ -1000,6 +1007,19 @@ private:
      * @copydetails #m_defHP
      */
     int m_proHP;
+
+    /**
+     * @brief The title of the music currently being played in the area.
+     *
+     * @details Title is a path to the music file, with the starting point on
+     * `base/sounds/music/` clientside, with file extension.
+     */
+    QString m_currentMusic;
+
+    /**
+     * @brief The name of the client (or client's character) that started the currently playing music.
+     */
+    QString m_musicPlayedBy;
 
     /**
      * @brief A pointer to a Logger, used to send requests to log data.
@@ -1054,14 +1074,33 @@ private:
     bool m_forceImmediate;
 
     /**
+     * @brief Whether or not music is allowed in this area. If false, only CMs can change the music.
+     */
+    bool m_toggleMusic;
+
+    /**
      * @brief Whether or not to ignore the server defined background list. If true, any background can be set in an area.
      */
     bool m_ignoreBgList;
 
+    /**
+     * @brief Whether or not the area message is sent upon area join.
+     */
+    bool m_send_area_message;
+
+    /**
+     * @brief Whether or not the floodguard is active.
+     */
     bool m_floodguardactive;
 
+    /**
+     * @brief Whether or not the Chill Mod is active.
+     */
     bool m_chillMod;
 
+    /**
+     * @brief Whether or not the automoderator is active.
+     */
     bool m_autoMod;
 };
 

@@ -22,15 +22,14 @@
 
 void AOClient::cmdFlip(int argc, QStringList argv)
 {
-    QStringList faces = {"heads","tails"};
-    QString face = faces[AOClient::genRand(0,1)];
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
 
-    if (showname.isEmpty() && current_char.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + "Spectator flipped a coin and got " + face + ".");
-    else if (showname.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " flipped a coin and got " + face + ".");
-    else
-        sendServerMessageArea("[" + QString::number(id) + "] " + showname + " flipped a coin and got " + face + ".");
+    QString l_sender_name = getSenderName(m_id);
+    QStringList l_faces = {"heads","tails"};
+    QString l_face = l_faces[AOClient::genRand(0,1)];
+
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " flipped a coin and got " + l_face + ".");
 }
 
 void AOClient::cmdRoll(int argc, QStringList argv)
@@ -45,7 +44,7 @@ void AOClient::cmdRollP(int argc, QStringList argv)
 
 void AOClient::cmdTimer(int argc, QStringList argv)
 {
-    AreaData* area = server->areas[current_area];
+    AreaData* l_area = server->m_areas[m_current_area];
 
     // Called without arguments
     // Shows a brief of all timers
@@ -54,7 +53,7 @@ void AOClient::cmdTimer(int argc, QStringList argv)
         timers.append("Currently active timers:");
 
         for (int i = 0; i <= 4; i++) {
-            timers.append(getAreaTimer(area->index(), i));
+            timers.append(getAreaTimer(l_area->index(), i));
         }
 
         sendServerMessage(timers.join("\n"));
@@ -63,9 +62,9 @@ void AOClient::cmdTimer(int argc, QStringList argv)
 
     // Called with more than one argument
     bool ok;
-    int timer_id = argv[0].toInt(&ok);
+    int l_timer_id = argv[0].toInt(&ok);
 
-    if (!ok || timer_id < 0 || timer_id > 4) {
+    if (!ok || l_timer_id < 0 || l_timer_id > 4) {
         sendServerMessage("Invalid timer ID. Timer ID must be a whole number between 0 and 4.");
         return;
     }
@@ -73,7 +72,7 @@ void AOClient::cmdTimer(int argc, QStringList argv)
     // Called with one argument
     // Shows the status of one timer
     if (argc == 1) {
-        sendServerMessage(getAreaTimer(area->index(), timer_id));
+        sendServerMessage(getAreaTimer(l_area->index(), l_timer_id));
         return;
     }
 
@@ -82,147 +81,132 @@ void AOClient::cmdTimer(int argc, QStringList argv)
 
     // Select the proper timer
     // Check against permissions if global timer is selected
-    QTimer* requested_timer;
-    if (timer_id == 0) {
+    QTimer* l_requested_timer;
+    if (l_timer_id == 0) {
         if (!checkAuth(ACLFlags.value("GLOBAL_TIMER"))) {
             sendServerMessage("You are not authorized to alter the global timer.");
             return;
         }
 
-        requested_timer = server->timer;
+        l_requested_timer = server->timer;
     }
     else
-        requested_timer = area->timers().at(timer_id - 1);
+        l_requested_timer = l_area->timers().at(l_timer_id - 1);
 
-    AOPacket show_timer("TI", {QString::number(timer_id), "2"});
-    AOPacket hide_timer("TI", {QString::number(timer_id), "3"});
-    bool is_global = timer_id == 0;
+    AOPacket l_show_timer("TI", {QString::number(l_timer_id), "2"});
+    AOPacket l_hide_timer("TI", {QString::number(l_timer_id), "3"});
+    bool l_is_global = l_timer_id == 0;
 
     // Set the timer's time remaining if the second
     // argument is a valid time
-    QTime requested_time = QTime::fromString(argv[1], "hh:mm:ss");
+    QTime l_requested_time = QTime::fromString(argv[1], "hh:mm:ss");
 
-    if (requested_time.isValid()) {
-        requested_timer->setInterval(QTime(0,0).msecsTo(requested_time));
-        requested_timer->start();
-        sendServerMessage("Set timer " + QString::number(timer_id) + " to " + argv[1] + ".");
-        AOPacket update_timer("TI", {QString::number(timer_id), "0", QString::number(QTime(0,0).msecsTo(requested_time))});
-        is_global ? server->broadcast(show_timer) : server->broadcast(show_timer, current_area); // Show the timer
-        is_global ? server->broadcast(update_timer) : server->broadcast(update_timer, current_area);
+    if (l_requested_time.isValid()) {
+        l_requested_timer->setInterval(QTime(0,0).msecsTo(l_requested_time));
+        l_requested_timer->start();
+        sendServerMessage("Set timer " + QString::number(l_timer_id) + " to " + argv[1] + ".");
+        AOPacket l_update_timer("TI", {QString::number(l_timer_id), "0", QString::number(QTime(0,0).msecsTo(l_requested_time))});
+        l_is_global ? server->broadcast(l_show_timer) : server->broadcast(l_show_timer, m_current_area); // Show the timer
+        l_is_global ? server->broadcast(l_update_timer) : server->broadcast(l_update_timer, m_current_area);
         return;
     }
     // Otherwise, update the state of the timer
     else {
         if (argv[1] == "start") {
-            requested_timer->start();
-            sendServerMessage("Started timer " + QString::number(timer_id) + ".");
-            AOPacket update_timer("TI", {QString::number(timer_id), "0", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(requested_timer->remainingTime())))});
-            is_global ? server->broadcast(show_timer) : server->broadcast(show_timer, current_area);
-            is_global ? server->broadcast(update_timer) : server->broadcast(update_timer, current_area);
+            l_requested_timer->start();
+            sendServerMessage("Started timer " + QString::number(l_timer_id) + ".");
+            AOPacket update_timer("TI", {QString::number(l_timer_id), "0", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(l_requested_timer->remainingTime())))});
+            l_is_global ? server->broadcast(l_show_timer) : server->broadcast(l_show_timer, m_current_area);
+            l_is_global ? server->broadcast(update_timer) : server->broadcast(update_timer, m_current_area);
         }
         else if (argv[1] == "pause" || argv[1] == "stop") {
-            requested_timer->setInterval(requested_timer->remainingTime());
-            requested_timer->stop();
-            sendServerMessage("Stopped timer " + QString::number(timer_id) + ".");
-            AOPacket update_timer("TI", {QString::number(timer_id), "1", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(requested_timer->interval())))});
-            is_global ? server->broadcast(update_timer) : server->broadcast(update_timer, current_area);
+            l_requested_timer->setInterval(l_requested_timer->remainingTime());
+            l_requested_timer->stop();
+            sendServerMessage("Stopped timer " + QString::number(l_timer_id) + ".");
+            AOPacket update_timer("TI", {QString::number(l_timer_id), "1", QString::number(QTime(0,0).msecsTo(QTime(0,0).addMSecs(l_requested_timer->interval())))});
+            l_is_global ? server->broadcast(update_timer) : server->broadcast(update_timer, m_current_area);
         }
         else if (argv[1] == "hide" || argv[1] == "unset") {
-            requested_timer->setInterval(0);
-            requested_timer->stop();
-            sendServerMessage("Hid timer " + QString::number(timer_id) + ".");
+            l_requested_timer->setInterval(0);
+            l_requested_timer->stop();
+            sendServerMessage("Hid timer " + QString::number(l_timer_id) + ".");
             // Hide the timer
-            is_global ? server->broadcast(hide_timer) : server->broadcast(hide_timer, current_area);
+            l_is_global ? server->broadcast(l_hide_timer) : server->broadcast(l_hide_timer, m_current_area);
         }
     }
 }
 
 void AOClient::cmdNoteCard(int argc, QStringList argv)
 {
-    AreaData* area = server->areas[current_area];
-    QString notecard = argv.join(" ");
+    Q_UNUSED(argc);
 
-    area->addNotecard(current_char, notecard);
+    AreaData* l_area = server->m_areas[m_current_area];
+    QString l_notecard = argv.join(" ");
+    QString l_sender_name = getSenderName(m_id);
 
-    if (showname.isEmpty() && current_char.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + "Spectator wrote a note card.");
-    else if (showname.isEmpty())
-        sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " wrote a note card.");
-    else
-        sendServerMessageArea("[" + QString::number(id) + "] " + showname + " wrote a note card.");
+    l_area->addNotecard(m_current_char, l_notecard);
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " wrote a note card.");
 }
 
 void AOClient::cmdNoteCardClear(int argc, QStringList argv)
 {
-    AreaData* area = server->areas[current_area];
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
 
-    if (!area->addNotecard(current_char, QString())) {
-        if (showname.isEmpty() && current_char.isEmpty())
-            sendServerMessageArea("[" + QString::number(id) + "] " + "Spectator erased their note card.");
-        else if (showname.isEmpty())
-            sendServerMessageArea("[" + QString::number(id) + "] " + current_char + " erased their note card.");
-        else
-            sendServerMessageArea("[" + QString::number(id) + "] " + showname + " erased their note card.");
-    }
+    AreaData* l_area = server->m_areas[m_current_area];
+    QString l_sender_name = getSenderName(m_id);
+
+    if (!l_area->addNotecard(m_current_char, QString()))
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " erased their note card.");
 }
 
 void AOClient::cmdNoteCardReveal(int argc, QStringList argv)
 {
-    AreaData* area = server->areas[current_area];
-    const QStringList l_notecards = area->getNotecards();
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+
+    AreaData* l_area = server->m_areas[m_current_area];
+    const QStringList l_notecards = l_area->getNotecards();
 
     if (l_notecards.isEmpty()) {
         sendServerMessage("There are no cards to reveal in this area.");
         return;
     }
 
-    QString message("Note cards have been revealed.\n");
-    message.append(l_notecards.join("\n") + "\n");
+    QString l_message("Note cards have been revealed.\n");
+    l_message.append(l_notecards.join("\n") + "\n");
 
-    sendServerMessageArea(message);
-    area->logCmdAdvanced(current_char, ipid, hwid, "NOTECARD REVEAL", message, showname, ooc_name, QString::number(id));
+    sendServerMessageArea(l_message);
 }
 
 void AOClient::cmd8Ball(int argc, QStringList argv)
 {
+    Q_UNUSED(argc);
+
     if (ConfigManager::magic8BallAnswers().isEmpty()) {
         qWarning() << "8ball.txt is empty!";
         sendServerMessage("8ball.txt is empty.");
         }
-    else if (showname.isEmpty() && current_char.isEmpty()) {
-        QString response = ConfigManager::magic8BallAnswers()[(genRand(1, ConfigManager::magic8BallAnswers().size() - 1))];
-        QString sender_name = "Spectator";
-        QString sender_id = "[" + QString::number(id) + "] ";
-        QString sender_message = argv.join(" ");
-
-        sendServerMessageArea(sender_id + sender_name + " asked the magic 8-ball, \"" + sender_message + "\" and the answer is: " + response);
-    }
-    else if (showname.isEmpty()) {
-        QString response = ConfigManager::magic8BallAnswers()[(genRand(1, ConfigManager::magic8BallAnswers().size() - 1))];
-        QString sender_name = current_char;
-        QString sender_id = "[" + QString::number(id) + "] ";
-        QString sender_message = argv.join(" ");
-
-        sendServerMessageArea(sender_id + sender_name + " asked the magic 8-ball, \"" + sender_message + "\" and the answer is: " + response);
-    }
     else {
-        QString response = ConfigManager::magic8BallAnswers()[(genRand(1, ConfigManager::magic8BallAnswers().size() - 1))];
-        QString sender_name = showname;
-        QString sender_id = "[" + QString::number(id) + "] ";
-        QString sender_message = argv.join(" ");
+        QString l_response = ConfigManager::magic8BallAnswers().at((genRand(1, ConfigManager::magic8BallAnswers().size() - 1)));
+        QString l_sender_name = getSenderName(m_id);
+        QString l_sender_id = "[" + QString::number(m_id) + "] ";
+        QString l_sender_message = argv.join(" ");
 
-        sendServerMessageArea(sender_id + sender_name + " asked the magic 8-ball, \"" + sender_message + "\" and the answer is: " + response);
+        sendServerMessageArea(l_sender_id + l_sender_name + " asked the magic 8-ball, \"" + l_sender_message + "\" and the answer is: " + l_response);
     }
 }
 
 void AOClient::cmdSubTheme(int argc, QStringList argv)
 {
-    QString subtheme = argv.join(" ");
+    Q_UNUSED(argc);
 
-    for (AOClient* client : server->clients) {
-        if (client->current_area == current_area)
-            client->sendPacket("ST", {subtheme, "1"});
+    QString l_subtheme = argv.join(" ");
+
+    for (AOClient* l_client : qAsConst(server->m_clients)) {
+        if (l_client->m_current_area == m_current_area)
+            l_client->sendPacket("ST", {l_subtheme, "1"});
     }
 
-    sendServerMessageArea("Subtheme was set to " + subtheme);
+    sendServerMessageArea("Subtheme was set to " + l_subtheme);
 }

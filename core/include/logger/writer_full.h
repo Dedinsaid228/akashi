@@ -15,49 +15,58 @@
 //    You should have received a copy of the GNU Affero General Public License      //
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
-#include "include/ws_proxy.h"
+#ifndef WRITER_FULL_H
+#define WRITER_FULL_H
+#include <QObject>
+#include <QFile>
+#include <QDir>
+#include <QDateTime>
+#include <QTextStream>
 
-WSProxy::WSProxy(int p_local_port, int p_ws_port, QObject* parent) :
-    QObject(parent),
-    local_port(p_local_port),
-    ws_port(p_ws_port)
+/**
+ * @brief A class to handle file interaction when writing in full log mode.
+ */
+class WriterFull : public QObject
 {
-    server = new QWebSocketServer(QLatin1String(""),
-                                  QWebSocketServer::NonSecureMode, this);
-    connect(server, &QWebSocketServer::newConnection, this,
-            &WSProxy::wsConnected);
-}
+    Q_OBJECT
+public:
+    /**
+     * @brief Constructor for full logwriter
+     *
+     * @param QObject pointer to the parent object.
+     */
+    WriterFull(QObject* parent = nullptr);;
 
-void WSProxy::start()
-{
-    if(!server->listen(QHostAddress::Any, ws_port)) {
-        qDebug() << "WebSocket proxy failed to start: " << server->errorString();
-    } else {
-        qDebug() << "WebSocket proxy listening";
-    }
-}
+    /**
+     * @brief Deconstructor for full logwriter.
+     *
+     * @details Doesn't really do anything, but its here for completeness sake.
+     */
+    virtual ~WriterFull() {}
 
-void WSProxy::wsConnected()
-{
-    QWebSocket* new_ws = server->nextPendingConnection();
-    QTcpSocket* new_tcp = new QTcpSocket(this);
-    WSClient* client = new WSClient(new_tcp, new_ws, this);
-    clients.append(client);
+    /**
+     * @brief Function to write log entry into a logfile.
+     * @param Preformatted QString which will be written into the logfile.
+     */
+    void flush(const QString f_entry);
 
-    connect(new_ws, &QWebSocket::textMessageReceived, client, &WSClient::onWsData);
-    connect(new_tcp, &QTcpSocket::readyRead, client, &WSClient::onTcpData);
-    connect(new_ws, &QWebSocket::disconnected, client, &WSClient::onWsDisconnect);
-    connect(new_tcp, &QTcpSocket::disconnected, this, [=] {
-        client->onTcpDisconnect();
-        clients.removeAll(client);
-        client->deleteLater();
-    });
-    connect(new_tcp, &QTcpSocket::connected, client, &WSClient::onTcpConnect);
+    /**
+     * @brief Writes log entry into area seperated logfiles.
+     * @param Preformatted QString which will be written into the logfile
+     * @param Area name of the target logfile.
+     */
+    void flush(const QString f_entry, const QString f_area_name);
 
-    new_tcp->connectToHost(QHostAddress::LocalHost, local_port);
-}
+private:
+    /**
+     * @brief Filename of the logfile used. This will always be the time the server starts up.
+     */
+    QFile l_logfile;
 
-WSProxy::~WSProxy()
-{
-    server->deleteLater();
-}
+    /**
+     * @brief Directory where logfiles will be stored.
+     */
+    QDir l_dir;
+};
+
+#endif //WRITER_FULL_H

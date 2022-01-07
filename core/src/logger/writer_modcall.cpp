@@ -15,49 +15,33 @@
 //    You should have received a copy of the GNU Affero General Public License      //
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
-#include "include/ws_proxy.h"
+#include "include/logger/writer_modcall.h"
 
-WSProxy::WSProxy(int p_local_port, int p_ws_port, QObject* parent) :
-    QObject(parent),
-    local_port(p_local_port),
-    ws_port(p_ws_port)
+WriterModcall::WriterModcall(QObject* parent) :
+    QObject(parent)
 {
-    server = new QWebSocketServer(QLatin1String(""),
-                                  QWebSocketServer::NonSecureMode, this);
-    connect(server, &QWebSocketServer::newConnection, this,
-            &WSProxy::wsConnected);
-}
+    l_dir.setPath("logs/");
+    if (!l_dir.exists()) {
+        l_dir.mkpath(".");
+    }
 
-void WSProxy::start()
-{
-    if(!server->listen(QHostAddress::Any, ws_port)) {
-        qDebug() << "WebSocket proxy failed to start: " << server->errorString();
-    } else {
-        qDebug() << "WebSocket proxy listening";
+    l_dir.setPath("logs/modcall");
+    if (!l_dir.exists()) {
+        l_dir.mkpath(".");
     }
 }
 
-void WSProxy::wsConnected()
+void WriterModcall::flush(const QString f_area_name, QQueue<QString> f_buffer)
 {
-    QWebSocket* new_ws = server->nextPendingConnection();
-    QTcpSocket* new_tcp = new QTcpSocket(this);
-    WSClient* client = new WSClient(new_tcp, new_ws, this);
-    clients.append(client);
+    l_logfile.setFileName(QString("logs/modcall/report_%1_%2.log").arg(f_area_name, (QDateTime::currentDateTime().toString("yyyy-MM-dd_hhmmss"))));
 
-    connect(new_ws, &QWebSocket::textMessageReceived, client, &WSClient::onWsData);
-    connect(new_tcp, &QTcpSocket::readyRead, client, &WSClient::onTcpData);
-    connect(new_ws, &QWebSocket::disconnected, client, &WSClient::onWsDisconnect);
-    connect(new_tcp, &QTcpSocket::disconnected, this, [=] {
-        client->onTcpDisconnect();
-        clients.removeAll(client);
-        client->deleteLater();
-    });
-    connect(new_tcp, &QTcpSocket::connected, client, &WSClient::onTcpConnect);
+    if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
+        QTextStream file_stream(&l_logfile);
 
-    new_tcp->connectToHost(QHostAddress::LocalHost, local_port);
-}
+        while (!f_buffer.isEmpty())
+            file_stream << f_buffer.dequeue();
+    }
 
-WSProxy::~WSProxy()
-{
-    server->deleteLater();
-}
+    l_logfile.close();
+
+};
