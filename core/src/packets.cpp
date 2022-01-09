@@ -674,14 +674,14 @@ void AOClient::pktAnnounceCase(AreaData* area, int argc, QStringList argv, AOPac
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
     QSet<bool> l_needs_set(l_needs_list.begin(), l_needs_list.end());
 #else
-    QSet<bool> l_needs_set = needs_list.toSet();
+    QSet<bool> l_needs_set = l_needs_list.toSet();
 #endif
     for (AOClient* client : qAsConst(server->m_clients)) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 14, 0))
         QSet<bool> matches(client->m_casing_preferences.begin(), client->m_casing_preferences.end());
         matches.intersect(l_needs_set);
 #else
-        QSet<bool> matches = client->casing_preferences.toSet().intersect(needs_set);
+        QSet<bool> matches = m_client->casing_preferences.toSet().intersect(needs_set);
 #endif
 
         if (!matches.isEmpty() && !l_clients_to_alert.contains(client))
