@@ -123,3 +123,63 @@ void AOClient::cmdToggleMusic(int argc, QStringList argv)
     sendServerMessage("Music in this area is now " + l_state);
     emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEMUSIC",l_state,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
 }
+
+void AOClient::cmdAddSong(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    //This needs some explanation.
+    //Akashi has no concept of argument count,so any space is interpreted as a new element
+    //in the QStringList. This works fine until someone enters something with a space.
+    //Since we can't preencode those elements, we join all as a string and use a delimiter
+    //that does not exist in file and URL paths. I decided on the ol' reliable ','.
+    QString l_argv_string = argv.join(" ");
+    QStringList l_argv = l_argv_string.split(",");
+
+    bool l_success = false;
+    if (l_argv.size() == 1) {
+        QString l_song_name = l_argv.value(0);
+        l_success = m_music_manager->addCustomSong(l_song_name, l_song_name, 0, m_current_area);
+    }
+
+    if (l_argv.size() >= 2) {
+        sendServerMessage("Too many arguments. Addition of song has failed.");
+        return;
+    }
+
+    QString l_message = l_success ? "succeeded." : "failed.";
+    sendServerMessage("The addition of the song has " + l_message);
+}
+
+void AOClient::cmdAddCategory(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    bool l_success = m_music_manager->addCustomCategory(argv.join(" "), m_current_area);
+    QString l_message = l_success ? "succeeded." : "failed.";
+    sendServerMessage("The addition of the category has " + l_message);
+}
+
+void AOClient::cmdRemoveCategorySong(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    bool l_success = m_music_manager->removeCategorySong(argv.join(" "), m_current_area);
+    QString l_message = l_success ? "succeeded." : "failed.";
+    sendServerMessage("The removal of the entry has " + l_message);
+}
+
+void AOClient::cmdToggleRootlist(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+    bool l_status = m_music_manager->toggleRootEnabled(m_current_area);
+    QString l_message = (l_status) ? "enabled." : "disabled.";
+    sendServerMessage("Global musiclist has been " + l_message);
+}
+
+void AOClient::cmdClearCustom(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+    m_music_manager->clearCustomList(m_current_area);
+    sendServerMessage("Custom songs have been cleared.");
+}

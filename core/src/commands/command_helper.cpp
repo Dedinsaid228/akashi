@@ -303,3 +303,20 @@ QString AOClient::getSenderName(int f_uid)
     else
         return l_target->m_showname;
 }
+
+QString AOClient::getEviMod(int f_area)
+{
+    AreaData* l_area = server->m_areas[f_area];
+
+    switch (l_area->eviMod()) {
+    case AreaData::EvidenceMod::FFA:
+        return "FFA";
+    case AreaData::EvidenceMod::CM:
+        return "CM";
+    case AreaData::EvidenceMod::HIDDEN_CM:
+        return "HIDDEN_CM";
+    case AreaData::EvidenceMod::MOD:
+        return "MOD";
+    }
+    return "UNKNOWN";
+}

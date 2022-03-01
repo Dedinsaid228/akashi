@@ -53,12 +53,11 @@ void AOClient::clientDisconnected()
     qDebug() << m_remote_ip.toString() << "disconnected";
 #endif
 
-    server->freeUID(m_id);
-
     if (m_joined) {
         server->m_player_count--;
         emit server->updatePlayerCount(server->m_player_count);
-        server->m_areas[m_current_area]->clientLeftArea(server->getCharID(m_current_char));
+        server->m_areas[m_current_area]->clientLeftArea(server->getCharID(m_current_char), m_id);
+        server->updateCharsTaken(server->m_areas[m_current_area]);
         arup(ARUPType::PLAYER_COUNT, true);
 
         QString l_sender_name = getSenderName(m_id);
@@ -82,6 +81,8 @@ void AOClient::clientDisconnected()
     if (l_updateLocks)
         arup(ARUPType::LOCKED, true);
     arup(ARUPType::CM, true);
+
+    emit clientSuccessfullyDisconnected(m_id);
 }
 
 void AOClient::clientConnected()
@@ -139,7 +140,6 @@ void AOClient::handlePacket(AOPacket packet)
 #ifdef NET_DEBUG
     qDebug() << "Received packet:" << packet.header << ":" << packet.contents << "args length:" << packet.contents.length();
 #endif
-    QString l_sender_name = getSenderName(m_id);
     AreaData* l_area = server->m_areas[m_current_area];
     PacketInfo l_info = packets.value(packet.header, {false, 0, &AOClient::pktDefault});
 
@@ -154,6 +154,7 @@ void AOClient::handlePacket(AOPacket packet)
     if (packet.header != "CH" && packet.header != "CT") {
         if (m_is_afk)
         {
+            QString l_sender_name = getSenderName(m_id);
             sendServerMessage("You are no longer AFK. Welcome back!");
             sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " are no longer AFK.");
         }
@@ -170,7 +171,7 @@ void AOClient::handlePacket(AOPacket packet)
     (this->*(l_info.action))(l_area, packet.contents.length(), packet.contents, packet);
 }
 
-void AOClient::changeArea(int new_area)
+void AOClient::changeArea(int new_area, bool ignore_cooldown)
 {
     const int l_old_area = m_current_area;
 
@@ -184,7 +185,12 @@ void AOClient::changeArea(int new_area)
         return;
     }
 
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_area_change_time <= 2) {
+    if (!server->m_areas[new_area]->areaPassword().isEmpty() && m_password != server->m_areas[new_area]->areaPassword() && !checkAuth(ACLFlags.value("BYPASS_LOCKS"))) {
+        sendServerMessage("Area " + server->m_area_names[new_area] + " is passworded.");
+        return;
+    }
+
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_area_change_time <= 2 && !ignore_cooldown) {
         sendServerMessage("You change area very often!");
         return;
     }
@@ -201,7 +207,7 @@ void AOClient::changeArea(int new_area)
         server->updateCharsTaken(server->m_areas[m_current_area]);
     }
 
-    server->m_areas[m_current_area]->clientLeftArea(m_char_id);
+    server->m_areas[m_current_area]->clientLeftArea(m_char_id, m_id);
     bool l_character_taken = false;
 
     if (server->m_areas[new_area]->charactersTaken().contains(server->getCharID(m_current_char))) {
@@ -210,14 +216,13 @@ void AOClient::changeArea(int new_area)
         l_character_taken = true;
     }
 
-    server->m_areas[new_area]->clientJoinedArea(m_char_id);
+    server->m_areas[new_area]->clientJoinedArea(m_char_id, m_id);
     m_current_area = new_area;
     arup(ARUPType::PLAYER_COUNT, true);
     sendEvidenceList(server->m_areas[new_area]);
     sendPacket("HP", {"1", QString::number(server->m_areas[new_area]->defHP())});
     sendPacket("HP", {"2", QString::number(server->m_areas[new_area]->proHP())});
-    sendPacket("BN", {server->m_areas[new_area]->background()});
-    sendPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"});
+    sendPacket("BN", {server->m_areas[new_area]->background(), m_pos});
 
     if (l_character_taken && m_take_taked_char == false) {
         sendPacket("DONE");
@@ -436,128 +441,66 @@ void AOClient::sendServerBroadcast(QString message)
 
 void AOClient::autoMod(bool ic_chat)
 {
-    if (ic_chat) {
-        if (m_last5messagestime[0] == -5) {
-            m_last5messagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
-            return;
-        }
-
-        if (m_last5messagestime[1] == -5) {
-            m_last5messagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
-            return;
-        }
-
-         if (m_last5messagestime[2] == -5) {
-             m_last5messagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
+    for (int i = 0; i <= 4; i++) {
+         if (m_last5messagestime[i] == -5) {
+             m_last5messagestime[i] = QDateTime::currentDateTime().toSecsSinceEpoch();
              return;
-        }
+         }
+    }
 
-         if (m_last5messagestime[3] == -5) {
-             m_last5messagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
-             return;
-        }
+    int l_warn = server->db_manager->getWarnNum(m_ipid);
 
-        if (m_last5messagestime[4] == -5) {
-            m_last5messagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - server->db_manager->getWarnDate(m_ipid)
+            > parseTime(ConfigManager::autoModWarnTerm()) && l_warn != 0 && l_warn != 1) {
+    long date = QDateTime::currentDateTime().toSecsSinceEpoch();
+    server->db_manager->updateWarn(m_ipid, l_warn - 1);
+    server->db_manager->updateWarn(m_ipid, date);
+    }
+
+    if (m_last5messagestime[4] - m_last5messagestime[0] < ConfigManager::autoModTrigger() && !m_first_message) {
+
+        if (l_warn == 0) {
+            DBManager::automodwarns l_warn;
+            l_warn.ipid = m_ipid;
+            l_warn.date = QDateTime::currentDateTime().toSecsSinceEpoch();
+            l_warn.warns = 2;
+
+            server->db_manager->addWarn(l_warn);
+            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(2) + " more warn, then you will be punished.");
+            clearLastMessages();
             return;
         }
-}
-    else {
-        if (m_last5oocmessagestime[0] == -5) {
-           m_last5oocmessagestime[0] = QDateTime::currentDateTime().toSecsSinceEpoch();
-           return;
-        }
 
-        if (m_last5oocmessagestime[1] == -5) {
-           m_last5oocmessagestime[1] = QDateTime::currentDateTime().toSecsSinceEpoch();
-           return;
-        }
+        if (l_warn < 4) {
+            long date = QDateTime::currentDateTime().toSecsSinceEpoch();
 
-        if (m_last5oocmessagestime[2] == -5) {
-           m_last5oocmessagestime[2] = QDateTime::currentDateTime().toSecsSinceEpoch();
-           return;
-        }
-
-        if (m_last5oocmessagestime[3] == -5) {
-           m_last5oocmessagestime[3] = QDateTime::currentDateTime().toSecsSinceEpoch();
-           return;
-        }
-
-        if (m_last5oocmessagestime[4] == -5) {
-           m_last5oocmessagestime[4] = QDateTime::currentDateTime().toSecsSinceEpoch();
-           return;
-        }
-    }
-
-    long l_warnterm = parseTime(ConfigManager::autoModWarnTerm());
-
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_warn_time > l_warnterm && m_warn != 0) {
-        m_warn--;
-        m_last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-    }
-
-    int l_calmdowntime = m_last5messagestime[4] - m_last5messagestime[0];
-    int l_ooccalmdowntime = m_last5oocmessagestime[4] - m_last5oocmessagestime[0];
-    int l_triggertime = ConfigManager::autoModTrigger();
-    bool l_punishment = false;
-
-    if (ic_chat) {
-        if (l_calmdowntime < l_triggertime && !m_first_message)
-            l_punishment = true;
-    }
-    else {
-        if (l_ooccalmdowntime < l_triggertime && !m_first_oocmessage)
-            l_punishment = true;
-    }
-
-    if (l_punishment) {
-
-        if (m_warn < 2) {
-            m_warn++;
-            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(3 - m_warn) + " more warn, then you will be punished.");
-            m_last_warn_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-            clearLastMessages(ic_chat);
+            server->db_manager->updateWarn(m_ipid, l_warn + 1);
+            server->db_manager->updateWarn(m_ipid, date);
+            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(5 - (l_warn + 1)) + " more warn, then you will be punished.");
+            clearLastMessages();
             return;
         }
 
         int l_haznum = server->db_manager->getHazNum(m_ipid);
 
-        if (l_haznum == 0 || l_haznum == 1)
-           autoMute(ic_chat, l_haznum);
-      else if (l_haznum == 2)
-           autoKick();
-      else if (l_haznum == 3)
-           autoBan();
+        switch (l_haznum) {
+        case 0:
+        case 1: autoMute(ic_chat, l_haznum); break;
+        case 2: autoKick(); break;
+        case 3: autoBan(); break;
+        }
   }
 
-    if (ic_chat) {
-        if (m_first_message)
-            m_first_message = !m_first_message;
-    }
-    else {
-        if (m_first_oocmessage)
-            m_first_oocmessage = !m_first_oocmessage;
-    }
+    if (m_first_message)
+        m_first_message = !m_first_message;
 
-    clearLastMessages(ic_chat);
+    clearLastMessages();
 }
 
-void AOClient::clearLastMessages(bool ic_chat)
+void AOClient::clearLastMessages()
 {
-    if (ic_chat) {
-        m_last5messagestime[0] = -5;
-        m_last5messagestime[1] = -5;
-        m_last5messagestime[2] = -5;
-        m_last5messagestime[3] = -5;
-        m_last5messagestime[4] = -5;
-    }
-    else {
-        m_last5oocmessagestime[0] = -5;
-        m_last5oocmessagestime[1] = -5;
-        m_last5oocmessagestime[2] = -5;
-        m_last5oocmessagestime[3] = -5;
-        m_last5oocmessagestime[4] = -5;
-    }
+    for (int i = 0; i <= 4; i++)
+         m_last5messagestime[i] = -5;
 }
 
 void AOClient::autoMute(bool ic_chat, int haznum)
@@ -696,6 +639,27 @@ QString AOClient::getIpid() const { return m_ipid; }
 QString AOClient::getHwid() const { return m_hwid; }
 
 Server* AOClient::getServer() { return server; }
+
+AOClient::AOClient(Server *p_server, QTcpSocket *p_socket, QObject *parent, int user_id, MusicManager *p_manager)
+    : QObject(parent),
+      m_id(user_id),
+      m_remote_ip(p_socket->peerAddress()),
+      m_password(""),
+      m_joined(false),
+      m_current_area(0),
+      m_current_char(""),
+      m_socket(p_socket),
+      server(p_server),
+      is_partial(false),
+      m_last_wtce_time(0),
+      m_last_area_change_time(0),
+      m_last_music_change_time(0),
+      m_last5messagestime(),
+      m_music_manager(p_manager)
+{
+    m_afk_timer = new QTimer;
+    m_afk_timer->setSingleShot(true);
+}
 
 AOClient::~AOClient() {
     m_socket->deleteLater();

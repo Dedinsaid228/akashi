@@ -237,6 +237,15 @@ public:
     };
 
     /**
+     * @brief Details about warns issued by the automoderator.
+     */
+    struct automodwarns {
+        QString ipid; //!< User's IPID.
+        unsigned long date; //!< Date of receipt of the last punishment from the automoderator.
+        int warns; //!< Number of warns.
+    };
+
+    /**
      * @brief Returns the hazard level of the user.
      */
     int getHazNum(QString ipid);
@@ -265,6 +274,31 @@ public:
      * @overload
      */
     void updateHazNum(QString ipid, QString action);
+
+    /**
+     * @brief Returns the user's number of warns.
+     */
+    int getWarnNum(QString ipid);
+
+    /**
+     * @brief Returns the date when the last warn was received.
+     */
+    long getWarnDate(QString ipid);
+
+    /**
+     * @brief Registers get warn into the database.
+     */
+    void addWarn(automodwarns warn);
+
+    /**
+     * @brief Updates info of warns.
+     */
+    void updateWarn(QString ipid, int warns);
+
+    /**
+     * @overload
+     */
+    void updateWarn(QString ipid, long date);
 
 
     /**

@@ -50,14 +50,7 @@ class AOClient : public QObject {
      * @param user_id The user ID of the client.
      * @param parent Qt-based parent, passed along to inherited constructor from QObject.
      */
-    AOClient(Server* p_server, QTcpSocket* p_socket, QObject* parent = nullptr, int user_id = 0)
-        : QObject(parent), m_id(user_id), m_remote_ip(p_socket->peerAddress()), m_password(""),
-          m_joined(false), m_current_area(0), m_current_char(""), m_socket(p_socket), server(p_server),
-          is_partial(false), m_last_wtce_time(0), m_last_area_change_time(0), m_last_music_change_time(0),
-          m_last5messagestime(), m_last5oocmessagestime()  {
-        m_afk_timer = new QTimer;
-        m_afk_timer->setSingleShot(true);
-    };
+    AOClient(Server* p_server, QTcpSocket* p_socket, QObject* parent = nullptr, int user_id = 0, MusicManager* p_manager = nullptr);;
 
     /**
       * @brief Destructor for the AOClient instance.
@@ -148,6 +141,9 @@ class AOClient : public QObject {
      */
     bool m_authenticated = false;
 
+    /**
+     * @brief If true, the client will not be shown as a moderator, even if it is one.
+     */
     bool m_sneak_mod = false;
 
     /**
@@ -253,26 +249,28 @@ class AOClient : public QObject {
         {"NONE",            0ULL      },
         {"KICK",            1ULL << 0 },
         {"BAN",             1ULL << 1 },
-        {"BGLOCK",          1ULL << 2 },
-        {"MODIFY_USERS",    1ULL << 3 },
-        {"CM",              1ULL << 4 },
-        {"GLOBAL_TIMER",    1ULL << 5 },
-        {"EVI_MOD",         1ULL << 6 },
-        {"MOTD",            1ULL << 7 },
-        {"ANNOUNCE",        1ULL << 8 },
-        {"MODCHAT",         1ULL << 9 },
-        {"MUTE",            1ULL << 10},
-        {"UNCM",            1ULL << 11},
-        {"SAVETEST",        1ULL << 12},
-        {"FORCE_CHARSELECT",1ULL << 13},
-        {"BYPASS_LOCKS",    1ULL << 14},
-        {"IGNORE_BGLIST",   1ULL << 15},
-        {"SEND_NOTICE",     1ULL << 16},
-        {"WUSO",            1ULL << 17},
-        {"SNEAK",           1ULL << 18},
-        {"TAKETAKED",       1ULL << 19},
-        {"IPIDINFO",        1ULL << 20},
-        {"SUPER",          ~0ULL      }
+        {"MODIFY_USERS",    1ULL << 2 },
+        {"CM",              1ULL << 3 },
+        {"GLOBAL_TIMER",    1ULL << 4 },
+        {"EVI_MOD",         1ULL << 5 },
+        {"MOTD",            1ULL << 6 },
+        {"ANNOUNCE",        1ULL << 7 },
+        {"MODCHAT",         1ULL << 8 },
+        {"MUTE",            1ULL << 9},
+        {"UNCM",            1ULL << 10},
+        {"SAVETEST",        1ULL << 11},
+        {"FORCE_CHARSELECT",1ULL << 12},
+        {"BYPASS_LOCKS",    1ULL << 13},
+        {"IGNORE_BGLIST",   1ULL << 14},
+        {"SEND_NOTICE",     1ULL << 15},
+        {"WUSO",            1ULL << 16},
+        {"SNEAK",           1ULL << 17},
+        {"TAKETAKED",       1ULL << 18},
+        {"IPIDINFO",        1ULL << 19},
+        {"GM",              1ULL << 20},
+        {"SAVETEST",        1ULL << 21},
+        {"SAVEAREA",        1ULL << 22},
+        {"SUPER",          ~0ULL      }         
     };
 
 
@@ -328,9 +326,19 @@ class AOClient : public QObject {
     QList<int> m_charcurse_list;
 
     /**
+     * @brief Password for entering in area, which contains the same password.
+     */
+    QString m_userpassword = "";
+
+    /**
      * @brief Temporary client permission if client is allowed to save a testimony to server storage.
      */
     bool m_testimony_saving = false;
+
+    /**
+     * @brief Temporary client permission if client is allowed to save a area config to server storage.
+     */
+    bool m_area_saving = false;
 
     /**
      * @brief Checks if the client would be authorised to something based on its necessary permissions.
@@ -421,8 +429,10 @@ class AOClient : public QObject {
      * @brief Changes the area the client is in.
      *
      * @param new_area The ID of the new area.
+     *
+     * @param ignore_cooldown If true, no check will be made when the client last changed area.
      */
-    void changeArea(int new_area);
+    void changeArea(int new_area, bool ignore_cooldown=false);
 
     /**
      * @brief Changes the client's character.
@@ -476,16 +486,15 @@ class AOClient : public QObject {
     /**
      * @brief The main function of the automoderator.
      */
-    void autoMod(bool ic_chat);
+    void autoMod(bool ic_chat=false);
 
     /**
      * @brief "Clears" the array for next use.
      *
      * @see #m_last5messagestime
      *
-     * @see #m_last5oocmessagestime
      */
-    void clearLastMessages(bool ic_chat);
+    void clearLastMessages();
 
     /**
      * @brief An auxiliary function of the automoderator, which is responsible for the mute of the player.
@@ -1166,6 +1175,83 @@ class AOClient : public QObject {
      * @iscommand
      */
     void cmdToggleAutoMod(int argc, QStringList argv);
+
+    /**
+     * @brief When given arguments, sets the password that the client needs to set to enter the area. If no arguments are given, the command will return the current password in area.
+     *
+     * @iscommand
+     */
+    void cmdSetAreaPassword(int argc, QStringList argv);
+
+    /**
+     * @brief When given arguments, sets the password that the client needs to set to enter the passworded area. If no arguments are given, the command will return the current password of the client.
+     *
+     * @iscommand
+     */
+    void cmdSetClientPassword(int argc, QStringList argv);
+
+    /**
+     * @brief Rename the area in which the client is located.
+     *
+     * @details The only argument is the new name of the area.
+     *
+     * @iscommand
+     */
+    void cmdRenameArea(int argc, QStringList argv);
+
+    /**
+     * @brief Create a new area.
+     *
+     * @details The only argument is the name of the new area.
+     *
+     * @iscommand
+     */
+    void cmdCreateArea(int argc, QStringList argv);
+
+    /**
+     * @brief Delete the specified area.
+     *
+     * @details The only argument is the ID of the area to be removed.
+     *
+     * @iscommand
+     */
+    void cmdRemoveArea(int argc, QStringList argv);
+
+    /**
+     * @brief Save the areas.ini file.
+     *
+     * @details The only argument is an additional name for the file.
+     *
+     * @iscommand
+     */
+    void cmdSaveAreas(int argc, QStringList argv);
+
+    /**
+     * @brief Give permission to save areas.ini file.
+     *
+     * @details The only argument is the client ID.
+     *
+     * @iscommand
+     */
+    void cmdPermitAreaSaving(int argc, QStringList argv);
+
+    /**
+     * @brief Swap selected areas.
+     *
+     * @details This command needs two arguments is ID of the areas to be swapped.
+     *
+     * @iscommand
+     */
+    void cmdSwapAreas(int argc, QStringList argv);
+
+    /**
+     * @brief Toggle whether it is possible in the current area to become CM or not.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleProtected(int argc, QStringList argv);
 
     ///@}
 
@@ -2044,6 +2130,31 @@ class AOClient : public QObject {
      */
     void cmdToggleMusic(int argc, QStringList argv);
 
+    /**
+     * @brief Adds a song to the custom list.
+     */
+    void cmdAddSong(int argc, QStringList argv);
+
+    /**
+     * @brief Adds a category to the areas custom music list.
+     */
+    void cmdAddCategory(int argc, QStringList argv);
+
+    /**
+     * @brief Removes any matching song or category from the custom area.
+     */
+    void cmdRemoveCategorySong(int argc, QStringList argv);
+
+    /**
+     * @brief Toggles the prepending behaviour of the servers root musiclist.
+     */
+    void cmdToggleRootlist(int argc, QStringList argv);
+
+    /**
+     * @brief Clears the entire custom list of this area.
+     */
+    void cmdClearCustom(int argc, QStringList argv);
+
     ///@}
 
     /**
@@ -2201,6 +2312,8 @@ class AOClient : public QObject {
     * @param f_uid The UID of the desired client.
     */
    QString getSenderName(int f_uid);
+
+   QString getEviMod(int f_area);
     
     /**
      * @brief Checks if a testimony contains '<' or '>'.
@@ -2257,8 +2370,8 @@ class AOClient : public QObject {
         {"changeauth",         {ACLFlags.value("SUPER"),        0, &AOClient::cmdChangeAuth}},
         {"rootpass",           {ACLFlags.value("SUPER"),        1, &AOClient::cmdSetRootPass}},
         {"bg",                 {ACLFlags.value("NONE"),         1, &AOClient::cmdSetBackground}},
-        {"bglock",             {ACLFlags.value("BGLOCK"),       0, &AOClient::cmdBgLock}},
-        {"bgunlock",           {ACLFlags.value("BGLOCK"),       0, &AOClient::cmdBgUnlock}},
+        {"bglock",             {ACLFlags.value("CM"),           0, &AOClient::cmdBgLock}},
+        {"bgunlock",           {ACLFlags.value("CM"),           0, &AOClient::cmdBgUnlock}},
         {"adduser",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddUser}},
         {"listperms",          {ACLFlags.value("MODIFY_USERS"), 0, &AOClient::cmdListPerms}},
         {"addperm",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddPerms}},
@@ -2358,6 +2471,12 @@ class AOClient : public QObject {
         {"notice",             {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNotice}},
         {"noticeg",            {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNoticeGlobal}},
         {"clearcm",            {ACLFlags.value("KICK"),         0, &AOClient::cmdClearCM}},
+        {"areamessage",        {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMessage}},
+        {"addsong",            {ACLFlags.value("CM"),           1, &AOClient::cmdAddSong}},
+        {"addcategory",        {ACLFlags.value("CM"),           1, &AOClient::cmdAddCategory}},
+        {"removeentry",        {ACLFlags.value("CM"),           1, &AOClient::cmdRemoveCategorySong}},
+        {"toggleroot",         {ACLFlags.value("CM"),           0, &AOClient::cmdToggleRootlist}},
+        {"clearcustom",        {ACLFlags.value("CM"),           0, &AOClient::cmdClearCustom}},
         {"ipidinfo",           {ACLFlags.value("IPIDINFO"),     1, &AOClient::cmdIpidInfo}},
         {"sneak",              {ACLFlags.value("NONE"),         0, &AOClient::cmdSneak}},
         {"taketaked",          {ACLFlags.value("TAKETAKED"),    0, &AOClient::cmdTakeTakedChar}},
@@ -2372,7 +2491,16 @@ class AOClient : public QObject {
         {"toggleautomod",      {ACLFlags.value("CM"),           0, &AOClient::cmdToggleAutoMod}},
         {"togglewuso",         {ACLFlags.value("WUSO"),         0, &AOClient::cmdToggleWebUsersSpectateOnly}},
         {"removewuso",         {ACLFlags.value("WUSO"),         1, &AOClient::cmdRemoveWebUsersSpectateOnly}},
-        {"play_once",          {ACLFlags.value("NONE"),         1, &AOClient::cmdPlayOnce}}
+        {"play_once",          {ACLFlags.value("NONE"),         1, &AOClient::cmdPlayOnce}},
+        {"areapassword",       {ACLFlags.value("CM"),           0, &AOClient::cmdSetAreaPassword}},
+        {"password",           {ACLFlags.value("NONE"),         1, &AOClient::cmdSetClientPassword}},
+        {"renamearea",         {ACLFlags.value("GM"),           1, &AOClient::cmdRenameArea}},
+        {"createarea",         {ACLFlags.value("GM"),           1, &AOClient::cmdCreateArea}},
+        {"removearea",         {ACLFlags.value("GM"),           1, &AOClient::cmdRemoveArea}},
+        {"saveareas",          {ACLFlags.value("NONE"),         1, &AOClient::cmdSaveAreas}},
+        {"permitareasaving",   {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdPermitAreaSaving}},
+        {"swapareas",          {ACLFlags.value("GM"),           2, &AOClient::cmdSwapAreas}},
+        {"toggleprotected",    {ACLFlags.value("GM"),           0, &AOClient::cmdToggleProtected}},
     };
 
     /**
@@ -2436,27 +2564,6 @@ class AOClient : public QObject {
     long m_last5messagestime[5] = {-5, -5, -5, -5, -5};
 
     /**
-     * @brief The time in seconds since the client sent 5 messages to the OOC chat.
-     *
-     * @details Used by an automoderator.
-     */
-    long m_last5oocmessagestime[5] = {-5, -5, -5, -5, -5};
-
-    /**
-     * @brief The number of warns the client has.
-     *
-     * @details Used by an automoderator.
-     */
-    int m_warn = 0;
-
-    /**
-     * @brief The time in seconds since the client received warn.
-     *
-     * @details Used by an automoderator.
-     */
-    long m_last_warn_time;
-
-    /**
      * @brief Checking if the client sent messages to IC chat or not.
      *
      * @details Used to prevent receiving a penalty from the automoderator for sending the first message.
@@ -2464,18 +2571,16 @@ class AOClient : public QObject {
     bool m_first_message = true;
 
     /**
-     * @brief Checking if the client sent messages to OOC chat or not.
-     *
-     * @details Used to prevent receiving a penalty from the automoderator for sending the first message.
-     */
-    bool m_first_oocmessage = true;
-
-    /**
      * @brief The text of the last in-character message that was sent by the client.
      *
      * @details Used to determine if the incoming message is a duplicate.
      */
     QString m_last_message;
+
+    /**
+     * @brief Pointer to the servers music manager instance.
+     */
+    MusicManager* m_music_manager;
 
     /**
      * @brief A helper function to add recorded packets to an area's judgelog.
@@ -2574,6 +2679,11 @@ signals:
   void logChangeArea(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
               const QString& f_area_name, const QString& f_changearea, const QString &f_uid,
               const QString &f_hwid);
+
+  /**
+   * @brief Signals the server that the client has disconnected and marks its userID as free again.
+   */
+  void clientSuccessfullyDisconnected(const int& f_user_id);
 
 };
 

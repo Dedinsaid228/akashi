@@ -32,6 +32,7 @@
 #include <QElapsedTimer>
 #include <QHostAddress>
 
+typedef QMap<QString,QPair<QString,int>> MusicList;
 /**
  * @brief The config file handler class.
  */
@@ -71,13 +72,26 @@ class ConfigManager {
      *
      * @return See short description.
      */
-    static QStringList musiclist();
+    static MusicList musiclist();
+
+    /**
+     * @brief Returns an ordered QList of all basesongs of this server.
+     *
+     * @return See short description.
+     */
+    static QStringList ordered_songs();
 
     /**
      * @brief Returns the content of
      * @return
      */
     static QSettings *areaData();
+
+    /**
+     * @brief Returns the content of
+     * @return
+     */
+    static QSettings *hubsData();
 
     /**
      * @brief Returns a sanitized QStringList of the areas.
@@ -94,32 +108,11 @@ class ConfigManager {
     static QStringList rawAreaNames();
 
     /**
-     * @brief Returns true if the server should advertise to the master server.
-     *
-     * @return See short description.
-     */
-    static bool advertiseServer();
-
-    /**
      * @brief Returns the maximum number of players the server will allow.
      *
      * @return See short description.
      */
     static int maxPlayers();
-
-    /**
-     * @brief Returns the IP of the master server to advertise to.
-     *
-     * @return See short description.
-     */
-    static QString masterServerIP();
-
-    /**
-     * @brief Returns the port of the master server to advertise to.
-     *
-     * @return See short description.
-     */
-    static int masterServerPort();
 
     /**
      * @brief Returns the port to listen for connections on.
@@ -416,19 +409,26 @@ class ConfigManager {
     static QStringList gimpList();
 
     /**
-     * @brief Returns if the HTTP advertiser is constructed or not.
+     * @brief Returns the server approved domain list.
+     *
+     * @return See short description.
      */
-    static bool advertiseHTTPServer();
+    static QStringList cdnList();
 
     /**
-     * @brief Returns if the HTTP advertiser prints debug info to console.
+     * @brief Returns if the advertiser is enabled to advertise on ms3.
      */
-    static bool advertiserHTTPDebug();
+    static bool advertiseServer();
+
+    /**
+     * @brief Returns if the advertiser prints debug info to console.
+     */
+    static bool advertiserDebug();
 
     /**
      * @brief Returns the IP or URL of the masterserver.
      */
-    static QUrl advertiserHTTPIP();
+    static QUrl advertiserIP();
 
     /**
      * @brief Returns an optional hostname paramemter for the advertiser.
@@ -475,6 +475,7 @@ class ConfigManager {
      */
     static void reloadSettings();
 
+
 private:
     /**
      * @brief Checks if a file exists and is valid.
@@ -500,6 +501,7 @@ private:
     struct CommandSettings {
         QStringList magic_8ball; //!< Contains answers for /8ball, found in config/text/8ball.txt
         QStringList gimps; //!< Contains phrases for /gimp, found in config/text/gimp.txt
+        QStringList cdns; //!< Contains domains for custom song validation, found in config/text/cdns.txt
     };
 
     /**
@@ -526,6 +528,16 @@ private:
      * @brief Stores all adjustable logstrings.
      */
     static QSettings* m_logtext;
+
+    /**
+     * @brief Contains the musiclist with time durations.
+     */
+    static MusicList* m_musicList;
+
+    /**
+     * @brief Contains an ordered list for the musiclist.
+     */
+    static QStringList* m_ordered_list;
 
     /**
      * @brief Pointer to QElapsedTimer to track the uptime of the server.

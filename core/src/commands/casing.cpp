@@ -231,7 +231,7 @@ void AOClient::cmdSaveTestimony(int argc, QStringList argv)
     Q_UNUSED(argc);
 
     bool l_permission_found = false;
-    if (checkAuth(ACLFlags.value("BAN")))
+    if (checkAuth(ACLFlags.value("SAVETEST")))
         l_permission_found = true;
 
     if (m_testimony_saving == true)

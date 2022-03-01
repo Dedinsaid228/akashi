@@ -25,6 +25,8 @@ ConfigManager::CommandSettings* ConfigManager::m_commands = new CommandSettings(
 QSettings* ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings::IniFormat);
 QSettings* ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
 QElapsedTimer* ConfigManager::m_uptimeTimer = new QElapsedTimer;
+MusicList* ConfigManager::m_musicList = new MusicList;
+QStringList* ConfigManager::m_ordered_list = new QStringList;
 
 bool ConfigManager::verifyServerConfig()
 {
@@ -39,7 +41,7 @@ bool ConfigManager::verifyServerConfig()
 
     // Verify config files
     QStringList l_config_files{"config/config.ini", "config/areas.ini", "config/backgrounds.txt", "config/characters.txt", "config/music.txt",
-                              "config/discord.ini", "config/text/8ball.txt", "config/text/gimp.txt"};
+                              "config/discord.ini", "config/text/8ball.txt", "config/text/gimp.txt","config/text/cdns.txt"};
     for (const QString &l_file : l_config_files) {
         if (!fileExists(QFileInfo(l_file))) {
             qCritical() << l_file + " does not exist!";
@@ -95,6 +97,7 @@ bool ConfigManager::verifyServerConfig()
     m_settings->endGroup();
     m_commands->magic_8ball = (loadConfigFile("8ball"));
     m_commands->gimps = (loadConfigFile("gimp"));
+    m_commands->cdns = (loadConfigFile("cdns"));
 
     m_uptimeTimer->start();
 
@@ -132,18 +135,23 @@ QStringList ConfigManager::backgrounds()
     return l_backgrounds;
 }
 
-QStringList ConfigManager::musiclist()
+MusicList ConfigManager::musiclist()
 {
     QStringList l_music_list;
     QFile l_file("config/music.txt");
     l_file.open(QIODevice::ReadOnly | QIODevice::Text);
     while (!l_file.atEnd()) {
-        l_music_list.append(l_file.readLine().trimmed());
+        m_ordered_list->append(l_file.readLine().trimmed());
     }
     l_file.close();
-    if(l_music_list[0].contains(".")) // Add a default category if none exists
-        l_music_list.insert(0, "==Music==");
-    return l_music_list;
+    if(m_ordered_list->contains(".")) // Add a default category if none exists
+        m_ordered_list->insert(0, "==Music==");
+    return *m_musicList;
+}
+
+QStringList ConfigManager::ordered_songs()
+{
+    return *m_ordered_list;
 }
 
 QSettings* ConfigManager::areaData()
@@ -203,11 +211,6 @@ QStringList ConfigManager::loadConfigFile(const QString filename)
     return stringlist;
 }
 
-bool ConfigManager::advertiseServer()
-{
-    return m_settings->value("Options/advertise", true).toBool();
-}
-
 int ConfigManager::maxPlayers()
 {
     bool ok;
@@ -219,16 +222,6 @@ int ConfigManager::maxPlayers()
     }
 
     return l_players;
-}
-
-QString ConfigManager::masterServerIP()
-{
-    return m_settings->value("Options/ms_ip", "master.aceattorneyonline.com").toString();
-}
-
-int ConfigManager::masterServerPort()
-{
-    return m_settings->value("Options/ms_port", 27016).toInt();
 }
 
 int ConfigManager::serverPort()
@@ -543,24 +536,29 @@ QStringList ConfigManager::gimpList()
     return m_commands->gimps;
 }
 
-bool ConfigManager::advertiseHTTPServer()
+QStringList ConfigManager::cdnList()
 {
-    return m_settings->value("ModernAdvertiser/advertise","true").toBool();
+    return m_commands->cdns;
 }
 
-bool ConfigManager::advertiserHTTPDebug()
+bool ConfigManager::advertiseServer()
 {
-    return m_settings->value("ModernAdvertiser/debug","true").toBool();
+    return m_settings->value("Advertiser/advertise","true").toBool();
 }
 
-QUrl ConfigManager::advertiserHTTPIP()
+bool ConfigManager::advertiserDebug()
 {
-    return m_settings->value("ModernAdvertiser/ms_ip","").toUrl();
+    return m_settings->value("Advertiser/debug","true").toBool();
+}
+
+QUrl ConfigManager::advertiserIP()
+{
+    return m_settings->value("Advertiser/ms_ip","").toUrl();
 }
 
 QString ConfigManager::advertiserHostname()
 {
-    return m_settings->value("ModernAdvertiser/hostname","").toString();
+    return m_settings->value("Advertiser/hostname","").toString();
 }
 
 qint64 ConfigManager::uptime()

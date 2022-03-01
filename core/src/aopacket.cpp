@@ -43,8 +43,9 @@ AOPacket::AOPacket(QString p_packet)
     }
 
     packet_contents.removeFirst(); // Remove header
-    if (header != "HI")
-    packet_contents.removeLast();  // Remove anything trailing after delimiter
+
+    if (!packet_contents.isEmpty())
+        packet_contents.removeLast();  // Remove anything trailing after delimiter
 
     contents = packet_contents;
 }

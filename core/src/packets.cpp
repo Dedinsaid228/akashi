@@ -78,7 +78,7 @@ void AOClient::pktSoftwareId(AreaData* area, int argc, QStringList argv, AOPacke
         m_version.minor = l_match.captured(3).toInt();
     }
 
-    sendPacket("PN", {QString::number(server->m_player_count), QString::number(ConfigManager::maxPlayers())});
+    sendPacket("PN", {QString::number(server->m_player_count), QString::number(ConfigManager::maxPlayers()), ConfigManager::serverDescription()});
     sendPacket("FL", l_feature_list);
 
     if (ConfigManager::assetUrl().isValid()) {
@@ -138,7 +138,7 @@ void AOClient::pktLoadingDone(AreaData* area, int argc, QStringList argv, AOPack
 
     server->m_player_count++;
     emit server->updatePlayerCount(server->m_player_count);
-    area->clientJoinedArea();
+    area->clientJoinedArea(-1, m_id);
     m_joined = true;
     server->updateCharsTaken(area);
 
@@ -150,8 +150,7 @@ void AOClient::pktLoadingDone(AreaData* area, int argc, QStringList argv, AOPack
     sendPacket("FA", server->m_area_names);
     //Here lies OPPASS, the genius of FanatSors who send the modpass to everyone in plain text.
     sendPacket("DONE");
-    sendPacket("BN", {area->background()});
-    sendPacket("MS", {"chat", "-", " ", " ", "", "jud", "0", "0", "-1", "0", "0", "0", "0", "0", "0", " ", "-1", "0", "0", "100<and>100", "0", "0", "0", "0", "0", "", "", "", "0", "||"});
+    sendPacket("BN", {area->background(), m_pos});
 
     sendServerMessage("=== MOTD ===\r\n" + ConfigManager::motd() + "\r\n=============");
 
@@ -311,6 +310,7 @@ void AOClient::pktOocChat(AreaData* area, int argc, QStringList argv, AOPacket p
     }
 
     bool chillmod = area->chillMod();
+    bool l_automod = area->autoMod();
 
     if (chillmod == true && l_message.length() > ConfigManager::maxCharactersChillMod()) {
         sendServerMessage("Your message is too long!");
@@ -328,7 +328,7 @@ void AOClient::pktOocChat(AreaData* area, int argc, QStringList argv, AOPacket p
         QString l_command = l_cmd_argv[0].trimmed().toLower();
 
         if (l_command == "/g")
-            autoMod(false);
+            autoMod();
 
         l_command = l_command.right(l_command.length() - 1);
         l_cmd_argv.removeFirst();
@@ -340,10 +340,8 @@ void AOClient::pktOocChat(AreaData* area, int argc, QStringList argv, AOPacket p
     else {
             server->broadcast(final_packet, m_current_area);
 
-            bool l_automod = area->autoMod();
-
             if (l_automod == true)
-                autoMod(false);
+                autoMod();
         }
     emit logOOC((m_current_char + " " + m_showname), m_ooc_name, m_ipid,area->name(),l_message, QString::number(m_id), m_hwid);
 }
@@ -374,7 +372,8 @@ void AOClient::pktChangeMusic(AreaData* area, int argc, QStringList argv, AOPack
     QString l_argument = argv[0];
 
     for (const QString &l_song : qAsConst(server->m_music_list)) {
-        if (l_song == l_argument || l_song == "~stop.mp3") { // ~stop.mp3 is a dummy track used by 2.9+
+        Q_UNUSED(l_song);
+        if (server->m_music_list.contains(l_argument) || m_music_manager->isCustom(m_current_area, l_argument) || l_argument == "~stop.mp3") { // ~stop.mp3 is a dummy track used by 2.9+
             // We have a song here
             if (m_is_dj_blocked) {
                 sendServerMessage("You are blocked from changing the music.");
@@ -411,9 +410,9 @@ void AOClient::pktChangeMusic(AreaData* area, int argc, QStringList argv, AOPack
 
             QString l_sender_name = getSenderName(m_id);
 
-            area->changeMusic(l_sender_name, l_song);
+            area->changeMusic(l_sender_name, l_final_song);
             server->broadcast(music_change, m_current_area);
-            emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),l_song, QString::number(m_id), m_hwid);
+            emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),l_final_song, QString::number(m_id), m_hwid);
             return;
         }
     }
@@ -733,7 +732,6 @@ void AOClient::updateEvidenceList(AreaData* area)
             }
             // no match = show it to all
         }
-
         l_evidence_list.append(l_evidence_format.arg(evidence.name, evidence.description, evidence.image));
     }
 

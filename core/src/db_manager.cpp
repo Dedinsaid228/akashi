@@ -1,6 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 //    akashi - a server for Attorney Online 2                                       //
-//    Copyright (C) 2020  scatterflower                                           //
+//    Copyright (C) 2020  scatterflower                                             //
 //                                                                                  //
 //    This program is free software: you can redistribute it and/or modify          //
 //    it under the terms of the GNU Affero General Public License as                //
@@ -43,11 +43,13 @@ DBManager::DBManager() :
     QSqlQuery create_user_table("CREATE TABLE IF NOT EXISTS users ('ID' INTEGER, 'USERNAME' TEXT, 'SALT' TEXT, 'PASSWORD' TEXT, 'ACL' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_ipidip_table("CREATE TABLE IF NOT EXISTS ipidip ('ID' INTEGER, 'IPID' TEXT, 'IP' TEXT, 'CREATED' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_automod_table("CREATE TABLE IF NOT EXISTS automod ('ID' INTEGER, 'IPID' TEXT, 'DATE' TEXT, 'ACTION' TEXT, 'HAZNUM' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT))");
+    QSqlQuery create_automodwarns_table("CREATE TABLE IF NOT EXISTS automodwarns ('ID' INTEGER, 'IPID' TEXT, 'DATE' TEXT, 'WARNS' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT))");
 
     create_ban_table.exec();
     create_user_table.exec();
     create_ipidip_table.exec();
     create_automod_table.exec();
+    create_automodwarns_table.exec();
 
     if (db_version != DB_VERSION)
         updateDB(db_version);
@@ -465,6 +467,83 @@ void DBManager::updateHazNum(QString ipid, QString action)
 
     query.prepare("UPDATE automod SET ACTION = ? WHERE IPID = ?");
     query.addBindValue(action);
+    query.addBindValue(ipid);
+
+    if (!query.exec())
+        qDebug() << "SQL Error:" << query.lastError().text();
+}
+
+int DBManager::getWarnNum(QString ipid)
+{
+    QSqlQuery query;
+
+    query.prepare("SELECT * FROM AUTOMODWARNS WHERE IPID = ?");
+    query.addBindValue(ipid);
+    query.setForwardOnly(true);
+    query.exec();
+
+    while (query.next()) {
+        automodwarns warn;
+        warn.ipid = query.value(1).toString();
+        warn.date = query.value(2).toLongLong();
+        warn.warns = query.value(3).toInt();
+        return warn.warns;
+    }
+    return 0;
+}
+
+long DBManager::getWarnDate(QString ipid)
+{
+    QSqlQuery query;
+
+    query.prepare("SELECT * FROM AUTOMODWARNS WHERE IPID = ?");
+    query.addBindValue(ipid);
+    query.setForwardOnly(true);
+    query.exec();
+
+    while (query.next()) {
+        automodwarns warn;
+        warn.ipid = query.value(1).toString();
+        warn.date = query.value(2).toLongLong();
+        warn.warns = query.value(3).toInt();
+        return warn.date;
+    }
+    return 0;
+}
+
+void DBManager::addWarn(automodwarns warn)
+{
+    QSqlQuery query;
+
+    query.prepare("INSERT INTO AUTOMODWARNS(IPID, DATE, WARNS) VALUES(?, ?, ?)");
+    query.addBindValue(warn.ipid);
+    query.addBindValue(QString::number(warn.date));
+    query.addBindValue(warn.warns);
+
+    if (!query.exec())
+        qDebug() << "SQL Error:" << query.lastError().text();
+}
+
+void DBManager::updateWarn(QString ipid, int warns)
+{
+    QSqlQuery query;
+
+    qDebug() << warns;
+
+    query.prepare("UPDATE automodwarns SET WARNS = ? WHERE IPID = ?");
+    query.addBindValue(warns);
+    query.addBindValue(ipid);
+
+    if (!query.exec())
+        qDebug() << "SQL Error:" << query.lastError().text();
+}
+
+void DBManager::updateWarn(QString ipid, long date)
+{
+    QSqlQuery query;
+
+    query.prepare("UPDATE automodwarns SET DATE = ? WHERE IPID = ?");
+    query.addBindValue(QString::number(date));
     query.addBindValue(ipid);
 
     if (!query.exec())

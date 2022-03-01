@@ -25,8 +25,9 @@
 #include "include/db_manager.h"
 #include "include/discord.h"
 #include "include/config_manager.h"
-#include "include/http_advertiser.h"
+#include "include/advertiser.h"
 #include "include/logger/u_logger.h"
+#include "include/music_manager.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -115,6 +116,21 @@ class Server : public QObject {
     AOClient* getClientByID(int id);
 
     /**
+     * @brief Adds a new area.
+     */
+    void addArea(QString f_areaName, int f_areaIndex);
+
+    /**
+     * @brief Deletes the selected area.
+     */
+    void removeArea(int f_areaNumber);
+
+    /**
+     * @brief Swaps the selected areas.
+     */
+    void swapAreas(int f_area1, int f_area2);
+
+    /**
      * @brief Updates which characters are taken in the given area, and sends out an update packet to
      * all clients present the area.
      *
@@ -160,6 +176,15 @@ class Server : public QObject {
     void broadcast(AOPacket packet, AOPacket other_packet, enum TARGET_TYPE target);
 
     /**
+     * @brief Sends a packet to a single client.
+     *
+     * @param The packet send to the client.
+     *
+     * @param The temporary userID of the client.
+     */
+    void unicast(AOPacket f_packet, int f_client_id);
+
+    /**
      * @brief Returns the character's character ID (= their index in the character list).
      *
      * @param char_name The 'internal' name for the character whose character ID to look up. This is equivalent to
@@ -185,14 +210,9 @@ class Server : public QObject {
     QVector<AOClient*> m_clients;
 
     /**
-     * @brief The overall player count in the server.
+     * @brief Collection of all clients with their userID as key.
      */
-    int m_player_count;
-
-    /**
-     * @brief The characters available on the server to use.
-     */
-    QStringList m_characters;
+    QHash<int,AOClient*> m_clients_ids;
 
     /**
      * @brief The areas on the server.
@@ -206,6 +226,22 @@ class Server : public QObject {
      * here for faster access.
      */
     QStringList m_area_names;
+
+    /**
+     * @brief Stack of all available IDs for clients. When this is empty the server
+     * rejects any new connection attempt.
+     */
+    QStack<int> m_available_ids;
+
+    /**
+     * @brief The overall player count in the server.
+     */
+    int m_player_count;
+
+    /**
+     * @brief The characters available on the server to use.
+     */
+    QStringList m_characters;
 
     /**
      * @brief The available songs on the server.
@@ -258,18 +294,6 @@ class Server : public QObject {
      */
     void reloadSettings();
 
-    /**
-     * @brief Frees the given UID, allowing it to be taken by new clients.
-     *
-     * @param id The UID to free.
-     */
-    void freeUID(const int id);
-
-    /**
-     * @brief Informs the server to resize the UID vectV53*mGr4xzmAGpYor.
-     */
-    void resizeUIDs();
-
   public slots:
     /**
      * @brief Handles a new connection.
@@ -292,6 +316,11 @@ class Server : public QObject {
      * @details Constructs or rebuilds Discord Object during server startup and configuration reload.
      */
     void handleDiscordIntegration();
+
+    /**
+     * @brief Marks a userID as free and ads it back to the available client id queue.
+     */
+    void markIDFree(const int& f_user_id);
 
   signals:
 
@@ -343,9 +372,9 @@ class Server : public QObject {
 
   private:
     /**
-     * @brief Connects new AOClient to the logger.
+     * @brief Connects new AOClient to logger and disconnect handling.
      **/
-    void hookupLogger(AOClient* client);
+    void hookupAOClient(AOClient* client);
 
     /**
      * @brief The proxy used for WebSocket connections.
@@ -367,17 +396,22 @@ class Server : public QObject {
     /**
      * @brief Handles HTTP server advertising.
      */
-    HTTPAdvertiser* httpAdvertiser;
+    Advertiser* ms3_Advertiser;
 
     /**
      * @brief Advertises the server in a regular intervall.
      */
-    QTimer* httpAdvertiserTimer;
+    QTimer* AdvertiserTimer;
 
     /**
      * @brief Handles the universal log framework.
      */
     ULogger* logger;
+
+    /**
+     * @brief Handles all musiclists.
+     */
+    MusicManager* music_manager;
 
     /**
      * @brief The port through which the server will accept TCP connections.
@@ -388,10 +422,5 @@ class Server : public QObject {
      * @brief The port through which the server will accept WebSocket connections.
      */
     int ws_port;
-
-    /**
-     * @brief A vector containing possible UIDs and whether or not they have been taken.
-     */
-    QVector<bool>* m_uid;
 };
 #endif // SERVER_H

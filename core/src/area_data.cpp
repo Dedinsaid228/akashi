@@ -20,11 +20,10 @@
 
 #include "include/area_data.h"
 
-AreaData::AreaData(QString p_name, int p_index) :
+AreaData::AreaData(QString p_name, int p_index, MusicManager* p_music_manager = nullptr) :
     m_index(p_index),
+    m_music_manager(p_music_manager),
     m_playerCount(0),
-    m_status(IDLE),
-    m_locked(FREE),
     m_document("No document."),
     m_area_message("No area message set."),
     m_defHP(10),
@@ -46,6 +45,8 @@ AreaData::AreaData(QString p_name, int p_index) :
     m_iniswapAllowed = areas_ini->value("iniswap_allowed", "true").toBool();
     m_bgLocked = areas_ini->value("bg_locked", "false").toBool();
     m_eviMod = QVariant(areas_ini->value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
+    m_status = QVariant(areas_ini->value("status", "IDLE").toString().toUpper()).value<AreaData::Status>();
+    m_locked = QVariant(areas_ini->value("lock_status", "FREE").toString().toUpper()).value<AreaData::LockStatus>();
     m_blankpostingAllowed = areas_ini->value("blankposting_allowed","true").toBool();
     m_forceImmediate = areas_ini->value("force_immediate", "false").toBool();
     m_toggleMusic = areas_ini->value("toggle_music", "true").toBool();
@@ -54,6 +55,8 @@ AreaData::AreaData(QString p_name, int p_index) :
     m_chillMod = areas_ini->value("chillmod", "false").toBool();
     m_autoMod = areas_ini->value("automod", "false").toBool();
     m_floodguardactive = areas_ini->value("floodguard_active", "false").toBool();
+    m_areapassword = areas_ini->value("password", "").toString();
+    setEvidenceList(areas_ini->value("evidence", "").toStringList());
     areas_ini->endGroup();
     QTimer* timer1 = new QTimer();
     m_timers.append(timer1);
@@ -77,22 +80,25 @@ const QMap<QString, AreaData::Status> AreaData::map_statuses = {
     {"yablachki",               AreaData::Status::YABLACHKI           },
 };
 
-void AreaData::clientLeftArea(int f_charId)
+void AreaData::clientLeftArea(int f_charId, int f_userId)
 {
     --m_playerCount;
 
     if (f_charId != -1) {
         m_charactersTaken.removeAll(f_charId);
     }
+    m_joined_ids.removeAll(f_userId);
 }
 
-void AreaData::clientJoinedArea(int f_charId)
+void AreaData::clientJoinedArea(int f_charId, int f_userId)
 {
     ++m_playerCount;
 
     if (f_charId != -1) {
         m_charactersTaken.append(f_charId);
     }
+    m_joined_ids.append(f_userId);
+    emit userJoinedArea(m_index, f_userId);
 }
 
 QList<int> AreaData::owners() const
@@ -133,6 +139,11 @@ void AreaData::toggleBlankposting()
 bool AreaData::isProtected() const
 {
     return m_isProtected;
+}
+
+void AreaData::toggleIsProtected()
+{
+    m_isProtected = !m_isProtected;
 }
 
 AreaData::LockStatus AreaData::lockStatus() const
@@ -587,4 +598,38 @@ bool AreaData::autoMod()
 void AreaData::toggleAutoMod()
 {
     m_autoMod = !m_autoMod;
+}
+
+QString AreaData::areaPassword()
+{
+    return m_areapassword;
+}
+
+void AreaData::setAreaPassword(QString f_password)
+{
+    m_areapassword = f_password;
+}
+
+void AreaData::setEvidenceList(QStringList f_evi_list)
+{
+    for (int i = 0; i < f_evi_list.size(); i++) {
+        QRegularExpression l_regex(QString::number(i) + "(?:(?:(?<name>.*?)name)*(?:(?<desc>.*?)desc)*(?:(?<image>.*?)image)*)");
+        QRegularExpressionMatch l_match = l_regex.match(f_evi_list[i]);
+        QString l_evi_name, l_evi_desc, l_evi_image;
+
+        if (l_match.hasMatch()) {
+            l_evi_name = l_match.captured("name");
+            l_evi_desc = l_match.captured("desc");
+            l_evi_image = l_match.captured("image");
+            AreaData::Evidence l_evi = {l_evi_name, l_evi_desc, l_evi_image};
+
+            appendEvidence(l_evi);
+        }
+        else return;
+    }
+}
+
+QVector<int> AreaData::joinedIDs() const
+{
+    return m_joined_ids;
 }

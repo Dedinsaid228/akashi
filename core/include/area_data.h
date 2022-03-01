@@ -20,6 +20,7 @@
 
 #include "aopacket.h"
 #include "config_manager.h"
+#include "music_manager.h"
 
 #include <QMap>
 #include <QString>
@@ -27,6 +28,7 @@
 #include <QDebug>
 #include <QTimer>
 #include <QElapsedTimer>
+#include <QRegularExpression>
 
 class Logger;
 
@@ -43,7 +45,7 @@ class AreaData : public QObject {
      * and `YYYYYY` is the actual name of the area.
      * @param p_index The index of the area in the area list.
      */
-    AreaData(QString p_name, int p_index);
+    AreaData(QString p_name, int p_index, MusicManager* p_music_manager);
 
     /**
      * @brief The data for evidence in the area.
@@ -217,7 +219,7 @@ class AreaData : public QObject {
      * @param f_charId The character ID of the client who left. The default value is `-1`. If it is left at that,
      * the area will not try to remove any character from the list of characters taken.
      */
-    void clientLeftArea(int f_charId = -1);
+    void clientLeftArea(int f_charId = -1, int f_userId = -1);
 
     /**
      * @brief A client in the area joined recently.
@@ -227,7 +229,7 @@ class AreaData : public QObject {
      * @param f_charId The character ID of the client who joined. The default value is `-1`. If it is left at that,
      * the area will not add any character to the list of characters taken.
      */
-    void clientJoinedArea(int f_charId = -1);
+    void clientJoinedArea(int f_charId = -1, int f_userId = -1);
 
     /**
      * @brief Returns a copy of the list of owners of this area.
@@ -289,6 +291,15 @@ class AreaData : public QObject {
      * @see #m_isProtected
      */
     bool isProtected() const;
+
+    /**
+     * @brief Toggle the area is protected.
+     *
+     * @return See short description.
+     *
+     * @see #m_isProtected
+     */
+    void toggleIsProtected();
 
     /**
      * @brief Returns the lock status of the area.
@@ -884,6 +895,34 @@ class AreaData : public QObject {
      */
     void toggleAutoMod();
 
+    /**
+     * @brief Returns the password set in area.
+     */
+    QString areaPassword();
+
+    /**
+     * @brief Sets a new password for area.
+     */
+    void setAreaPassword(QString f_password);
+
+    /**
+     * @brief Sets the evidence list to area when the server starts.
+     */
+    void setEvidenceList(QStringList f_evi_list);
+
+    /**
+     * @brief Returns a constant that includes all currently joined userids.
+     */
+    QVector<int> joinedIDs() const;
+
+signals:
+    /**
+     * @brief Sends a packet to every client inside the area.
+     */
+    void sendAreaPacket(AOPacket f_packet, int f_area_index);
+
+    void userJoinedArea(int f_area_index, int f_user_id);
+
 private:
     /**
      * @brief The list of timers available in the area.
@@ -899,6 +938,11 @@ private:
      * @brief The index of the area in the server's area list.
      */
     int m_index;
+
+    /**
+     * @brief Pointer to the global music manager.
+     */
+    MusicManager* m_music_manager;
 
     /**
      * @brief A list of the character IDs of all characters taken.
@@ -995,6 +1039,11 @@ private:
     QString m_area_message;
 
     /**
+     * @brief Collection of joined IDs to this area.
+     */
+    QVector<int> m_joined_ids;
+
+    /**
      * @brief The Confidence Gauge's value for the Defence side.
      *
      * @details Unit is 10%, and the values range from 0 (= 0%) to 10 (= 100%).
@@ -1065,8 +1114,10 @@ private:
      */
     QStringList m_lastICMessage;
 
+    /**
+     * @brief The IPID of the player who sent the last IC packet.
+     */
     QString m_lastICMessageOwner;
-
 
     /**
      * @brief Whether or not to force immediate text processing in this area.
@@ -1102,6 +1153,11 @@ private:
      * @brief Whether or not the automoderator is active.
      */
     bool m_autoMod;
+
+    /**
+     * @brief The password set in area.
+     */
+    QString m_areapassword;
 };
 
 #endif // AREA_DATA_H
