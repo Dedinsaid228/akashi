@@ -4,11 +4,29 @@ name: CI
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
-on: [push, pull_request]
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  formatting-check:
+    name: check-clang-format
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run clang-format style check.
+      uses: jidicula/clang-format-action@v4.5.0
+      with:
+        clang-format-version: '14'
+        check-path: '.'
+
   build-linux:
+    needs: formatting-check
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -33,7 +51,8 @@ jobs:
 
       - name: Run tests
         run: |
-            for test in bin_tests/*; do
+            cd ${{github.workspace}}/bin_tests/
+            for test in ./unittest_*; do
               LD_LIBRARY_PATH=./bin:$LD_LIBRARY_PATH ./$test
             done;
           
@@ -44,14 +63,24 @@ jobs:
           path: bin/
   
   build-windows:
+    needs: formatting-check
     runs-on: windows-latest
     
     steps:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
       
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: ../Qt
+          key: ${{ runner.os }}-QtCache
+
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
      
       - name: Build
         run: |
@@ -62,11 +91,19 @@ jobs:
           mv bin\config_sample bin\config
 
       - name: Run tests
-        run: |
-          for test in bin_tests/*; do
-            LD_LIBRARY_PATH=./bin:$LD_LIBRARY_PATH ./$test
-          done;
+        run: | 
+            for test in ./unittest_*; do
+              LD_LIBRARY_PATH=../bin:$LD_LIBRARY_PATH ./$test
+            done;
+        working-directory: ${{ github.workspace }}/bin_tests
         shell: bash
+        
+      - name: Deploy OpenSSL
+        run: |
+          curl https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1o.zip --output openssl-1.1.1o.zip
+          tar -xf openssl-1.1.1o.zip
+          copy .\openssl-1.1\x64\bin\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll 
+          copy .\openssl-1.1\x64\bin\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
           
       - name: Upload zip
         uses: actions/upload-artifact@v2

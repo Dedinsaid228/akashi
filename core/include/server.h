@@ -18,35 +18,38 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "include/aoclient.h"
-#include "include/aopacket.h"
-#include "include/area_data.h"
-#include "include/ws_proxy.h"
-#include "include/db_manager.h"
-#include "include/discord.h"
-#include "include/config_manager.h"
-#include "include/advertiser.h"
-#include "include/logger/u_logger.h"
-#include "include/music_manager.h"
-
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
 #include <QMap>
 #include <QSettings>
+#include <QStack>
 #include <QString>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
+#include <QWebSocket>
+#include <QWebSocketServer>
 
+#include "include/network/aopacket.h"
+
+class ACLRolesHandler;
+class Advertiser;
 class AOClient;
-class DBManager;
 class AreaData;
+class CommandExtensionCollection;
+class ConfigManager;
+class DBManager;
+class Discord;
+class MusicManager;
+class ULogger;
+class WSProxy;
 
 /**
  * @brief The class that represents the actual server as it is.
  */
-class Server : public QObject {
+class Server : public QObject
+{
     Q_OBJECT
 
   public:
@@ -57,13 +60,13 @@ class Server : public QObject {
      * @param p_ws_port The WebSocket port to listen for connections on.
      * @param parent Qt-based parent, passed along to inherited constructor from QObject.
      */
-    Server(int p_port, int p_ws_port, QObject* parent = nullptr);
+    Server(int p_port, int p_ws_port, QObject *parent = nullptr);
 
     /**
-      * @brief Destructor for the Server class.
-      *
-      * @details Marks every Client, the WSProxy, the underlying #server, and the database manager to be deleted later.
-      */
+     * @brief Destructor for the Server class.
+     *
+     * @details Marks every Client, the WSProxy, the underlying #server, and the database manager to be deleted later.
+     */
     ~Server();
 
     /**
@@ -79,12 +82,20 @@ class Server : public QObject {
     /**
      * @brief Enum to specifc different targets to send altered packets to a specific usergroup.
      */
-    enum class TARGET_TYPE {
+    enum class TARGET_TYPE
+    {
         AUTHENTICATED,
         MODCHAT,
         ADVERT
     };
     Q_ENUM(TARGET_TYPE)
+
+    /**
+     * @brief Returns a list of all clients currently in the server.
+     *
+     * @return A list of all clients currently in the server.
+     */
+    QVector<AOClient *> getClients();
 
     /**
      * @brief Gets a pointer to a client by IPID.
@@ -95,7 +106,7 @@ class Server : public QObject {
      *
      * @see Server::getClientsByIpid() to get all clients ran by the same user.
      */
-    AOClient* getClient(QString ipid);
+    AOClient *getClient(QString ipid);
 
     /**
      * @brief Gets a list of pointers to all clients with the given IPID.
@@ -104,7 +115,16 @@ class Server : public QObject {
      *
      * @return A list of clients whose IPID match. List may be empty.
      */
-    QList<AOClient*> getClientsByIpid(QString ipid);
+    QList<AOClient *> getClientsByIpid(QString ipid);
+
+    /**
+     * @brief Gets a list of pointers to all clients with the given HWID.
+     *
+     * @param HWID The HWID to look for.
+     *
+     * @return A list of clients whose HWID match. List may be empty.
+     */
+    QList<AOClient *> getClientsByHwid(QString f_hwid);
     
     /**
      * @brief Gets a pointer to a client by user ID.
@@ -113,7 +133,39 @@ class Server : public QObject {
      *
      * @return A pointer to the client if found, a nullpointer if not.
      */
-    AOClient* getClientByID(int id);
+    AOClient *getClientByID(int id);
+
+    /**
+     * @brief Returns the overall player count in the server.
+     *
+     * @return The overall player count in the server.
+     */
+    int getPlayerCount();
+
+    /**
+     * @brief Returns a list of the available characters on the server to use.
+     *
+     * @return A list of the available characters on the server to use.
+     */
+    QStringList getCharacters();
+
+    /**
+     * @brief Returns the count of available characters on the server to use.
+     *
+     * @return The count of available characters on the server to use.
+     */
+    int getCharacterCount();
+
+    /**
+     * @brief Get the available character by index.
+     *
+     * @param f_chr_id The index of the character.
+     *
+     * @return The character if it exist, otherwise an empty stirng.
+     */
+    QString getCharacterById(int f_chr_id);
+
+    void renameArea(QString f_areaNewName, int f_areaIndex);
 
     /**
      * @brief Adds a new area.
@@ -136,7 +188,7 @@ class Server : public QObject {
      *
      * @param area The area in which to update the list of characters.
      */
-    void updateCharsTaken(AreaData* area);
+    void updateCharsTaken(AreaData *area);
 
     /**
      * @brief Sends a packet to all clients in a given area.
@@ -195,99 +247,112 @@ class Server : public QObject {
     int getCharID(QString char_name);
 
     /**
-     * @brief Getter for an area specific buffer from the logger.
-     */
-    QQueue<QString> getAreaBuffer(const QString& f_areaName);
-
-    /**
      * @brief Checks if an IP is in a subnet of the IPBanlist.
      **/
     bool isIPBanned(QHostAddress f_remote_IP);
 
     /**
-     * @brief The collection of all currently connected clients.
+     * @brief Getter for an area specific buffer from the logger.
      */
-    QVector<AOClient*> m_clients;
-
-    /**
-     * @brief Collection of all clients with their userID as key.
-     */
-    QHash<int,AOClient*> m_clients_ids;
-
-    /**
-     * @brief The areas on the server.
-     */
-    QVector<AreaData*> m_areas;
+    QQueue<QString> getAreaBuffer(const QString &f_areaName);
 
     /**
      * @brief The names of the areas on the server.
      *
-     * @details Equivalent to iterating over #areas and getting the area names individually, but grouped together
-     * here for faster access.
+     * @return A list of names.
+     *
      */
-    QStringList m_area_names;
+    QStringList getAreaNames();
+
+   /**
+    * @brief Returns the list of areas in the server.
+    *
+    * @return A list of areas.
+    */
+   QVector<AreaData *> getAreas();
+
 
     /**
-     * @brief Stack of all available IDs for clients. When this is empty the server
-     * rejects any new connection attempt.
+     * @brief Returns the number of areas in the server.
      */
-    QStack<int> m_available_ids;
-
-    /**
-     * @brief The overall player count in the server.
-     */
-    int m_player_count;
+    int getAreaCount();
 
     /**
      * @brief The characters available on the server to use.
-     */
-    QStringList m_characters;
-
-    /**
-     * @brief The available songs on the server.
+     * @brief Returns a pointer to the area associated with the index.
      *
-     * @details Does **not** include the area names, the actual music list packet should be constructed from
-     * #area_names and this combined.
+     * @param f_area_id The index of the area.
+     *
+     * @return A pointer to the area or null.
      */
-    QStringList m_music_list;
+    AreaData *getAreaById(int f_area_id);
 
     /**
-     * @brief The backgrounds on the server that may be used in areas.
+     * @brief Returns the name of the area associated with the index.
+     *
+     * @param f_area_id The index of the area
+     *
+     * @return The name of the area or empty.
      */
-    QStringList m_backgrounds;
+    QString getAreaName(int f_area_id);
 
     /**
-     * @brief Collection of all IPs that are banned.
+     * @brief Returns the available songs on the server.
+     *
+     * @return A list of songs.
      */
-    QStringList m_ipban_list;
+    QStringList getMusicList();
 
     /**
-     * @brief The database manager on the server, used to store users' bans and authorisation details.
+     * @brief Returns the available backgrounds on the server.
+     *
+     * @return A list of backgrounds.
      */
-    DBManager* db_manager;
+    QStringList getBackgrounds();
+
+    /**
+     * @brief Returns a pointer to a database manager.
+     *
+     * @return A pointer to a database manager.
+     */
+    DBManager *getDatabaseManager();
+
+    /**
+     * @brief Returns a pointer to ACL role handler.
+     */
+    ACLRolesHandler *getACLRolesHandler();
+
+    /**
+     * @brief Returns a pointer to a command extension collection.
+     */
+    CommandExtensionCollection *getCommandExtensionCollection();
 
     /**
      * @brief The server-wide global timer.
      */
-    QTimer* timer;
+    QTimer *timer;
 
 
-    QStringList getCursedCharsTaken(AOClient* client, QStringList chars_taken);
+    QStringList getCursedCharsTaken(AOClient *client, QStringList chars_taken);
 
     /**
-     * @brief Timer until the next IC message can be sent.
+     * @brief Returns whatever a game message may be broadcasted or not.
+     *
+     * @return True if expired; false otherwise.
      */
-    QTimer next_message_timer;
+    bool isMessageAllowed() const;
+
+    /**
+     * @brief Starts a global timer that determines whatever a game message may be broadcasted or not.
+     *
+     * @param f_duration The duration of the message floodguard timer.
+     */
+    void startMessageFloodguard(int f_duration);
 
     /**
      * @brief Attempts to parse a IPv6 mapped IPv4 to an IPv4.
      */
     QHostAddress parseToIPv4(QHostAddress f_remote_ip);
-
-    /**
-     * @brief If false, IC messages will be rejected.
-     */
-    bool can_send_ic_messages = true;
 
     /**
      * @brief Convenience class to call a reload of available configuraiton elements.
@@ -304,11 +369,12 @@ class Server : public QObject {
     void clientConnected();
 
     /**
-     * @brief Sets #can_send_messages to true.
+     * @brief Handles a new connection.
      *
-     * @details Called whenever #next_message_timer reaches 0.
+     * @details The function creates an AOClient to represent the user, assigns a user ID to them, and
+     * checks if the client is banned.
      */
-    void allowMessage();
+    void ws_clientConnected();
 
     /**
      * @brief Method to construct and reconstruct Discord Webhook Integration.
@@ -320,7 +386,19 @@ class Server : public QObject {
     /**
      * @brief Marks a userID as free and ads it back to the available client id queue.
      */
-    void markIDFree(const int& f_user_id);
+    void markIDFree(const int &f_user_id);
+
+    /**
+     * @brief Increase the current player count by one.
+     */
+    void increasePlayerCount();
+
+    /**
+     * @brief Decrease the current player count based on the client id provided.
+     *
+     * @param f_client_id The client id of the client to check.
+     */
+    void decreasePlayerCount();
 
   signals:
 
@@ -333,9 +411,11 @@ class Server : public QObject {
     void reloadRequest(QString p_name, QString p_desc);
 
     /**
-     * @brief Updates the playercount in the modern advertiser.
+     * @brief This signal is emitted whenever the current player count has changed.
+     *
+     * @param f_current_player The player count at the time the signal was emitted.
      */
-    void updatePlayerCount(int f_current_players);
+    void playerCountUpdated(int f_current_players);
 
     /**
      * @brief Triggers a partial update of the modern advertiser as some information, such as ports
@@ -351,7 +431,7 @@ class Server : public QObject {
      * @param f_reason The reason the client specified for the modcall.
      * @param f_buffer The area's log buffer.
      */
-    void modcallWebhookRequest(const QString& f_name, const QString& f_area, const QString& f_reason, const QQueue<QString>& f_buffer);
+    void modcallWebhookRequest(const QString &f_name, const QString &f_area, const QString &f_reason, const QQueue<QString> &f_buffer);
 
     /**
      * @brief Sends a ban webhook request, emitted by AOClient::cmdBan
@@ -361,57 +441,58 @@ class Server : public QObject {
      * @param f_reason The reason for the ban.
      * @param f_banID The ID of the issued ban.
      */
-    void banWebhookRequest(const QString& f_ipid, const QString& f_moderator, const QString& f_duration, const QString& f_reason, const int& f_banID);
+    void banWebhookRequest(const QString &f_ipid, const QString &f_moderator, const QString &f_duration, const QString &f_reason, const int &f_banID);
 
     /**
      * @brief Signal connected to universal logger. Logs a client connection attempt.
      * @param f_ipid The IPID of the incoming connection.
      * @param f_hdid The HDID of the incoming connection.
      */
-    void logConnectionAttempt(const QString& f_ipid, const QString& f_hwid);
+    void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
   private:
-    /**
-     * @brief Connects new AOClient to logger and disconnect handling.
-     **/
-    void hookupAOClient(AOClient* client);
 
     /**
      * @brief The proxy used for WebSocket connections.
      *
      * @see WSProxy and WSClient for an explanation as to why this is a thing.
      */
-    WSProxy* proxy;
+    WSProxy *proxy;
 
     /**
      * @brief Listens for incoming TCP connections.
      */
-    QTcpServer* server;
+    QTcpServer *server;
+
+    /**
+     * @brief Listens for incoming websocket connections.
+     */
+    QWebSocketServer *ws_server;
 
     /**
      * @brief Handles Discord webhooks.
      */
-    Discord* discord;
+    Discord *discord;
 
     /**
      * @brief Handles HTTP server advertising.
      */
-    Advertiser* ms3_Advertiser;
+    Advertiser *ms3_Advertiser;
 
     /**
      * @brief Advertises the server in a regular intervall.
      */
-    QTimer* AdvertiserTimer;
+    QTimer *AdvertiserTimer;
 
     /**
      * @brief Handles the universal log framework.
      */
-    ULogger* logger;
+    ULogger *logger;
 
     /**
      * @brief Handles all musiclists.
      */
-    MusicManager* music_manager;
+    MusicManager *music_manager;
 
     /**
      * @brief The port through which the server will accept TCP connections.
@@ -422,5 +503,99 @@ class Server : public QObject {
      * @brief The port through which the server will accept WebSocket connections.
      */
     int ws_port;
+
+    /**
+      * @brief The collection of all currently connected clients.
+      */
+     QVector<AOClient *> m_clients;
+
+     /**
+      * @brief Collection of all clients with their userID as key.
+      */
+     QHash<int, AOClient *> m_clients_ids;
+
+     /**
+      * @brief Stack of all available IDs for clients. When this is empty the server
+      * rejects any new connection attempt.
+      */
+     QStack<int> m_available_ids;
+
+     /**
+      * @brief The overall player count in the server.
+      */
+     int m_player_count;
+
+     /**
+      * @brief The characters available on the server to use.
+      */
+     QStringList m_characters;
+
+     /**
+      * @brief The areas on the server.
+      */
+     QVector<AreaData *> m_areas;
+
+     /**
+      * @brief The names of the areas on the server.
+      *
+      * @details Equivalent to iterating over #areas and getting the area names individually, but grouped together
+      * here for faster access.
+      */
+     QStringList m_area_names;
+
+     /**
+      * @brief The available songs on the server.
+      *
+      * @details Does **not** include the area names, the actual music list packet should be constructed from
+      * #area_names and this combined.
+      */
+     QStringList m_music_list;
+
+     /**
+      * @brief The backgrounds on the server that may be used in areas.
+      */
+     QStringList m_backgrounds;
+
+     /**
+      * @brief Collection of all IPs that are banned.
+      */
+     QStringList m_ipban_list;
+
+     /**
+      * @brief Timer until the next IC message can be sent.
+      */
+     QTimer *m_message_floodguard_timer;
+
+     /**
+      * @brief If false, IC messages will be rejected.
+      */
+     bool m_can_send_ic_messages = true;
+
+     /**
+      * @brief The database manager on the server, used to store users' bans and authorisation details.
+      */
+     DBManager *db_manager;
+
+     /**
+      * @see ACLRolesHandler
+      */
+     ACLRolesHandler *acl_roles_handler;
+
+     /**
+      * @see CommandExtensionCollection
+      */
+     CommandExtensionCollection *command_extension_collection;
+
+     /**
+      * @brief Connects new AOClient to logger and disconnect handling.
+      **/
+     void hookupAOClient(AOClient *client);
+
+   private slots:
+
+     /**
+      * @brief Allow game messages to be broadcasted.
+      */
+     void allowMessage();
 };
 #endif // SERVER_H

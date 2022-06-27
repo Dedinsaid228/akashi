@@ -17,12 +17,13 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #ifndef WRITER_MODCALL_H
 #define WRITER_MODCALL_H
+#include <QDateTime>
 #include <QObject>
 #include <QFile>
 #include <QDir>
-#include <QDateTime>
-#include <QTextStream>
 #include <QQueue>
+
+#include <QTextStream>
 
 
 /**
@@ -31,13 +32,16 @@
 class WriterModcall : public QObject
 {
     Q_OBJECT
-public:
+
+
+ public:
     /**
      * @brief Constructor for modcall logwriter
      *
      * @param QObject pointer to the parent object.
      */
-    WriterModcall(QObject* parent = nullptr);;
+    WriterModcall(QObject *parent = nullptr);
+    ;
 
     /**
      * @brief Deconstructor for modcall logwriter.
@@ -53,7 +57,7 @@ public:
      */
     void flush(const QString f_area_name, QQueue<QString> f_buffer);
 
-private:
+ private:
     /**
      * @brief Filename of the logfile used.
      */
@@ -65,4 +69,4 @@ private:
     QDir l_dir;
 };
 
-#endif //WRITER_MODCALL_H
+#endif // WRITER_MODCALL_H

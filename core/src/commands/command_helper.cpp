@@ -17,6 +17,11 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/area_data.h"
+#include "include/config_manager.h"
+#include "include/network/aopacket.h"
+#include "include/server.h"
+
 // This file is for functions used by various commands, defined in the command helper function category in aoclient.h
 // Be sure to register the command in the header before adding it here!
 
@@ -32,8 +37,8 @@ void AOClient::cmdDefault(int argc, QStringList argv)
 QStringList AOClient::buildAreaList(int area_idx)
 {
     QStringList entries;
-    QString area_name = server->m_area_names[area_idx];
-    AreaData* area = server->m_areas[area_idx];
+    QString area_name = server->getAreaName(area_idx);
+    AreaData *area = server->getAreaById(area_idx);
 
     if (area->playerCount() == 0)
         return entries;
@@ -41,37 +46,38 @@ QStringList AOClient::buildAreaList(int area_idx)
     entries.append("=== " + area_name + " ===");
 
     switch (area->lockStatus()) {
-        case AreaData::LockStatus::LOCKED:
-            entries.append("[LOCKED]");
-            break;
-        case AreaData::LockStatus::SPECTATABLE:
-            entries.append("[SPECTATABLE]");
-            break;
-        case AreaData::LockStatus::FREE:
-        default:
-            break;
+    case AreaData::LockStatus::LOCKED:
+        entries.append("[LOCKED]");
+        break;
+    case AreaData::LockStatus::SPECTATABLE:
+        entries.append("[SPECTATABLE]");
+        break;
+   case AreaData::LockStatus::FREE:
+   default:
+        break;
     }
 
     entries.append("[" + QString::number(area->playerCount()) + " users][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
 
-    for (AOClient* client : qAsConst(server->m_clients)) {
-        if (client->m_current_area == area_idx && client->m_joined) {
-            QString char_entry = "[" + QString::number(client->m_id) + "] " + client->m_current_char;
-            if (client->m_current_char == "")
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
+        if (l_client->m_current_area == area_idx && l_client->hasJoined()) {
+            QString char_entry = "[" + QString::number(l_client->m_id) + "] " + l_client->m_current_char;
+            if (l_client->m_current_char == "")
                 char_entry += "Spectator";
-            if (area->owners().contains(client->m_id))
+            if (area->owners().contains(l_client->m_id))
                 char_entry.insert(0, "[CM]");
-            if (client->m_showname != "")
-                char_entry += " (" + client->m_showname + ")";
-            if (client->m_pos != "" && client->m_current_char != "")
-                char_entry += " <" + client->m_pos + "> ";
+            if (l_client->m_showname != "")
+                char_entry += " (" + l_client->m_showname + ")";
+            if (l_client->m_pos != "" && l_client->m_current_char != "")
+                char_entry += " <" + l_client->m_pos + "> ";
             if (m_authenticated)
-                char_entry += " (" + client->getIpid() + "): " + client->m_ooc_name;
+                char_entry += " (" + l_client->getIpid() + "): " + l_client->m_ooc_name;
             if (!m_authenticated && area->owners().contains(m_id))
-                char_entry += ": " + client->m_ooc_name;
-            if (client->m_authenticated && !client->m_sneak_mod)
+                char_entry += ": " + l_client->m_ooc_name;
+            if (l_client->m_authenticated && !l_client->m_sneak_mod)
                char_entry.insert(0, "[M]");
-            if (client->m_is_afk)
+            if (l_client->m_is_afk)
                 char_entry.insert(0, "[AFK]");
             entries.append(char_entry);
         }
@@ -123,8 +129,8 @@ void AOClient::diceThrower(int argc, QStringList argv, bool p_roll)
 
 QString AOClient::getAreaTimer(int area_idx, int timer_idx)
 {
-    AreaData* l_area = server->m_areas[area_idx];
-    QTimer* l_timer;
+    AreaData *l_area = server->getAreaById(area_idx);
+    QTimer *l_timer;
     QString l_timer_name = (timer_idx == 0) ? "Global timer" : "Timer " + QString::number(timer_idx);
 
     if (timer_idx == 0)
@@ -135,7 +141,7 @@ QString AOClient::getAreaTimer(int area_idx, int timer_idx)
         return "Invalid timer ID.";
 
     if (l_timer->isActive()) {
-        QTime current_time = QTime(0,0).addMSecs(l_timer->remainingTime());
+        QTime current_time = QTime(0, 0).addMSecs(l_timer->remainingTime());
 
         return l_timer_name + " is at " + current_time.toString("hh:mm:ss.zzz");
     }
@@ -243,7 +249,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     else
         server->broadcast(l_packet, m_current_area);
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NOTICE",f_notice,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NOTICE",f_notice,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::playMusic(QStringList f_args, bool f_once)
@@ -259,9 +265,9 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     }
 
     m_last_music_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
 
-    if (l_area->isMusicAllowed() == false && !checkAuth(ACLFlags.value("CM"))) {
+    if (l_area->isMusicAllowed() == false && !checkPermission(ACLRole::CM)) {
         sendServerMessage("Music is disabled in this area.");
         return;
     }
@@ -289,7 +295,7 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     AOPacket music_change("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
     server->broadcast(music_change, m_current_area);
     l_area->changeMusic(l_sender_name, l_song);
-    emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->m_areas[m_current_area]->name(),l_song, QString::number(m_id), m_hwid);
+    emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->getAreaById(m_current_area)->name(),l_song, QString::number(m_id), m_hwid);
 }
 
 QString AOClient::getSenderName(int f_uid)
@@ -306,7 +312,7 @@ QString AOClient::getSenderName(int f_uid)
 
 QString AOClient::getEviMod(int f_area)
 {
-    AreaData* l_area = server->m_areas[f_area];
+    AreaData* l_area = server->getAreaById(f_area);
 
     switch (l_area->eviMod()) {
     case AreaData::EvidenceMod::FFA:

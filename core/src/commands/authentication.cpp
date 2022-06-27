@@ -17,6 +17,10 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/config_manager.h"
+#include "include/db_manager.h"
+#include "include/server.h"
+
 // This file is for commands under the authentication category in aoclient.h
 // Be sure to register the command in the header before adding it here!
 
@@ -38,14 +42,15 @@ void AOClient::cmdLogin(int argc, QStringList argv)
             sendPacket("AUTH", {"1"}); // Client: "You were granted the Disable Modcalls button."
             sendServerMessage("Logged in as a moderator."); // pre-2.9.1 clients are hardcoded to display the mod UI when this string is sent in OOC
             m_authenticated = true;
+            m_acl_role_id = ACLRolesHandler::SUPER_ID;
         }
         else {
             sendPacket("AUTH", {"0"}); // Client: "Login unsuccessful."
             sendServerMessage("Incorrect password.");
         }
 
-        emit logLogin((m_current_char + " " + m_showname),m_ooc_name,"Moderator", m_ipid, server->m_areas.value(m_current_area)->name(),m_authenticated, QString::number(m_id), m_hwid);
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"login","Moderator",server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+        emit logLogin((m_current_char + " " + m_showname),m_ooc_name,"Moderator", m_ipid, server->getAreaName(m_current_area),m_authenticated, QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"login","Moderator",server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
         break;
     }
     case DataTypes::AuthType::ADVANCED: {
@@ -58,9 +63,10 @@ void AOClient::cmdLogin(int argc, QStringList argv)
         QString l_username = argv[0];
         QString l_password = argv[1];
 
-        if (server->db_manager->authenticate(l_username, l_password)) {
+        if (server->getDatabaseManager()->authenticate(l_username, l_password)) {
             m_moderator_name = l_username;
             m_authenticated = true;
+            m_acl_role_id = server->getDatabaseManager()->getACL(l_username);
             sendPacket("AUTH", {"1"}); // Client: "You were granted the Disable Modcalls button."
 
             if (m_version.release <= 2 && m_version.major <= 9 && m_version.minor <= 0)
@@ -73,8 +79,8 @@ void AOClient::cmdLogin(int argc, QStringList argv)
             sendServerMessage("Incorrect password.");
         }
 
-        emit logLogin((m_current_char + " " + m_showname),m_ooc_name, l_username, m_ipid, server->m_areas.value(m_current_area)->name(),m_authenticated, QString::number(m_id), m_hwid);
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"login",l_username,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+        emit logLogin((m_current_char + " " + m_showname),m_ooc_name, l_username, m_ipid, server->getAreaName(m_current_area),m_authenticated, QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"login",l_username,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
         break;
     }
     default: {
@@ -122,8 +128,8 @@ void AOClient::cmdSetRootPass(int argc, QStringList argv)
 
     QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
 
-    server->db_manager->createUser("root", l_salt, argv[0], ACLFlags.value("SUPER"));
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"rootpass",argv[0],server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    server->getDatabaseManager()->createUser("root", l_salt, argv[0], ACLRolesHandler::SUPER_ID);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"rootpass",argv[0],server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdAddUser(int argc, QStringList argv)
@@ -146,9 +152,9 @@ void AOClient::cmdAddUser(int argc, QStringList argv)
 
     QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
 
-    if (server->db_manager->createUser(argv[0], l_salt, argv[1], ACLFlags.value("NONE"))) {
-        sendServerMessage("Created user " + argv[0] + ".\nUse /addperm to modify their permissions.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"rootpass",argv[0],server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    if (server->getDatabaseManager()->createUser(argv[0], l_salt, argv[1], ACLRolesHandler::NONE_ID)) {
+            sendServerMessage("Created user " + argv[0] + ".\nUse /addperm to modify their permissions.");
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"rootpass",argv[0],server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
     else
         sendServerMessage("Unable to create user " + argv[0] + ".\nDoes a user with that name already exist?");
@@ -158,9 +164,9 @@ void AOClient::cmdRemoveUser(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    if (server->db_manager->deleteUser(argv[0])) {
+    if (server->getDatabaseManager()->deleteUser(argv[0])) {
         sendServerMessage("Successfully removed user " + argv[0] + ".");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"REMOVEUSER",argv[0],server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"REMOVEUSER",argv[0],server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
     else
         sendServerMessage("Unable to remove user " + argv[0] + ".\nDoes it exist?");
@@ -168,130 +174,76 @@ void AOClient::cmdRemoveUser(int argc, QStringList argv)
 
 void AOClient::cmdListPerms(int argc, QStringList argv)
 {
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
+    const ACLRole l_role = server->getACLRolesHandler()->getRoleById(m_acl_role_id);
+
+    ACLRole l_target_role = l_role;
+    qDebug() << m_acl_role_id;
     QStringList l_message;
-    const QStringList l_keys = ACLFlags.keys();
 
     if (argc == 0) {
-        // Just print out all permissions available to the user.
         l_message.append("You have been given the following permissions:");
-        for (const QString &l_perm : l_keys) {
-            if (l_perm == "NONE"); // don't need to list this one
-            else if (l_perm == "SUPER") {
-                if (l_user_acl == ACLFlags.value("SUPER")) // This has to be checked separately, because SUPER & anything will always be truthy
-                    l_message.append("SUPER (Be careful! This grants the user all permissions.)");
-            }
-            else if ((ACLFlags.value(l_perm) & l_user_acl) == 0); // user doesn't have this permission, don't print it
-            else
-                l_message.append(l_perm);
-        }
     }
     else {
-        if ((l_user_acl & ACLFlags.value("MODIFY_USERS")) == 0) {
+        if (!l_role.checkPermission(ACLRole::MODIFY_USERS)) {
             sendServerMessage("You do not have permission to view other users' permissions.");
             return;
         }
 
         l_message.append("User " + argv[0] + " has the following permissions:");
-        unsigned long long l_acl = server->db_manager->getACL(argv[0]);
-        if (l_acl == 0) {
-            sendServerMessage("This user either doesn't exist, or has no permissions set.");
-            return;
-        }
+        l_target_role = server->getACLRolesHandler()->getRoleById(argv[0]);
+    }
 
-        for (const QString &l_perm : l_keys) {
-            if ((ACLFlags.value(l_perm) & l_acl) != 0 && l_perm != "SUPER") {
-                l_message.append(l_perm);
-            }
+    if (l_target_role.getPermissions() == ACLRole::NONE) {
+        l_message.append("NONE");
+    }
+    else if (l_target_role.checkPermission(ACLRole::SUPER)) {
+        l_message.append("SUPER (Be careful! This grants the user all permissions.)");
+    }
+    else {
+        const QList<ACLRole::Permission> l_permissions = ACLRole::PERMISSION_CAPTIONS.keys();
+        for (const ACLRole::Permission i_permission : l_permissions) {
+            if (l_target_role.checkPermission(i_permission)) {
+                l_message.append(ACLRole::PERMISSION_CAPTIONS.value(i_permission));
         }
+      }
     }
 
     sendServerMessage(l_message.join("\n"));
 }
 
-void AOClient::cmdAddPerms(int argc, QStringList argv)
+void AOClient::cmdSetPerms(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
-    argv[1] = argv[1].toUpper();
-    const QStringList l_keys = ACLFlags.keys();
-
-    if (!l_keys.contains(argv[1])) {
-        sendServerMessage("That permission doesn't exist!");
+    const QString l_target_acl = argv[1];
+    if (!server->getACLRolesHandler()->roleExists(l_target_acl)) {
+        sendServerMessage("That role doesn't exist!");
         return;
     }
 
-    if (argv[1] == "SUPER") {
-        if (l_user_acl != ACLFlags.value("SUPER")) {
-            // This has to be checked separately, because SUPER & anything will always be truthy
-            sendServerMessage("You aren't allowed to add that permission!");
-            return;
-        }
-    }
-    if (argv[1] == "NONE") {
-        sendServerMessage("Added no permissions!");
+    if (l_target_acl == ACLRolesHandler::SUPER_ID && !checkPermission(ACLRole::SUPER)) {
+        sendServerMessage("You aren't allowed to set that role!");
         return;
     }
 
-    unsigned long long l_newperm = ACLFlags.value(argv[1]);
-
-    if ((l_newperm & l_user_acl) != 0) {
-        if (server->db_manager->updateACL(argv[0], l_newperm, true)) {
-            sendServerMessage("Successfully added permission " + argv[1] + " to user " + argv[0]);
-            emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"ADDPERMS","User: " + argv[0] + ". Perm.: " + argv[1],server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
-        }
-        else
-            sendServerMessage(argv[0] + " wasn't found!");
+    const QString l_target_username = argv[0];
+    if (l_target_username == "root") {
+        sendServerMessage("You can't change root's role!");
         return;
     }
 
-    sendServerMessage("You aren't allowed to add that permission!");
+    if (server->getDatabaseManager()->updateACL(l_target_username, l_target_acl)) {
+        sendServerMessage("Successfully applied role " + l_target_acl + " to user " + l_target_username);
+    }
+    else {
+        sendServerMessage(l_target_username + " wasn't found!");
+    }
 }
 
 void AOClient::cmdRemovePerms(int argc, QStringList argv)
 {
-    Q_UNUSED(argc);
-
-    unsigned long long l_user_acl = server->db_manager->getACL(m_moderator_name);
-    argv[1] = argv[1].toUpper();
-    const QStringList l_keys = ACLFlags.keys();
-
-    if (!l_keys.contains(argv[1])) {
-        sendServerMessage("That permission doesn't exist!");
-        return;
-    }
-
-    if (argv[0] == "root") {
-        sendServerMessage("You cannot change the permissions of the root account!");
-        return;
-    }
-
-    if (argv[1] == "SUPER") {
-        if (l_user_acl != ACLFlags.value("SUPER")) {
-            // This has to be checked separately, because SUPER & anything will always be truthy
-            sendServerMessage("You aren't allowed to remove that permission!");
-            return;
-        }
-    }
-    if (argv[1] == "NONE") {
-        sendServerMessage("Removed no permissions!");
-        return;
-    }
-
-    unsigned long long l_newperm = ACLFlags.value(argv[1]);
-
-    if ((l_newperm & l_user_acl) != 0) {
-        if (server->db_manager->updateACL(argv[0], l_newperm, false)) {
-            sendServerMessage("Successfully removed permission " + argv[1] + " from user " + argv[0]);
-            emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"REMOVEPERMS","User: " + argv[0] + ". Perm.: " + argv[1],server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
-        }
-        else
-            sendServerMessage(argv[0] + " wasn't found!");
-        return;
-    }
-
-    sendServerMessage("You aren't allowed to remove that permission!");
+    argv.append(ACLRolesHandler::NONE_ID);
+    cmdSetPerms(argc, argv);
 }
 
 void AOClient::cmdListUsers(int argc, QStringList argv)
@@ -299,7 +251,7 @@ void AOClient::cmdListUsers(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    QStringList l_users = server->db_manager->getUsers();
+    QStringList l_users = server->getDatabaseManager()->getUsers();
 
     sendServerMessage("All users:\n" + l_users.join("\n"));
 }
@@ -315,15 +267,16 @@ void AOClient::cmdLogout(int argc, QStringList argv)
     }
 
     m_authenticated = false;
+    m_acl_role_id = "";
     m_moderator_name = "";
     sendPacket("AUTH", {"-1"}); // Client: "You were logged out."
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"LOGOUT","",server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"LOGOUT","",server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdChangePassword(int argc, QStringList argv)
 {
     QString l_username;
-    QString l_password;
+    QString l_password = argv[0];
 
     if (argc == 1) {
         if (m_moderator_name.isEmpty()) {
@@ -332,9 +285,8 @@ void AOClient::cmdChangePassword(int argc, QStringList argv)
         }
 
         l_username = m_moderator_name;
-        l_password = argv[0];
     }
-    else if (argc == 2 && checkAuth(ACLFlags.value("SUPER"))) {
+    else if (argc == 2 && checkPermission(ACLRole::SUPER)) {
         l_username = argv[0];
         l_password = argv[1];
     }
@@ -348,9 +300,9 @@ void AOClient::cmdChangePassword(int argc, QStringList argv)
         return;
     }
 
-    if (server->db_manager->updatePassword(l_username, l_password)) {
+    if (server->getDatabaseManager()->updatePassword(l_username, l_password)) {
         sendServerMessage("Successfully changed password.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CHANGEPASSWORD","User: " + l_username + ". Password: " + l_password,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CHANGEPASSWORD","User: " + l_username + ". Password: " + l_password,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
     else {
         sendServerMessage("There was an error changing the password.");

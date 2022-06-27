@@ -17,6 +17,11 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/area_data.h"
+#include "include/config_manager.h"
+#include "include/network/aopacket.h"
+#include "include/server.h"
+
 // This file is for commands under the roleplay category in aoclient.h
 // Be sure to register the command in the header before adding it here!
 
@@ -44,7 +49,7 @@ void AOClient::cmdRollP(int argc, QStringList argv)
 
 void AOClient::cmdTimer(int argc, QStringList argv)
 {
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
 
     // Called without arguments
     // Shows a brief of all timers
@@ -83,7 +88,7 @@ void AOClient::cmdTimer(int argc, QStringList argv)
     // Check against permissions if global timer is selected
     QTimer* l_requested_timer;
     if (l_timer_id == 0) {
-        if (!checkAuth(ACLFlags.value("GLOBAL_TIMER"))) {
+        if (!checkPermission(ACLRole::GLOBAL_TIMER)) {
             sendServerMessage("You are not authorized to alter the global timer.");
             return;
         }
@@ -140,7 +145,7 @@ void AOClient::cmdNoteCard(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
     QString l_notecard = argv.join(" ");
     QString l_sender_name = getSenderName(m_id);
 
@@ -153,7 +158,7 @@ void AOClient::cmdNoteCardClear(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
     QString l_sender_name = getSenderName(m_id);
 
     if (!l_area->addNotecard(m_current_char, QString()))
@@ -165,7 +170,7 @@ void AOClient::cmdNoteCardReveal(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
     const QStringList l_notecards = l_area->getNotecards();
 
     if (l_notecards.isEmpty()) {
@@ -203,7 +208,8 @@ void AOClient::cmdSubTheme(int argc, QStringList argv)
 
     QString l_subtheme = argv.join(" ");
 
-    for (AOClient* l_client : qAsConst(server->m_clients)) {
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
         if (l_client->m_current_area == m_current_area)
             l_client->sendPacket("ST", {l_subtheme, "1"});
     }

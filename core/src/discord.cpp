@@ -17,7 +17,9 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/discord.h"
 
-Discord::Discord(QObject* parent) :
+#include "include/config_manager.h"
+
+Discord::Discord(QObject *parent) :
     QObject(parent)
 {
 

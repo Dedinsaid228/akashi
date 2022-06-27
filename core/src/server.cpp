@@ -17,22 +17,38 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/server.h"
 
-Server::Server(int p_port, int p_ws_port, QObject* parent) :
+#include "include/acl_roles_handler.h"
+#include "include/advertiser.h"
+#include "include/aoclient.h"
+#include "include/area_data.h"
+#include "include/command_extension.h"
+#include "include/config_manager.h"
+#include "include/db_manager.h"
+#include "include/discord.h"
+#include "include/logger/u_logger.h"
+#include "include/music_manager.h"
+#include "include/network/aopacket.h"
+#include "include/network/network_socket.h"
+
+Server::Server(int p_port, int p_ws_port, QObject *parent) :
     QObject(parent),
-    m_player_count(0),
     port(p_port),
-    ws_port(p_ws_port)
+    ws_port(p_ws_port),
+    m_player_count(0)
 {
     server = new QTcpServer(this);
-    connect(server, SIGNAL(newConnection()), this, SLOT(clientConnected()));
+    connect(server, &QTcpServer::newConnection, this, &Server::clientConnected);
 
-    proxy = new WSProxy(port, ws_port, this);
-    if(ws_port != -1)
-        proxy->start();
+    timer = new QTimer(this);
 
-    timer = new QTimer();
+    db_manager = new DBManager;
 
-    db_manager = new DBManager();
+    acl_roles_handler = new ACLRolesHandler(this);
+    acl_roles_handler->loadFile("config/acl_roles.ini");
+
+    command_extension_collection = new CommandExtensionCollection;
+    command_extension_collection->setCommandNameWhitelist(AOClient::COMMANDS.keys());
+    command_extension_collection->loadFile("config/command_extensions.ini");
 
     //We create it, even if its not used later on.
     discord = new Discord(this);
@@ -63,6 +79,19 @@ void Server::start()
     else {
         qDebug() << "Server listening on" << port;
     }
+
+    // Enable WebAO
+    if (ConfigManager::webaoEnabled()) {
+        ws_server = new QWebSocketServer("Akashi", QWebSocketServer::NonSecureMode, this);
+        if (!ws_server->listen(bind_addr, ConfigManager::webaoPort())) {
+            qDebug() << "Websocket Server error:" << ws_server->errorString();
+        }
+        else {
+            connect(ws_server, &QWebSocketServer::newConnection,
+                    this, &Server::ws_clientConnected);
+            qInfo() << "Websocket Server listening on" << ConfigManager::webaoPort();
+        }
+    }
     
     //Checks if any Discord webhooks are enabled.
     handleDiscordIntegration();
@@ -72,13 +101,10 @@ void Server::start()
         AdvertiserTimer = new QTimer(this);
         ms3_Advertiser = new Advertiser();
 
-        connect(AdvertiserTimer, &QTimer::timeout,
-                ms3_Advertiser, &Advertiser::msAdvertiseServer);
-        connect(this, &Server::updatePlayerCount,
-                ms3_Advertiser, &Advertiser::updatePlayerCount);
-        connect(this, &Server::updateHTTPConfiguration,
-                ms3_Advertiser, &Advertiser::updateAdvertiserSettings);
-        emit updatePlayerCount(m_player_count);
+        connect(AdvertiserTimer, &QTimer::timeout, ms3_Advertiser, &Advertiser::msAdvertiseServer);
+        connect(this, &Server::playerCountUpdated, ms3_Advertiser, &Advertiser::updatePlayerCount);
+        connect(this, &Server::updateHTTPConfiguration, ms3_Advertiser, &Advertiser::updateAdvertiserSettings);
+        emit playerCountUpdated(m_player_count);
         ms3_Advertiser->msAdvertiseServer();
         AdvertiserTimer->start(300000);
     }
@@ -91,11 +117,9 @@ void Server::start()
 
     //Build our music manager.
     ConfigManager::musiclist();
-    music_manager = new MusicManager(this, ConfigManager::ordered_songs(), ConfigManager::cdnList());
-    connect(music_manager, &MusicManager::sendFMPacket,
-            this, &Server::unicast);
-    connect(music_manager, &MusicManager::sendAreaFMPacket,
-            this, QOverload<AOPacket,int>::of(&Server::broadcast));
+    music_manager = new MusicManager(ConfigManager::ordered_songs(), ConfigManager::cdnList(), ConfigManager::musiclist(), this);
+    connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
+    connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<AOPacket, int>::of(&Server::broadcast));
 
     //Get musiclist from config file
     m_music_list = music_manager->rootMusiclist();
@@ -121,14 +145,25 @@ void Server::start()
     //Get IP bans
     m_ipban_list = ConfigManager::iprangeBans();
 
-    //Rate-Limiter for IC-Chat
-    connect(&next_message_timer, &QTimer::timeout, this, &Server::allowMessage);
+    // Rate-Limiter for IC-Chat
+    m_message_floodguard_timer = new QTimer(this);
+    connect(m_message_floodguard_timer, &QTimer::timeout, this, &Server::allowMessage);
 
     //Prepare player IDs and reference hash.
     for (int i = ConfigManager::maxPlayers() -1; i >= 0; i--){
         m_available_ids.push(i);
         m_clients_ids.insert(i, nullptr);
     }
+}
+
+QVector<AOClient *> Server::getClients()
+{
+    return m_clients;
+}
+
+void Server::renameArea(QString f_areaNewName, int f_areaIndex)
+{
+    m_area_names[f_areaIndex] = f_areaNewName;
 }
 
 void Server::addArea(QString f_areaName, int f_areaIndex)
@@ -183,7 +218,10 @@ void Server::clientConnected()
     }
 
     int user_id = m_available_ids.pop();
-    AOClient* client = new AOClient(this, socket, this, user_id, music_manager);
+    // The parent hierachry looks like this :
+    // QTcpSocket -> NetworkSocket -> AOClient
+    NetworkSocket *l_socket = new NetworkSocket(socket, socket);
+    AOClient *client = new AOClient(this, l_socket, l_socket, user_id, music_manager);
     m_clients_ids.insert(user_id, client);
 
     int multiclient_count = 1;
@@ -234,14 +272,15 @@ void Server::clientConnected()
 
     m_clients.append(client);
 
-    connect(socket, &QTcpSocket::disconnected, client,
-            &AOClient::clientDisconnected);
-    connect(socket, &QTcpSocket::disconnected, this, [=] {
+    connect(l_socket, &NetworkSocket::clientDisconnected, this, [=] {
+        if (client->hasJoined()) {
+            decreasePlayerCount();
+        }
         m_clients.removeAll(client);
         client->deleteLater();
     });
 
-    connect(socket, &QTcpSocket::readyRead, client, &AOClient::clientData);
+    connect(l_socket, &NetworkSocket::handlePacket, client, &AOClient::handlePacket);
 
     AOPacket decryptor("decryptor", {"NOENCRYPT"}); // This is the infamous workaround for
                                                     // tsuserver4. It should disable fantacrypt
@@ -252,6 +291,86 @@ void Server::clientConnected()
 #ifdef NET_DEBUG
     qDebug() << client->m_remote_ip.toString() << "connected";
 #endif
+}
+
+void Server::ws_clientConnected()
+{
+    QWebSocket *socket = ws_server->nextPendingConnection();
+    NetworkSocket *l_socket = new NetworkSocket(socket, socket);
+
+    // Too many players. Reject connection!
+    // This also enforces the maximum playercount.
+    if (m_available_ids.empty()) {
+        AOPacket disconnect_reason("BD", {"Maximum playercount has been reached."});
+        l_socket->write(disconnect_reason);
+        l_socket->close();
+        l_socket->deleteLater();
+        return;
+    }
+
+    int user_id = m_available_ids.pop();
+    AOClient *client = new AOClient(this, l_socket, l_socket, user_id, music_manager);
+    m_clients_ids.insert(user_id, client);
+
+    int multiclient_count = 1;
+    bool is_at_multiclient_limit = false;
+    client->calculateIpid();
+    client->clientConnected();
+    auto ban = db_manager->isIPBanned(client->getIpid());
+    bool is_banned = ban.first;
+    for (AOClient *joined_client : qAsConst(m_clients)) {
+        if (client->m_remote_ip.isEqual(joined_client->m_remote_ip))
+            multiclient_count++;
+    }
+
+    if (multiclient_count > ConfigManager::multiClientLimit() && !client->m_remote_ip.isLoopback())
+        is_at_multiclient_limit = true;
+
+    if (is_banned) {
+        QString reason = ban.second;
+        AOPacket ban_reason("BD", {reason});
+        socket->sendTextMessage(ban_reason.toUtf8());
+    }
+    if (is_banned || is_at_multiclient_limit) {
+        client->deleteLater();
+        l_socket->close(QWebSocketProtocol::CloseCodeNormal);
+        markIDFree(user_id);
+        return;
+    }
+
+    QHostAddress l_remote_ip = client->m_remote_ip;
+    if (l_remote_ip.protocol() == QAbstractSocket::IPv6Protocol) {
+        l_remote_ip = parseToIPv4(l_remote_ip);
+    }
+
+    if (isIPBanned(l_remote_ip)) {
+        QString l_reason = "Your IP has been banned by a moderator.";
+        AOPacket l_ban_reason("BD", {l_reason});
+        l_socket->write(l_ban_reason);
+        client->deleteLater();
+        l_socket->close(QWebSocketProtocol::CloseCodeNormal);
+        markIDFree(user_id);
+        return;
+    }
+
+    m_clients.append(client);
+    connect(l_socket, &NetworkSocket::clientDisconnected, this, [=] {
+        if (client->hasJoined()) {
+            decreasePlayerCount();
+        }
+        m_clients.removeAll(client);
+        l_socket->deleteLater();
+    });
+    connect(l_socket, &NetworkSocket::handlePacket, client, &AOClient::handlePacket);
+
+    AOPacket decryptor("decryptor", {"NOENCRYPT"}); // This is the infamous workaround for
+                                                    // tsuserver4. It should disable fantacrypt
+                                                    // completely in any client 2.4.3 or newer
+    client->sendPacket(decryptor);
+    hookupAOClient(client);
+
+    if (ConfigManager::webUsersSpectableOnly() == true)
+        client->m_wuso = true;
 }
 
 void Server::updateCharsTaken(AreaData* area)
@@ -293,6 +412,17 @@ QStringList Server::getCursedCharsTaken(AOClient* client, QStringList chars_take
     return chars_taken_cursed;
 }
 
+bool Server::isMessageAllowed() const
+{
+    return m_can_send_ic_messages;
+}
+
+void Server::startMessageFloodguard(int f_duration)
+{
+    m_can_send_ic_messages = false;
+    m_message_floodguard_timer->start(f_duration);
+}
+
 QHostAddress Server::parseToIPv4(QHostAddress f_remote_ip)
 {
     bool l_ok;
@@ -312,6 +442,8 @@ void Server::reloadSettings()
     handleDiscordIntegration();
     logger->loadLogtext();
     m_ipban_list = ConfigManager::iprangeBans();
+    acl_roles_handler->loadFile("config/acl_roles.ini");
+    command_extension_collection->loadFile("config/command_extensions.ini");
 }
 
 void Server::broadcast(AOPacket packet, int area_index)
@@ -336,7 +468,7 @@ void Server::broadcast(AOPacket packet, TARGET_TYPE target)
     for (AOClient* l_client : qAsConst(m_clients)) {
         switch (target) {
         case TARGET_TYPE::MODCHAT:
-            if (l_client->checkAuth(l_client->ACLFlags.value("MODCHAT"))) {
+            if (l_client->checkPermission(ACLRole::MODCHAT)) {
                 l_client->sendPacket(packet);
             }
             break;
@@ -356,7 +488,7 @@ void Server::broadcast(AOPacket packet, AOPacket other_packet, TARGET_TYPE targe
     switch (target) {
     case TARGET_TYPE::AUTHENTICATED:
         for (AOClient* client : qAsConst(m_clients)){
-            if (client->m_authenticated) {
+            if (client->isAuthenticated()) {
                 client->sendPacket(other_packet);
             }
             else {
@@ -390,10 +522,48 @@ QList<AOClient*> Server::getClientsByIpid(QString ipid)
     return return_clients;
 }
 
+QList<AOClient *> Server::getClientsByHwid(QString f_hwid)
+{
+    QList<AOClient *> return_clients;
+    for (AOClient *l_client : qAsConst(m_clients)) {
+        if (l_client->getHwid() == f_hwid)
+            return_clients.append(l_client);
+    }
+    return return_clients;
+}
+
+
 AOClient* Server::getClientByID(int id)
 {
     return m_clients_ids.value(id);
 }
+
+int Server::getPlayerCount()
+{
+    return m_player_count;
+}
+
+QStringList Server::getCharacters()
+{
+    return m_characters;
+}
+
+int Server::getCharacterCount()
+{
+    return m_characters.length();
+}
+
+QString Server::getCharacterById(int f_chr_id)
+{
+    QString l_chr;
+
+    if (f_chr_id >= 0 && f_chr_id < m_characters.length()) {
+        l_chr = m_characters.at(f_chr_id);
+    }
+
+    return l_chr;
+}
+
 
 int Server::getCharID(QString char_name)
 {
@@ -406,14 +576,77 @@ int Server::getCharID(QString char_name)
     return -1; // character does not exist
 }
 
-  QQueue<QString> Server::getAreaBuffer(const QString &f_areaName)
-  {
-      return logger->buffer(f_areaName);
-  }
+QVector<AreaData *> Server::getAreas()
+{
+    return m_areas;
+}
+
+int Server::getAreaCount()
+{
+    return m_areas.length();
+}
+
+AreaData *Server::getAreaById(int f_area_id)
+{
+    AreaData *l_area = nullptr;
+
+    if (f_area_id >= 0 && f_area_id < m_areas.length()) {
+        l_area = m_areas.at(f_area_id);
+    }
+
+    return l_area;
+}
+
+QQueue<QString> Server::getAreaBuffer(const QString &f_areaName)
+{
+    return logger->buffer(f_areaName);
+}
+
+QStringList Server::getAreaNames()
+{
+    return m_area_names;
+}
+
+QString Server::getAreaName(int f_area_id)
+{
+    QString l_name;
+
+    if (f_area_id >= 0 && f_area_id < m_area_names.length()) {
+        l_name = m_area_names.at(f_area_id);
+    }
+
+    return l_name;
+}
+
+QStringList Server::getMusicList()
+{
+    return m_music_list;
+}
+
+QStringList Server::getBackgrounds()
+{
+    return m_backgrounds;
+}
+
+DBManager *Server::getDatabaseManager()
+{
+    return db_manager;
+}
+
+ACLRolesHandler *Server::getACLRolesHandler()
+{
+    return acl_roles_handler;
+}
+
+CommandExtensionCollection *Server::getCommandExtensionCollection()
+{
+    return command_extension_collection;
+}
+
 
 void Server::allowMessage()
 {
-    can_send_ic_messages = true;
+    m_can_send_ic_messages = true;
 }
 
 void Server::handleDiscordIntegration()
@@ -444,32 +677,32 @@ void Server::markIDFree(const int &f_user_id)
     m_clients_ids.insert(f_user_id, nullptr);
 }
 
-void Server::hookupAOClient(AOClient* client)
+void Server::hookupAOClient(AOClient *client)
 {
-    connect(client, &AOClient::logIC,
-            logger, &ULogger::logIC);
-    connect(client, &AOClient::logOOC,
-            logger, &ULogger::logOOC);
-    connect(client, &AOClient::logLogin,
-            logger, &ULogger::logLogin);
-    connect(client, &AOClient::logCMD,
-            logger, &ULogger::logCMD);
-    connect(client, &AOClient::logBan,
-            logger, &ULogger::logBan);
-    connect(client, &AOClient::logKick,
-            logger, &ULogger::logKick);
-    connect(client, &AOClient::logModcall,
-            logger, &ULogger::logModcall);
-    connect(client, &AOClient::clientSuccessfullyDisconnected,
-            this,   &Server::markIDFree);
-    connect(client, &AOClient::logDisconnect,
-            logger, &ULogger::logDisconnect);
-    connect(client, &AOClient::logMusic,
-            logger, &ULogger::logMusic);
-    connect(client, &AOClient::logChangeChar,
-            logger, &ULogger::logChangeChar);
-    connect(client, &AOClient::logChangeArea,
-            logger, &ULogger::logChangeArea);
+    connect(client, &AOClient::logIC, logger, &ULogger::logIC);
+    connect(client, &AOClient::logOOC, logger, &ULogger::logOOC);
+    connect(client, &AOClient::logLogin, logger, &ULogger::logLogin);
+    connect(client, &AOClient::logCMD, logger, &ULogger::logCMD);
+    connect(client, &AOClient::logBan, logger, &ULogger::logBan);
+    connect(client, &AOClient::logKick, logger, &ULogger::logKick);
+    connect(client, &AOClient::logModcall, logger, &ULogger::logModcall);
+    connect(client, &AOClient::clientSuccessfullyDisconnected, this, &Server::markIDFree);
+    connect(client, &AOClient::logDisconnect, logger, &ULogger::logDisconnect);
+    connect(client, &AOClient::logMusic, logger, &ULogger::logMusic);
+    connect(client, &AOClient::logChangeChar, logger, &ULogger::logChangeChar);
+    connect(client, &AOClient::logChangeArea, logger, &ULogger::logChangeArea);
+}
+
+void Server::increasePlayerCount()
+{
+    m_player_count++;
+    emit playerCountUpdated(m_player_count);
+}
+
+void Server::decreasePlayerCount()
+{
+    m_player_count--;
+    emit playerCountUpdated(m_player_count);
 }
 
 bool Server::isIPBanned(QHostAddress f_remote_IP)
@@ -491,8 +724,8 @@ Server::~Server()
     }
 
     server->deleteLater();
-    proxy->deleteLater();
     discord->deleteLater();
+    acl_roles_handler->deleteLater();
 
     delete db_manager;
 }

@@ -20,23 +20,24 @@
 
 #define CONFIG_VERSION 1
 
-#include "data_types.h"
-
 #include <QDebug>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QHostAddress>
+#include <QMetaEnum>
 #include <QSettings>
 #include <QUrl>
-#include <QMetaEnum>
-#include <QElapsedTimer>
-#include <QHostAddress>
 
-typedef QMap<QString,QPair<QString,int>> MusicList;
+#include "include/data_types.h"
+#include "include/typedefs.h"
+
 /**
  * @brief The config file handler class.
  */
-class ConfigManager {
+class ConfigManager
+{
 
   public:
     /**
@@ -220,6 +221,13 @@ class ConfigManager {
      * @return See short description.
      */
     static int messageFloodguard();
+
+    /**
+     * @brief Returns the duration of the global message floodguard.
+     *
+     * @return See short description.
+     */
+    static int globalMessageFloodguard();
 
     /**
      * @brief Returns the URL where the server should retrieve remote assets from.
@@ -437,6 +445,12 @@ class ConfigManager {
     static QString advertiserHostname();
 
     /**
+     * @brief Returns a dummy port instead of the real port
+     * @return
+     */
+    static bool advertiserCloudflareMode();
+
+    /**
      * @brief Returns the uptime of the server in miliseconds.
      */
     static qint64 uptime();
@@ -476,7 +490,7 @@ class ConfigManager {
     static void reloadSettings();
 
 
-private:
+ private:
     /**
      * @brief Checks if a file exists and is valid.
      *
@@ -484,7 +498,7 @@ private:
      *
      * @return True if the file exists and is valid, false otherwise.
      */
-    static bool fileExists(const QFileInfo& file);
+    static bool fileExists(const QFileInfo &file);
 
     /**
      * @brief Checks if a directory exists and is valid.
@@ -493,31 +507,32 @@ private:
      *
      * @return True if the directory exists and is valid, false otherwise.
      */
-    static bool dirExists(const QFileInfo& dir);
+    static bool dirExists(const QFileInfo &dir);
 
     /**
      * @brief A struct for storing QStringLists loaded from command configuration files.
      */
-    struct CommandSettings {
+    struct CommandSettings
+    {
         QStringList magic_8ball; //!< Contains answers for /8ball, found in config/text/8ball.txt
-        QStringList gimps; //!< Contains phrases for /gimp, found in config/text/gimp.txt
-        QStringList cdns; //!< Contains domains for custom song validation, found in config/text/cdns.txt
+        QStringList gimps;       //!< Contains phrases for /gimp, found in config/text/gimp.txt
+        QStringList cdns;        //!< Contains domains for custom song validation, found in config/text/cdns.txt
     };
 
     /**
      * @brief Contains the settings required for various commands.
      */
-    static CommandSettings* m_commands;
+    static CommandSettings *m_commands;
 
     /**
      * @brief Stores all server configuration values.
      */
-    static QSettings* m_settings;
+    static QSettings *m_settings;
 
     /**
      * @brief Stores all discord webhook configuration values.
      */
-    static QSettings* m_discord;
+    static QSettings *m_discord;
 
     /**
      * @brief Stores all of the area valus.
@@ -527,22 +542,22 @@ private:
     /**
      * @brief Stores all adjustable logstrings.
      */
-    static QSettings* m_logtext;
+    static QSettings *m_logtext;
 
     /**
      * @brief Contains the musiclist with time durations.
      */
-    static MusicList* m_musicList;
+    static MusicList *m_musicList;
 
     /**
      * @brief Contains an ordered list for the musiclist.
      */
-    static QStringList* m_ordered_list;
+    static QStringList *m_ordered_list;
 
     /**
      * @brief Pointer to QElapsedTimer to track the uptime of the server.
      */
-    static QElapsedTimer* m_uptimeTimer;
+    static QElapsedTimer *m_uptimeTimer;
 
     /**
      * @brief Returns a stringlist with the contents of a .txt file from config/text/.
@@ -551,7 +566,5 @@ private:
      */
     static QStringList loadConfigFile(const QString filename);
 };
-
-
 
 #endif // CONFIG_MANAGER_H

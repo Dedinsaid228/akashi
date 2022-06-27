@@ -1,4 +1,23 @@
+//////////////////////////////////////////////////////////////////////////////////////
+//    akashi - a server for Attorney Online 2                                       //
+//    Copyright (C) 2020  scatterflower                                             //
+//                                                                                  //
+//    This program is free software: you can redistribute it and/or modify          //
+//    it under the terms of the GNU Affero General Public License as                //
+//    published by the Free Software Foundation, either version 3 of the            //
+//    License, or (at your option) any later version.                               //
+//                                                                                  //
+//    This program is distributed in the hope that it will be useful,               //
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of                //
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                 //
+//    GNU Affero General Public License for more details.                           //
+//                                                                                  //
+//    You should have received a copy of the GNU Affero General Public License      //
+//    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
+//////////////////////////////////////////////////////////////////////////////////////
 #include "include/advertiser.h"
+
+#include "include/config_manager.h"
 
 Advertiser::Advertiser()
 {
@@ -11,7 +30,15 @@ Advertiser::Advertiser()
     m_hostname = ConfigManager::advertiserHostname();
     m_description = ConfigManager::serverDescription();
     m_port = ConfigManager::serverPort();
-    m_ws_port = ConfigManager::webaoPort();
+
+    // Cheap workaround to correctly advertise when Cloudflare tunnel is used.
+    if (ConfigManager::advertiserCloudflareMode()) {
+        m_ws_port = 80;
+    }
+    else {
+        m_ws_port = ConfigManager::webaoPort();
+    }
+
     m_masterserver = ConfigManager::advertiserIP();
     m_debug = ConfigManager::advertiserDebug();
 }
@@ -44,7 +71,7 @@ void Advertiser::msAdvertiseServer()
         l_json["name"] = m_name;
 
         if (!m_description.isEmpty()) {
-        l_json["description"] = m_description;
+            l_json["description"] = m_description;
         }
 
         m_manager->post(request, QJsonDocument(l_json).toJson());
@@ -56,7 +83,6 @@ void Advertiser::msAdvertiseServer()
     if (m_debug)
         qWarning().noquote() << "Unable to advertise. Masterserver URL '" + m_masterserver.toString() + "' is not valid.";
     return;
-
 }
 
 void Advertiser::msRequestFinished(QNetworkReply *f_reply)
@@ -93,4 +119,3 @@ void Advertiser::updateAdvertiserSettings()
     m_masterserver = ConfigManager::advertiserIP();
     m_debug = ConfigManager::advertiserDebug();
 }
-

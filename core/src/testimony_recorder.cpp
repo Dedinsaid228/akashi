@@ -17,6 +17,10 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/area_data.h"
+#include "include/config_manager.h"
+#include "include/server.h"
+
 //
 
 void AOClient::addStatement(QStringList packet)
@@ -25,7 +29,7 @@ void AOClient::addStatement(QStringList packet)
         return;
     }
 
-    AreaData* area = server->m_areas[m_current_area];
+    AreaData* area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
 
     if (c_statement >= -1) {
@@ -61,7 +65,7 @@ QStringList AOClient::updateStatement(QStringList packet)
         return packet;
     }
 
-    AreaData* area = server->m_areas[m_current_area];
+    AreaData* area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
 
     area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
@@ -80,7 +84,7 @@ QStringList AOClient::updateStatement(QStringList packet)
 
 void AOClient::clearTestimony()
 {
-    AreaData* area = server->m_areas[m_current_area];
+    AreaData* area = server->getAreaById(m_current_area);
     area->clearTestimony();
 }
 

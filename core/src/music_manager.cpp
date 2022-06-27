@@ -1,6 +1,9 @@
 #include "include/music_manager.h"
 
-MusicManager::MusicManager(QObject *parent, QStringList f_root_ordered, QStringList f_cdns, QMap<QString, QPair<QString, int>> f_root_list) :
+#include "include/config_manager.h"
+#include "include/network/aopacket.h"
+
+MusicManager::MusicManager(QStringList f_root_ordered, QStringList f_cdns, QMap<QString, QPair<QString, int>> f_root_list, QObject *parent) :
     QObject(parent),
     m_root_list(f_root_list),
     m_root_ordered(f_root_ordered)
@@ -13,7 +16,6 @@ MusicManager::MusicManager(QObject *parent, QStringList f_root_ordered, QStringL
 
 MusicManager::~MusicManager()
 {
-
 }
 
 QStringList MusicManager::musiclist(int f_area_id)

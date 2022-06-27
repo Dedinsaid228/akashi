@@ -98,6 +98,8 @@ bool ConfigManager::verifyServerConfig()
     m_commands->magic_8ball = (loadConfigFile("8ball"));
     m_commands->gimps = (loadConfigFile("gimp"));
     m_commands->cdns = (loadConfigFile("cdns"));
+    if (m_commands->cdns.isEmpty())
+        m_commands->cdns = QStringList{"cdn.discord.com"};
 
     m_uptimeTimer->start();
 
@@ -350,6 +352,17 @@ int ConfigManager::messageFloodguard()
     return l_flood;
 }
 
+int ConfigManager::globalMessageFloodguard()
+{
+    bool ok;
+    int l_flood = m_settings->value("Options/global_message_floodguard", 0).toInt(&ok);
+    if (!ok) {
+        qWarning("global_message_floodguard is not an int!");
+        l_flood = 0;
+    }
+    return l_flood;
+}
+
 QUrl ConfigManager::assetUrl()
 {
     QByteArray l_url = m_settings->value("Options/asset_url", "").toString().toUtf8();
@@ -448,6 +461,14 @@ QString ConfigManager::discordUptimeWebhookUrl()
 QString ConfigManager::discordWebhookColor()
 {
     return m_discord->value("Discord/webhook_color","13312842").toString();
+    const QString l_default_color = "13312842";
+    QString l_color = m_discord->value("Discord/webhook_color", l_default_color).toString();
+    if (l_color.isEmpty()) {
+        return l_default_color;
+    }
+    else {
+        return l_color;
+    }
 }
 
 bool ConfigManager::passwordRequirements()
@@ -559,6 +580,11 @@ QUrl ConfigManager::advertiserIP()
 QString ConfigManager::advertiserHostname()
 {
     return m_settings->value("Advertiser/hostname","").toString();
+}
+
+bool ConfigManager::advertiserCloudflareMode()
+{
+    return m_settings->value("Advertiser/cloudflare_enabled", "false").toBool();
 }
 
 qint64 ConfigManager::uptime()

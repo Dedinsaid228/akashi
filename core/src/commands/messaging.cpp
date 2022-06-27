@@ -17,6 +17,10 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/area_data.h"
+#include "include/network/aopacket.h"
+#include "include/server.h"
+
 // This file is for commands under the messaging category in aoclient.h
 // Be sure to register the command in the header before adding it here!
 
@@ -25,7 +29,7 @@ void AOClient::cmdPos(int argc, QStringList argv)
     Q_UNUSED(argc);
 
     changePosition(argv[0]);
-    updateEvidenceList(server->m_areas[m_current_area]);
+    updateEvidenceList(server->getAreaById(m_current_area));
 }
 
 void AOClient::cmdForcePos(int argc, QStringList argv)
@@ -33,7 +37,7 @@ void AOClient::cmdForcePos(int argc, QStringList argv)
     Q_UNUSED(argc);
 
     bool ok;
-    QList<AOClient*> l_targets;
+    QList<AOClient *> l_targets;
     int l_target_id = argv[1].toInt(&ok);
     int l_forced_clients = 0;
 
@@ -42,7 +46,7 @@ void AOClient::cmdForcePos(int argc, QStringList argv)
         return;
     }
     else if (ok) {
-        AOClient* l_target_client = server->getClientByID(l_target_id);
+        AOClient *l_target_client = server->getClientByID(l_target_id);
 
         if (l_target_client != nullptr)
             l_targets.append(l_target_client);
@@ -53,13 +57,14 @@ void AOClient::cmdForcePos(int argc, QStringList argv)
     }
 
     else if (argv[1] == "*") { // force all clients in the area
-        for (AOClient* client : qAsConst(server->m_clients)) {
-            if (client->m_current_area == m_current_area)
-                l_targets.append(client);
+        const QVector<AOClient *> l_clients = server->getClients();
+        for (AOClient *l_client : l_clients) {
+            if (l_client->m_current_area == m_current_area)
+                l_targets.append(l_client);
         }
     }
 
-    for (AOClient* l_target : l_targets) {
+    for (AOClient *l_target : l_targets) {
         l_target->sendServerMessage("Position forcibly changed.");
         l_target->changePosition(argv[0]);
         l_forced_clients++;
@@ -73,7 +78,7 @@ void AOClient::cmdG(int argc, QStringList argv)
     Q_UNUSED(argc);
 
     QString l_sender_name = m_ooc_name;
-    QString l_sender_area = server->m_area_names.value(m_current_area);
+    QString l_sender_area = server->getAreaName(m_current_area);
     QString l_sender_message = argv.join(" ");
     bool l_sender_auth = m_authenticated;
     bool l_sender_sneak = m_sneak_mod;
@@ -82,12 +87,13 @@ void AOClient::cmdG(int argc, QStringList argv)
     if (l_sender_auth && !l_sender_sneak)
         l_area += "[M]";
 
-    for (AOClient* l_client : qAsConst(server->m_clients)) {
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
         if (l_client->m_global_enabled)
             l_client->sendPacket("CT", {l_area + l_sender_name, l_sender_message});
     }
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"GLOBALCHAT",l_sender_message,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"GLOBALCHAT",l_sender_message,l_sender_area, QString::number(m_id), m_hwid);
     return;
 }
 
@@ -95,16 +101,17 @@ void AOClient::cmdNeed(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    QString l_sender_area = server->m_area_names.value(m_current_area);
+    QString l_sender_area = server->getAreaName(m_current_area);
     QString l_sender_message = argv.join(" ");
 
-    for (AOClient* l_client : qAsConst(server->m_clients)) {
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
         if (l_client->m_advert_enabled) {
             l_client->sendServerMessage({"=== Advert ===\n[" + l_sender_area + "] needs " + l_sender_message+ "."});
         }
     }
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NEED",l_sender_message,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NEED",l_sender_message,l_sender_area, QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdSwitch(int argc, QStringList argv)
@@ -131,12 +138,12 @@ void AOClient::cmdRandomChar(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData *l_area = server->getAreaById(m_current_area);
     int l_selected_char_id;
     bool l_taken = true;
 
     while (l_taken) {
-        l_selected_char_id = genRand(0, server->m_characters.size() - 1);
+        l_selected_char_id = genRand(0, server->getCharacterCount() - 1);
         if (!l_area->charactersTaken().contains(l_selected_char_id)) {
             l_taken = false;
         }
@@ -171,7 +178,7 @@ void AOClient::cmdPM(int argc, QStringList argv)
         return;
     }
 
-    AOClient* l_target_client = server->getClientByID(l_target_id);
+    AOClient *l_target_client = server->getClientByID(l_target_id);
 
     if (l_target_client == nullptr) {
         sendServerMessage("No client with that ID found.");
@@ -188,7 +195,7 @@ void AOClient::cmdPM(int argc, QStringList argv)
     if (!m_showname.isEmpty())
         final_message += " (" + m_showname + ") ";
 
-    final_message += " (ID: " + QString::number(m_id) + ") " + "in " + server->m_area_names[l_sender_area] + ". Message: " + message;
+    final_message += " (ID: " + QString::number(m_id) + ") " + "in " + server->getAreaName(l_sender_area) + ". Message: " + message;
 
     l_target_client->sendServerMessage(final_message);
     sendServerMessage("PM sent to " + QString::number(l_target_client->m_id) + ". Message: " + message);
@@ -210,7 +217,7 @@ void AOClient::cmdM(int argc, QStringList argv)
     QString l_sender_message = argv.join(" ");
 
     server->broadcast(AOPacket("CT", {"$M[" + QString::number(l_sender_area) + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"MODCHAT",l_sender_message,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"MODCHAT",l_sender_message,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     return;
 }
 
@@ -245,7 +252,7 @@ void AOClient::cmdGimp(int argc, QStringList argv)
     }
 
     l_target->m_is_gimped = true;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"GIMP","Gimped UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"GIMP","Gimped UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnGimp(int argc, QStringList argv)
@@ -275,7 +282,7 @@ void AOClient::cmdUnGimp(int argc, QStringList argv)
     }
 
     l_target->m_is_gimped = false;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNGIMP","Ungimped UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNGIMP","Ungimped UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdDisemvowel(int argc, QStringList argv)
@@ -309,7 +316,7 @@ void AOClient::cmdDisemvowel(int argc, QStringList argv)
     }
 
     l_target->m_is_disemvoweled = true;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"DISEMVOWEL","Disemvoweled UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"DISEMVOWEL","Disemvoweled UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
@@ -339,7 +346,7 @@ void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
     }
 
     l_target->m_is_disemvoweled = false;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNDISEMVOWEL","Undisemvoweled UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNDISEMVOWEL","Undisemvoweled UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdShake(int argc, QStringList argv)
@@ -373,7 +380,7 @@ void AOClient::cmdShake(int argc, QStringList argv)
     }
 
     l_target->m_is_shaken = true;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SHAKE","Shaked UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SHAKE","Shaked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnShake(int argc, QStringList argv)
@@ -403,7 +410,7 @@ void AOClient::cmdUnShake(int argc, QStringList argv)
     }
 
     l_target->m_is_shaken = false;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNSHAKE","Unshaked UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNSHAKE","Unshaked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdMutePM(int argc, QStringList argv)
@@ -500,16 +507,16 @@ void AOClient::cmdCharCurse(int argc, QStringList argv)
     //Kick back to char select screen
     if (!l_target->m_charcurse_list.contains(server->getCharID(l_target->m_current_char))) {
         l_target->changeCharacter(-1);
-        server->updateCharsTaken(server->m_areas.value(m_current_area));
+        server->updateCharsTaken(server->getAreaById(m_current_area));
         l_target->sendPacket("DONE");
     }
     else {
-        server->updateCharsTaken(server->m_areas.value(m_current_area));
+        server->updateCharsTaken(server->getAreaById(m_current_area));
     }
 
     l_target->sendServerMessage("You have been charcursed!");
     sendServerMessage("Charcursed player.");
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CHARCURSE","Charcursed UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CHARCURSE","Charcursed UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnCharCurse(int argc, QStringList argv)
@@ -538,10 +545,10 @@ void AOClient::cmdUnCharCurse(int argc, QStringList argv)
 
     l_target->m_is_charcursed = false;
     l_target->m_charcurse_list.clear();
-    server->updateCharsTaken(server->m_areas.value(m_current_area));
+    server->updateCharsTaken(server->getAreaById(m_current_area));
     sendServerMessage("Uncharcursed player.");
     l_target->sendServerMessage("You were uncharcursed.");
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNCHARCURSE","Uncharcursed UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNCHARCURSE","Uncharcursed UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdCharSelect(int argc, QStringList argv)
@@ -551,7 +558,7 @@ void AOClient::cmdCharSelect(int argc, QStringList argv)
         sendPacket("DONE");
     }
     else {
-        if (!checkAuth(ACLFlags.value("FORCE_CHARSELECT"))) {
+        if (!checkPermission(ACLRole::FORCE_CHARSELECT)) {
             sendServerMessage("You do not have permission to force another player to character select!");
             return;
         }

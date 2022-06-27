@@ -26,9 +26,12 @@ DESTDIR = $$PWD/../bin
 DEFINES += QT_DEBUG_PLUGINS
 
 SOURCES += \
+    src/acl_roles_handler.cpp \
     src/aoclient.cpp \
-    src/aopacket.cpp \
+    src/network/aopacket.cpp \
+    src/network/network_socket.cpp \
     src/area_data.cpp \
+    src/command_extension.cpp \
     src/commands/area.cpp \
     src/commands/authentication.cpp \
     src/commands/casing.cpp \
@@ -43,8 +46,6 @@ SOURCES += \
     src/packets.cpp \
     src/server.cpp \
     src/testimony_recorder.cpp \
-    src/ws_client.cpp \
-    src/ws_proxy.cpp \
     src/advertiser.cpp \
     src/logger/u_logger.cpp \
     src/logger/writer_modcall.cpp \
@@ -52,15 +53,18 @@ SOURCES += \
     src/music_manager.cpp
 
 HEADERS += include/aoclient.h \
-    include/aopacket.h \
+    include/acl_roles_handler.h \
+    include/akashidefs.h \
+    include/network/aopacket.h \
+    include/network/network_socket.h \
     include/area_data.h \
+    include/command_extension.h \
     include/config_manager.h \
     include/data_types.h \
     include/db_manager.h \
     include/discord.h \
     include/server.h \
-    include/ws_client.h \
-    include/ws_proxy.h \
+    include/typedefs.h \
     include/advertiser.h \
     include/logger/u_logger.h \
     include/logger/writer_modcall.h \

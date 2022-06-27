@@ -18,30 +18,65 @@
 #ifndef AOCLIENT_H
 #define AOCLIENT_H
 
-#include "include/aopacket.h"
-#include "include/server.h"
-#include "include/area_data.h"
-#include "include/db_manager.h"
-
 #include <algorithm>
 
-#include <QHostAddress>
-#include <QTcpSocket>
 #include <QDateTime>
+#include <QHostAddress>
 #include <QRegularExpression>
 #include <QtGlobal>
+#include <QTimer>
 #if QT_VERSION > QT_VERSION_CHECK(5, 10, 0)
 #include <QRandomGenerator>
 #endif
 
+#include "include/acl_roles_handler.h"
+#include "include/network/aopacket.h"
+#include "include/network/network_socket.h"
+
+class AreaData;
+class DBManager;
+class MusicManager;
 class Server;
 
 /**
  * @brief Represents a client connected to the server running Attorney Online 2 or one of its derivatives.
  */
-class AOClient : public QObject {
+class AOClient : public QObject
+{
     Q_OBJECT
+
   public:
+    /**
+     * @brief Describes a command's details.
+     */
+    struct CommandInfo
+    {
+        QVector<ACLRole::Permission> acl_permissions; //!< The permissions necessary to be able to run the command. @see ACLRole::Permission.
+        int minArgs;                                  //!< The minimum mandatory arguments needed for the command to function.
+        void (AOClient::*action)(int, QStringList);
+    };
+
+    /**
+     * @property CommandInfo::action
+     *
+     * @brief A function reference that contains what the command actually does.
+     *
+     * @param int When called, this parameter will be filled with the argument count. @anchor commandArgc
+     * @param QStringList When called, this parameter will be filled the list of arguments. @anchor commandArgv
+     */
+
+    /**
+     * @brief The list of commands available on the server.
+     *
+     * @details Generally called with the format of `/command parameters` in the out-of-character chat.
+     * @showinitializer
+     *
+     * @tparam QString The name of the command, without the leading slash.
+     * @tparam CommandInfo The details of the command.
+     * See @ref CommandInfo "the type's documentation" for more details.
+     */
+    static const QMap<QString, CommandInfo> COMMANDS;
+
     /**
      * @brief Creates an instance of the AOClient class.
      *
@@ -50,13 +85,13 @@ class AOClient : public QObject {
      * @param user_id The user ID of the client.
      * @param parent Qt-based parent, passed along to inherited constructor from QObject.
      */
-    AOClient(Server* p_server, QTcpSocket* p_socket, QObject* parent = nullptr, int user_id = 0, MusicManager* p_manager = nullptr);;
+    AOClient(Server *p_server, NetworkSocket *socket, QObject *parent = nullptr, int user_id = 0, MusicManager *p_manager = nullptr);
 
     /**
-      * @brief Destructor for the AOClient instance.
-      *
-      * @details Sets the socket to delete later.
-      */
+     * @brief Destructor for the AOClient instance.
+     *
+     * @details Sets the socket to delete later.
+     */
     ~AOClient();
 
     /**
@@ -78,6 +113,20 @@ class AOClient : public QObject {
     QString getHwid() const;
 
     /**
+     * @brief Returns true if the client has completed the participation handshake. False otherwise.
+     *
+     * @return True if the client has completed the participation handshake. False otherwise.
+     */
+    bool hasJoined() const;
+
+    /**
+     * @brief Returns true if the client has logged-in as a role.
+     *
+     * @return True if loggged-in, false otherwise.
+     */
+    bool isAuthenticated() const;
+
+    /**
      * @brief Calculates the client's IPID based on a hashed version of its IP.
      */
     void calculateIpid();
@@ -91,7 +140,7 @@ class AOClient : public QObject {
      *
      * @see #server
      */
-    Server* getServer();
+    Server *getServer();
 
     /**
      * @brief The user ID of the client.
@@ -135,11 +184,6 @@ class AOClient : public QObject {
      * @note This will be the same as current_char if the client is not iniswapped.
      */
     QString m_current_iniswap;
-
-    /**
-     * @brief If true, the client is a logged-in moderator.
-     */
-    bool m_authenticated = false;
 
     /**
      * @brief If true, the client will not be shown as a moderator, even if it is one.
@@ -226,7 +270,8 @@ class AOClient : public QObject {
      * @note Though the version number and naming scheme looks vaguely semver-like,
      * do not be misled into thinking it is that.
      */
-    struct ClientVersion {
+    struct ClientVersion
+    {
       QString string; //!< The name of the client software, for example, `AO2`.
       int release = -1; //!< The 'release' part of the version number. In Attorney Online's case, this is fixed at `2`.
       int major = -1; //!< The 'major' part of the version number. In Attorney Online's case, this increases when a new feature is introduced (generally).
@@ -239,40 +284,6 @@ class AOClient : public QObject {
      * @see The struct itself for more details.
      */
     ClientVersion m_version;
-
-    /**
-      * @brief The authorisation bitflag, representing what permissions a client can have.
-      *
-      * @showinitializer
-      */
-    QMap<QString, unsigned long long> ACLFlags {
-        {"NONE",            0ULL      },
-        {"KICK",            1ULL << 0 },
-        {"BAN",             1ULL << 1 },
-        {"MODIFY_USERS",    1ULL << 2 },
-        {"CM",              1ULL << 3 },
-        {"GLOBAL_TIMER",    1ULL << 4 },
-        {"EVI_MOD",         1ULL << 5 },
-        {"MOTD",            1ULL << 6 },
-        {"ANNOUNCE",        1ULL << 7 },
-        {"MODCHAT",         1ULL << 8 },
-        {"MUTE",            1ULL << 9},
-        {"UNCM",            1ULL << 10},
-        {"SAVETEST",        1ULL << 11},
-        {"FORCE_CHARSELECT",1ULL << 12},
-        {"BYPASS_LOCKS",    1ULL << 13},
-        {"IGNORE_BGLIST",   1ULL << 14},
-        {"SEND_NOTICE",     1ULL << 15},
-        {"WUSO",            1ULL << 16},
-        {"SNEAK",           1ULL << 17},
-        {"TAKETAKED",       1ULL << 18},
-        {"IPIDINFO",        1ULL << 19},
-        {"GM",              1ULL << 20},
-        {"SAVETEST",        1ULL << 21},
-        {"SAVEAREA",        1ULL << 22},
-        {"SUPER",          ~0ULL      }         
-    };
-
 
     /**
      * @brief A list of 5 casing preferences (def, pro, judge, jury, steno)
@@ -336,21 +347,56 @@ class AOClient : public QObject {
     bool m_testimony_saving = false;
 
     /**
+     * @brief If true, the client is a spectator and his IC interactions will be limtied.
+     */
+    bool m_is_spectator = true;
+
+    /**
      * @brief Temporary client permission if client is allowed to save a area config to server storage.
      */
     bool m_area_saving = false;
 
     /**
-     * @brief Checks if the client would be authorised to something based on its necessary permissions.
+     * @brief Checks if the client's ACL role has permission for the given permission.
      *
-     * @param acl_mask The permissions bitflag that the client's own permissions should be checked against.
+     * @param f_permission The permission flags.
      *
-     * @return True if the client's permissions are high enough for `acl_mask`, or higher than it.
-     * False if the client is missing some permissions.
+     * @return True if the client has permission, false otherwise.
      */
-    bool checkAuth(unsigned long long acl_mask);
+    bool checkPermission(ACLRole::Permission f_permission) const;
+
+      /**
+       * @brief Returns if the client is a spectator.
+       *
+       * @return True if the client is a spectator, false otherwise.
+       */
+      bool isSpectator() const;
+
+      /**
+       * @brief Sets the spectator state for the client.
+       *
+       * @param f_spectator
+       */
+      void setSpectator(bool f_spectator);
+
+      /**
+       * @brief The spectator character ID
+       *
+       * @details You may assume that AO has a sane way to determine if a user is a spectator
+       * or an actual player. Well, to nobodys surprise, this is not the case, so the character id -1 is used
+       * to determine if a client has entered spectator or user mode. I am making this a const mostly
+       * for the case this could change at some point in the future, but don't count on it.
+       */
+      const int SPECTATOR_ID = -1;
 
   public slots:
+    /**
+     * @brief Handles an incoming packet, checking for authorisation and minimum argument count.
+     *
+     * @param packet The incoming packet.
+     */
+    void handlePacket(AOPacket packet);
+
     /**
      * @brief A slot for when the client disconnects from the server.
      */
@@ -365,11 +411,6 @@ class AOClient : public QObject {
      * @brief Changing the value of <owner=> to "all" when evidence is present.
      */
     bool evidencePresent(QString id);
-
-    /**
-     * @brief A slot for when the client sends data to the server.
-     */
-    void clientData();
 
     /**
      * @brief A slot for sending a packet to the client.
@@ -388,33 +429,35 @@ class AOClient : public QObject {
      */
     void sendPacket(QString header);
 
-  private:
+
+  signals:
     /**
-     * @brief The TCP socket used to communicate with the client.
+     * @brief This signal is emitted when the client has completed the participation handshake.
      */
-    QTcpSocket* m_socket;
+    void joined();
+
+
+  private:
+  /**
+   * @brief The network socket used by the client. Can either be a Websocket or TCP Socket.
+   */
+  NetworkSocket *m_socket;
 
     /**
      * @brief A pointer to the Server, used for updating server variables that depend on the client (e.g. amount of players in an area).
      */
-    Server* server;
+    Server *server;
 
     /**
      * @brief The type of area update, used for area update (ARUP) packets.
      */
-    enum ARUPType {
+    enum ARUPType
+    {
         PLAYER_COUNT, //!< The packet contains player count updates.
-        STATUS, //!< The packet contains area status updates.
-        CM, //!< The packet contains updates about who's the CM of what area.
-        LOCKED //!< The packet contains updates about what areas are locked.
+        STATUS,       //!< The packet contains area status updates.
+        CM,           //!< The packet contains updates about who's the CM of what area.
+        LOCKED        //!< The packet contains updates about what areas are locked.
     };
-
-    /**
-     * @brief Handles an incoming packet, checking for authorisation and minimum argument count.
-     *
-     * @param packet The incoming packet.
-     */
-    void handlePacket(AOPacket packet);
 
     /**
      * @brief Handles an incoming command, checking for authorisation and minimum argument count.
@@ -512,113 +555,106 @@ class AOClient : public QObject {
     void autoBan();
 
     /**
-      * @name Packet headers
-      *
-      * @details These functions implement the AO2-style packet handling.
-      * As these should generally be the same across server software, I see no reason to document them specifically.
-      *
-      * You can check out the AO2 network protocol for explanations.
-      *
-      * All packet handling functions share the same parameters:
-      *
-      * @param area The area the client is in. Some packets make use of the client's current area.
-      * @param argc The amount of arguments in the packet, not counting the header. Same as `argv.size()`.
-      * @param argv The arguments in the packet, once again, not counting the header.
-      * @param packet The... arguments in the packet. Yes, exactly the same as `argv`, just packed into an AOPacket.
-      *
-      * @see https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md for the AO2 network protocol.
-      */
+     * @name Packet headers
+     *
+     * @details These functions implement the AO2-style packet handling.
+     * As these should generally be the same across server software, I see no reason to document them specifically.
+     *
+     * You can check out the AO2 network protocol for explanations.
+     *
+     * All packet handling functions share the same parameters:
+     *
+     * @param area The area the client is in. Some packets make use of the client's current area.
+     * @param argc The amount of arguments in the packet, not counting the header. Same as `argv.size()`.
+     * @param argv The arguments in the packet, once again, not counting the header.
+     * @param packet The... arguments in the packet. Yes, exactly the same as `argv`, just packed into an AOPacket.
+     *
+     * @see https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md for the AO2 network protocol.
+     */
     ///@{
 
     /// A "default" packet handler, to be used for error checking and copying other packet handlers.
-    void pktDefault(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktDefault(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [hardware ID](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#hard-drive-id).
-    void pktHardwareId(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktHardwareId(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /**
      * @brief Implements [feature list](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#feature-list) and
      * [player count](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#player-count).
      */
-    void pktSoftwareId(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktSoftwareId(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [resource counts](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#resource-counts).
-    void pktBeginLoad(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktBeginLoad(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [character list](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#character-list).
-    void pktRequestChars(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktRequestChars(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [music list](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#music-list).
-    void pktRequestMusic(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktRequestMusic(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [the final loading confirmation](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#final-confirmation).
-    void pktLoadingDone(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktLoadingDone(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /**
-      * @brief Implements character passwording. This is not on the netcode documentation as of writing.
-      *
-      * @todo Link packet details when it gets into the netcode documentation.
-      */
-    void pktCharPassword(AreaData* area, int argc, QStringList argv, AOPacket packet);
+     * @brief Implements character passwording. This is not on the netcode documentation as of writing.
+     *
+     * @todo Link packet details when it gets into the netcode documentation.
+     */
+    void pktCharPassword(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [character selection](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#choose-character).
-    void pktSelectChar(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktSelectChar(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [the in-character messaging hell](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#in-character-message).
-    void pktIcChat(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktIcChat(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [out-of-character messages](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#out-of-character-message).
-    void pktOocChat(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktOocChat(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [the keepalive packet](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#keep-alive).
-    void pktPing(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktPing(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /**
-      * @brief Implements [music](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#music) and
-      * [area changing](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#switch-area).
-      */
-    void pktChangeMusic(AreaData* area, int argc, QStringList argv, AOPacket packet);
+     * @brief Implements [music](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#music) and
+     * [area changing](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#switch-area).
+     */
+    void pktChangeMusic(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
 
     /**
-      * @brief Implements [the witness testimony / cross examination / judge decision popups]
-      * (https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#witness-testimonycross-examination-wtce).
-      */
-    void pktWtCe(AreaData* area, int argc, QStringList argv, AOPacket packet);
+     * @brief Implements [the witness testimony / cross examination / judge decision popups]
+     * (https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#witness-testimonycross-examination-wtce).
+     */
+    void pktWtCe(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [penalty bars](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#penalty-health-bars).
-    void pktHpBar(AreaData* area, int argc, QStringList argv, AOPacket packet);
-
-    /**
-      * @brief Implements WebSocket IP handling. This is not on the netcode documentation as of writing.
-      *
-      * @todo Link packet details when it gets into the netcode documentation.
-      */
-    void pktWebSocketIp(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktHpBar(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [moderator calling](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#call-mod).
-    void pktModCall(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktModCall(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [adding evidence](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#add).
-    void pktAddEvidence(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktAddEvidence(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [removing evidence](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#remove).
-    void pktRemoveEvidence(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktRemoveEvidence(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [editing evidence](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#edit).
-    void pktEditEvidence(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktEditEvidence(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [updating casing preferences](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#case-preferences-update).
-    void pktSetCase(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktSetCase(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     /// Implements [announcing a case](https://github.com/AttorneyOnline/docs/blob/master/docs/development/network.md#case-alert).
-    void pktAnnounceCase(AreaData* area, int argc, QStringList argv, AOPacket packet);
+    void pktAnnounceCase(AreaData *area, int argc, QStringList argv, AOPacket packet);
 
     ///@}
 
     /**
-      * @name Packet helper functions
-      */
+     * @name Packet helper functions
+     */
     ///@{
 
     /**
@@ -626,28 +662,28 @@ class AOClient : public QObject {
      *
      * @param area The current client's area.
      */
-    void sendEvidenceList(AreaData* area);
+    void sendEvidenceList(AreaData *area);
 
     /**
      * @brief Calls AOClient::updateEvidenceListHidCmNoCm() for every client in the current client's area.
      *
      * @param area The current client's area.
      */
-    void sendEvidenceListHidCmNoCm(AreaData* area);
+    void sendEvidenceListHidCmNoCm(AreaData *area);
 
     /**
      * @brief Updates the evidence list in the area for the client.
      *
      * @param area The client's area.
      */
-    void updateEvidenceList(AreaData* area);
+    void updateEvidenceList(AreaData *area);
 
     /**
      * @brief Updates the evidence list for better performance of evidencePresent();
      *
      * @param area The client's area.
      */
-    void updateEvidenceListHidCmNoCm(AreaData* area);
+    void updateEvidenceListHidCmNoCm(AreaData *area);
 
     /**
      * @brief Attempts to validate that hellish abomination that Attorney Online 2 calls an in-character packet.
@@ -681,9 +717,19 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Packet helper global variables
-      */
+     * @name Packet helper global variables
+     */
     ///@{
+
+    /**
+     * @brief If true, the client is a logged-in moderator.
+     */
+    bool m_authenticated = false;
+
+    /**
+     * @brief The ACL role identifier, used to determine what ACL role the client is linked to.
+     */
+    QString m_acl_role_id;
 
     /**
      * @brief The client's character ID.
@@ -732,59 +778,58 @@ class AOClient : public QObject {
     ///@}
 
     /// Describes a packet's interpretation details.
-    struct PacketInfo {
-        unsigned long long acl_mask; //!< The permissions necessary for the packet.
-        int minArgs; //!< The minimum arguments needed for the packet to be interpreted correctly / make sense.
-        void (AOClient::*action)(AreaData*, int, QStringList, AOPacket);
+    struct PacketInfo
+    {
+        ACLRole::Permission acl_permission; //!< The permissions necessary for the packet.
+        int minArgs;                        //!< The minimum arguments needed for the packet to be interpreted correctly / make sense.
+        void (AOClient::*action)(AreaData *, int, QStringList, AOPacket);
     };
 
     /**
-      * @property PacketInfo::action
-      *
-      * @brief A function reference that contains what the packet actually does.
-      *
-      * @param AreaData This is always just a reference to the data of the area the sender client is in. Used by some packets.
-      * @param int When called, this parameter will be filled with the argument count.
-      * @param QStringList When called, this parameter will be filled the list of arguments.
-      * @param AOPacket This is a duplicated version of the QStringList above, containing the same data.
-      */
+     * @property PacketInfo::action
+     *
+     * @brief A function reference that contains what the packet actually does.
+     *
+     * @param AreaData This is always just a reference to the data of the area the sender client is in. Used by some packets.
+     * @param int When called, this parameter will be filled with the argument count.
+     * @param QStringList When called, this parameter will be filled the list of arguments.
+     * @param AOPacket This is a duplicated version of the QStringList above, containing the same data.
+     */
 
     /**
-      * @brief The list of packets that the server can interpret.
-      *
-      * @showinitializer
-      *
-      * @tparam QString The header of the packet that uniquely identifies it.
-      * @tparam PacketInfo The details of the packet.
-      * See @ref PacketInfo "the type's documentation" for more details.
-      */
-    const QMap<QString, PacketInfo> packets {
-        {"HI",      {ACLFlags.value("NONE"), 1,  &AOClient::pktHardwareId     }},
-        {"ID",      {ACLFlags.value("NONE"), 2,  &AOClient::pktSoftwareId     }},
-        {"askchaa", {ACLFlags.value("NONE"), 0,  &AOClient::pktBeginLoad      }},
-        {"RC",      {ACLFlags.value("NONE"), 0,  &AOClient::pktRequestChars   }},
-        {"RM",      {ACLFlags.value("NONE"), 0,  &AOClient::pktRequestMusic   }},
-        {"RD",      {ACLFlags.value("NONE"), 0,  &AOClient::pktLoadingDone    }},
-        {"PW",      {ACLFlags.value("NONE"), 1,  &AOClient::pktCharPassword   }},
-        {"CC",      {ACLFlags.value("NONE"), 3,  &AOClient::pktSelectChar     }},
-        {"MS",      {ACLFlags.value("NONE"), 15, &AOClient::pktIcChat         }},
-        {"CT",      {ACLFlags.value("NONE"), 2,  &AOClient::pktOocChat        }},
-        {"CH",      {ACLFlags.value("NONE"), 1,  &AOClient::pktPing           }},
-        {"MC",      {ACLFlags.value("NONE"), 2,  &AOClient::pktChangeMusic    }},
-        {"RT",      {ACLFlags.value("NONE"), 1,  &AOClient::pktWtCe           }},
-        {"HP",      {ACLFlags.value("NONE"), 2,  &AOClient::pktHpBar          }},
-        {"WSIP",    {ACLFlags.value("NONE"), 1,  &AOClient::pktWebSocketIp    }},
-        {"ZZ",      {ACLFlags.value("NONE"), 0,  &AOClient::pktModCall        }},
-        {"PE",      {ACLFlags.value("NONE"), 3,  &AOClient::pktAddEvidence    }},
-        {"DE",      {ACLFlags.value("NONE"), 1,  &AOClient::pktRemoveEvidence }},
-        {"EE",      {ACLFlags.value("NONE"), 4,  &AOClient::pktEditEvidence   }},
-        {"SETCASE", {ACLFlags.value("NONE"), 7,  &AOClient::pktSetCase        }},
-        {"CASEA",   {ACLFlags.value("NONE"), 6,  &AOClient::pktAnnounceCase   }},
-    };
+     * @brief The list of packets that the server can interpret.
+     *
+     * @showinitializer
+     *
+     * @tparam QString The header of the packet that uniquely identifies it.
+     * @tparam PacketInfo The details of the packet.
+     * See @ref PacketInfo "the type's documentation" for more details.
+     */
+    const QMap<QString, PacketInfo> packets{
+        {"HI",      {ACLRole::NONE, 1, &AOClient::pktHardwareId}},
+        {"ID",      {ACLRole::NONE, 2, &AOClient::pktSoftwareId}},
+        {"askchaa", {ACLRole::NONE, 0, &AOClient::pktBeginLoad}},
+        {"RC",      {ACLRole::NONE, 0, &AOClient::pktRequestChars}},
+        {"RM",      {ACLRole::NONE, 0, &AOClient::pktRequestMusic}},
+        {"RD",      {ACLRole::NONE, 0, &AOClient::pktLoadingDone}},
+        {"PW",      {ACLRole::NONE, 1, &AOClient::pktCharPassword}},
+        {"CC",      {ACLRole::NONE, 3, &AOClient::pktSelectChar}},
+        {"MS",      {ACLRole::NONE, 15, &AOClient::pktIcChat}},
+        {"CT",      {ACLRole::NONE, 2, &AOClient::pktOocChat}},
+        {"CH",      {ACLRole::NONE, 1, &AOClient::pktPing}},
+        {"MC",      {ACLRole::NONE, 2, &AOClient::pktChangeMusic}},
+        {"RT",      {ACLRole::NONE, 1, &AOClient::pktWtCe}},
+        {"HP",      {ACLRole::NONE, 2, &AOClient::pktHpBar}},
+        {"ZZ",      {ACLRole::NONE, 0, &AOClient::pktModCall}},
+        {"PE",      {ACLRole::NONE, 3, &AOClient::pktAddEvidence}},
+        {"DE",      {ACLRole::NONE, 1, &AOClient::pktRemoveEvidence}},
+        {"EE",      {ACLRole::NONE, 4, &AOClient::pktEditEvidence}},
+        {"SETCASE", {ACLRole::NONE, 7, &AOClient::pktSetCase}},
+        {"CASEA",   {ACLRole::NONE, 6, &AOClient::pktAnnounceCase}}};
 
     /**
-      * @name Authentication
-      */
+     * @name Authentication
+     */
     ///@{
 
     /**
@@ -846,16 +891,16 @@ class AOClient : public QObject {
     void cmdListPerms(int argc, QStringList argv);
 
     /**
-     * @brief Adds permissions to a given user.
+     * @brief Sets the role of the user.
      *
-     * @details The first argument is the **target user**, the second is the **permission** (in string form) to add to that user.
+     * @details The first argument is the **target user**, the second is the **role** (in string form) to set to that user.
      *
      * @iscommand
      */
-    void cmdAddPerms(int argc, QStringList argv);
+    void cmdSetPerms(int argc, QStringList argv);
 
     /**
-     * @brief Removes permissions from a given user.
+     * @brief Removes the role from a given user.
      *
      * @details The first argument is the **target user**, the second is the **permission** (in string form) to remove from that user.
      *
@@ -894,11 +939,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Areas
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are also related to area management.
-      */
+     * @name Areas
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to area management.
+     */
     ///@{
 
     /**
@@ -1069,12 +1114,12 @@ class AOClient : public QObject {
     void cmdStatus(int argc, QStringList argv);
 
     /**
-    * @brief Sends an out-of-character message with the judgelog of an area.
-    *
-    * @details No arguments.
-    *
-    * @iscommand
-    */
+     * @brief Sends an out-of-character message with the judgelog of an area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
     void cmdJudgeLog(int argc, QStringList argv);
 
     /**
@@ -1112,6 +1157,24 @@ class AOClient : public QObject {
      * @iscommand
      */
     void cmdToggleAreaMessageOnJoin(int argc, QStringList argv);
+
+    /**
+     * @brief Toggles wether the client can use testimony animations in the area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleWtce(int argc, QStringList argv);
+
+    /**
+     * @brief Toggles wether the client can send game shouts in the area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdToggleShouts(int argc, QStringList argv);
 
     /**
      * @brief Disable/Enable messages when you move to areas or disconnect.
@@ -1256,11 +1319,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Moderation
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are also related to the moderation and administration of the server.
-      */
+     * @name Moderation
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to the moderation and administration of the server.
+     */
     ///@{
 
     /**
@@ -1305,7 +1368,7 @@ class AOClient : public QObject {
      * @brief Bans a client from the server, forcibly severing its connection to the server,
      * and disallowing their return.
      *
-     * @details The first argument is the **target's IPID**, the second is the **duration**, 
+     * @details The first argument is the **target's IPID**, the second is the **duration**,
      * and the third is the **reason** why the client was banned.
      *
      * The duration can be `perma`, meaning a forever ban, otherwise, it must be given in the format of `YYyWWwDDdHHhMMmSSs` to
@@ -1419,7 +1482,6 @@ class AOClient : public QObject {
      */
     void cmdBans(int argc, QStringList argv);
 
-
     /**
      * @brief Toggle whether or not in-character messages purely consisting of spaces are allowed.
      *
@@ -1451,31 +1513,31 @@ class AOClient : public QObject {
     void cmdReload(int argc, QStringList argv);
 
     /**
-    * @brief Toggles immediate text processing in the current area.
-    *
-    * @details No arguments.
-    *
-    * @iscommand
-    */
+     * @brief Toggles immediate text processing in the current area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
     void cmdForceImmediate(int argc, QStringList argv);
 
     /**
-    * @brief Toggles whether iniswaps are allowed in the current area.
-    *
-    * @details No arguments.
-    *
-    * @iscommand
-    */
+     * @brief Toggles whether iniswaps are allowed in the current area.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
     void cmdAllowIniswap(int argc, QStringList argv);
 
     /**
-    * @brief Grants a client the temporary permission to save a testimony.
-    *
-    * @details ClientID as the target of permission
-    *
-    * @iscommand
-    *
-    */
+     * @brief Grants a client the temporary permission to save a testimony.
+     *
+     * @details ClientID as the target of permission
+     *
+     * @iscommand
+     *
+     */
     void cmdPermitSaving(int argc, QStringList argv);
 
     /**
@@ -1535,6 +1597,18 @@ class AOClient : public QObject {
       * @iscommand
       */
      void cmdClearCM(int argc, QStringList argv);
+
+     /**
+      * @brief Removes all multiclient instances of a client on the server, excluding the one using the command.
+      *
+      * @details This command gracefully removes all multiclients from the server, disconnecting them and freeing their used character.
+      *
+      * @arg argv This command allows the user to specify if it should look for IPID or HWID matches. This is useful when a client mayb
+      * have been connected over IPv6 and the second connection is made over IPv4
+      *
+      * @iscommand
+      */
+     void cmdKickOther(int argc, QStringList argv);
 
      /**
       * @brief Get IPID information.
@@ -1612,11 +1686,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Roleplay
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are also related to various kinds of roleplay actions in some way.
-      */
+     * @name Roleplay
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to various kinds of roleplay actions in some way.
+     */
     ///@{
 
     /**
@@ -1718,11 +1792,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Messaging
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are also related to messages or the client's self-management in some way.
-      */
+     * @name Messaging
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to messages or the client's self-management in some way.
+     */
     ///@{
 
     /**
@@ -1777,12 +1851,12 @@ class AOClient : public QObject {
     void cmdG(int argc, QStringList argv);
 
     /**
-     * @brief Toggles whether the client will ignore @ref cmdG "global" messages or not.
-     *
-     * @details No arguments.
-     *
-     * @iscommand
-     */
+      * @brief Toggles whether the client will ignore @ref cmdG "global" messages or not.
+      *
+      * @details No arguments.
+      *
+      * @iscommand
+      */
     void cmdToggleGlobal(int argc, QStringList argv);
 
     /**
@@ -1940,11 +2014,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Casing
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are related to casing.
-      */
+     * @name Casing
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are related to casing.
+     */
     ///@{
 
     /**
@@ -2032,7 +2106,6 @@ class AOClient : public QObject {
      */
     void cmdAddStatement(int argc, QStringList argv);
 
-
     /**
      * @brief Sends a list of the testimony to OOC of the requesting client
      *
@@ -2063,11 +2136,11 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Music
-      *
-      * @brief All functions that detail the actions of commands,
-      * that are also related to music in some way.
-      */
+     * @name Music
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to music in some way.
+     */
     ///@{
 
     /**
@@ -2158,12 +2231,12 @@ class AOClient : public QObject {
     ///@}
 
     /**
-      * @name Command helper functions
-      *
-      * @brief A collection of functions of shared behaviour between command functions,
-      * allowing the abstraction of technical details in the command function definition,
-      * or the avoidance of repetition over multiple definitions.
-      */
+     * @name Command helper functions
+     *
+     * @brief A collection of functions of shared behaviour between command functions,
+     * allowing the abstraction of technical details in the command function definition,
+     * or the avoidance of repetition over multiple definitions.
+     */
     ///@{
 
     /**
@@ -2322,7 +2395,7 @@ class AOClient : public QObject {
      *
      * @return True if it contains '<' or '>' symbols, otherwise false.
      */
-    bool checkTestimonySymbols(const QString& message);
+    bool checkTestimonySymbols(const QString &message);
     ///@}
 
     /**
@@ -2334,15 +2407,6 @@ class AOClient : public QObject {
     bool change_auth_started = false;
 
     /**
-     * @brief Describes a command's details.
-     */
-    struct CommandInfo {
-        unsigned long long acl_mask; //!< The permissions necessary to be able to run the command. @see ACLFlags.
-        int minArgs; //!< The minimum mandatory arguments needed for the command to function.
-        void (AOClient::*action)(int, QStringList);
-    };
-
-    /**
       * @property CommandInfo::action
       *
       * @brief A function reference that contains what the command actually does.
@@ -2350,158 +2414,6 @@ class AOClient : public QObject {
       * @param int When called, this parameter will be filled with the argument count. @anchor commandArgc
       * @param QStringList When called, this parameter will be filled the list of arguments. @anchor commandArgv
       */
-
-    /**
-      * @brief The list of commands available on the server.
-      *
-      * @details Generally called with the format of `/command parameters` in the out-of-character chat.
-      * @showinitializer
-      *
-      * @tparam QString The name of the command, without the leading slash.
-      * @tparam CommandInfo The details of the command.
-      * See @ref CommandInfo "the type's documentation" for more details.
-      */
-    const QMap<QString, CommandInfo> commands {
-        {"login",              {ACLFlags.value("NONE"),         1, &AOClient::cmdLogin}},
-        {"getareas",           {ACLFlags.value("NONE"),         0, &AOClient::cmdGetAreas}},
-        {"getarea",            {ACLFlags.value("NONE"),         0, &AOClient::cmdGetArea}},
-        {"ban",                {ACLFlags.value("BAN"),          3, &AOClient::cmdBan}},
-        {"kick",               {ACLFlags.value("KICK"),         2, &AOClient::cmdKick}},
-        {"changeauth",         {ACLFlags.value("SUPER"),        0, &AOClient::cmdChangeAuth}},
-        {"rootpass",           {ACLFlags.value("SUPER"),        1, &AOClient::cmdSetRootPass}},
-        {"bg",                 {ACLFlags.value("NONE"),         1, &AOClient::cmdSetBackground}},
-        {"bglock",             {ACLFlags.value("CM"),           0, &AOClient::cmdBgLock}},
-        {"bgunlock",           {ACLFlags.value("CM"),           0, &AOClient::cmdBgUnlock}},
-        {"adduser",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddUser}},
-        {"listperms",          {ACLFlags.value("MODIFY_USERS"), 0, &AOClient::cmdListPerms}},
-        {"addperm",            {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdAddPerms}},
-        {"removeperm",         {ACLFlags.value("MODIFY_USERS"), 2, &AOClient::cmdRemovePerms}},
-        {"listusers",          {ACLFlags.value("MODIFY_USERS"), 0, &AOClient::cmdListUsers}},
-        {"unmod",              {ACLFlags.value("NONE"),         0, &AOClient::cmdLogout}},
-        {"pos",                {ACLFlags.value("NONE"),         1, &AOClient::cmdPos}},
-        {"g",                  {ACLFlags.value("NONE"),         1, &AOClient::cmdG}},
-        {"need",               {ACLFlags.value("NONE"),         1, &AOClient::cmdNeed}},
-        {"coinflip",           {ACLFlags.value("NONE"),         0, &AOClient::cmdFlip}},
-        {"roll",               {ACLFlags.value("NONE"),         0, &AOClient::cmdRoll}},
-        {"rollp",              {ACLFlags.value("NONE"),         0, &AOClient::cmdRollP}},
-        {"doc",                {ACLFlags.value("NONE"),         0, &AOClient::cmdDoc}},
-        {"cleardoc",           {ACLFlags.value("NONE"),         0, &AOClient::cmdClearDoc}},
-        {"cm",                 {ACLFlags.value("NONE"),         0, &AOClient::cmdCM}},
-        {"uncm",               {ACLFlags.value("CM"),           0, &AOClient::cmdUnCM}},
-        {"invite",             {ACLFlags.value("CM"),           1, &AOClient::cmdInvite}},
-        {"uninvite",           {ACLFlags.value("CM"),           1, &AOClient::cmdUnInvite}},
-        {"area_lock",          {ACLFlags.value("CM"),           0, &AOClient::cmdLock}},
-        {"area_spectate",      {ACLFlags.value("CM"),           0, &AOClient::cmdSpectatable}},
-        {"area_mute",          {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMute}},
-        {"area_unlock",        {ACLFlags.value("CM"),           0, &AOClient::cmdUnLock}},
-        {"timer",              {ACLFlags.value("CM"),           0, &AOClient::cmdTimer}},
-        {"area",               {ACLFlags.value("NONE"),         1, &AOClient::cmdArea}},
-        {"play",               {ACLFlags.value("NONE"),         1, &AOClient::cmdPlay}},
-        {"area_kick",          {ACLFlags.value("CM"),           1, &AOClient::cmdAreaKick}},
-        {"modarea_kick",       {ACLFlags.value("KICK"),         2, &AOClient::cmdModAreaKick}},
-        {"randomchar",         {ACLFlags.value("NONE"),         0, &AOClient::cmdRandomChar}},
-        {"switch",             {ACLFlags.value("NONE"),         1, &AOClient::cmdSwitch}},
-        {"toggleglobal",       {ACLFlags.value("NONE"),         0, &AOClient::cmdToggleGlobal}},
-        {"mods",               {ACLFlags.value("NONE"),         0, &AOClient::cmdMods}},
-        {"help",               {ACLFlags.value("NONE"),         0, &AOClient::cmdHelp}},
-        {"status",             {ACLFlags.value("NONE"),         1, &AOClient::cmdStatus}},
-        {"forcepos",           {ACLFlags.value("CM"),           2, &AOClient::cmdForcePos}},
-        {"currentmusic",       {ACLFlags.value("NONE"),         0, &AOClient::cmdCurrentMusic}},
-        {"pm",                 {ACLFlags.value("NONE"),         2, &AOClient::cmdPM}},
-        {"evidence_mod",       {ACLFlags.value("CM"),           1, &AOClient::cmdEvidenceMod}},
-        {"motd",               {ACLFlags.value("NONE"),         0, &AOClient::cmdMOTD}},
-        {"m",                  {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdM}},
-        {"mute",               {ACLFlags.value("MUTE"),         1, &AOClient::cmdMute}},
-        {"unmute",             {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnMute}},
-        {"bans",               {ACLFlags.value("BAN"),          0, &AOClient::cmdBans}},
-        {"unban",              {ACLFlags.value("BAN"),          1, &AOClient::cmdUnBan}},
-        {"removeuser",         {ACLFlags.value("MODIFY_USERS"), 1, &AOClient::cmdRemoveUser}},
-        {"subtheme",           {ACLFlags.value("CM"),           1, &AOClient::cmdSubTheme}},
-        {"about",              {ACLFlags.value("NONE"),         0, &AOClient::cmdAbout}},
-        {"evidence_swap",      {ACLFlags.value("CM"),           2, &AOClient::cmdEvidence_Swap}},
-        {"notecard",           {ACLFlags.value("NONE"),         1, &AOClient::cmdNoteCard}},
-        {"notecardreveal",     {ACLFlags.value("CM"),           0, &AOClient::cmdNoteCardReveal}},
-        {"notecard_reveal",    {ACLFlags.value("CM"),           0, &AOClient::cmdNoteCardReveal}},
-        {"notecardclear",      {ACLFlags.value("NONE"),         0, &AOClient::cmdNoteCardClear}},
-        {"notecard_clear",     {ACLFlags.value("NONE"),         0, &AOClient::cmdNoteCardClear}},
-        {"8ball",              {ACLFlags.value("NONE"),         1, &AOClient::cmd8Ball}},
-        {"judgelog",           {ACLFlags.value("CM"),           0, &AOClient::cmdJudgeLog}},
-        {"allowblankposting",  {ACLFlags.value("MODCHAT"),      0, &AOClient::cmdAllowBlankposting}},
-        {"gimp",               {ACLFlags.value("MUTE"),         1, &AOClient::cmdGimp}},
-        {"ungimp",             {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnGimp}},
-        {"baninfo",            {ACLFlags.value("BAN"),          1, &AOClient::cmdBanInfo}},
-        {"testify",            {ACLFlags.value("CM"),           0, &AOClient::cmdTestify}},
-        {"testimony",          {ACLFlags.value("NONE"),         0, &AOClient::cmdTestimony}},
-        {"examine",            {ACLFlags.value("CM"),           0, &AOClient::cmdExamine}},
-        {"pause",              {ACLFlags.value("CM"),           0, &AOClient::cmdPauseTestimony}},
-        {"delete",             {ACLFlags.value("CM"),           0, &AOClient::cmdDeleteStatement}},
-        {"update",             {ACLFlags.value("CM"),           0, &AOClient::cmdUpdateStatement}},
-        {"add",                {ACLFlags.value("CM"),           0, &AOClient::cmdAddStatement}},
-        {"reload",             {ACLFlags.value("SUPER"),        0, &AOClient::cmdReload}},
-        {"disemvowel",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdDisemvowel}},
-        {"undisemvowel",       {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnDisemvowel}},
-        {"shake",              {ACLFlags.value("MUTE"),         1, &AOClient::cmdShake}},
-        {"unshake",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnShake}},
-        {"forceimmediate",     {ACLFlags.value("CM"),           0, &AOClient::cmdForceImmediate}},
-        {"allowiniswap",       {ACLFlags.value("CM"),           0, &AOClient::cmdAllowIniswap}},
-        {"afk",                {ACLFlags.value("NONE"),         0, &AOClient::cmdAfk}},
-        {"savetestimony",      {ACLFlags.value("NONE"),         1, &AOClient::cmdSaveTestimony}},
-        {"loadtestimony",      {ACLFlags.value("CM"),           1, &AOClient::cmdLoadTestimony}},
-        {"permitsaving",       {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdPermitSaving}},
-        {"mutepm",             {ACLFlags.value("NONE"),         0, &AOClient::cmdMutePM}},
-        {"toggleadverts",      {ACLFlags.value("NONE"),         0, &AOClient::cmdToggleAdverts}},
-        {"ooc_mute",           {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocMute}},
-        {"ooc_unmute",         {ACLFlags.value("MUTE"),         1, &AOClient::cmdOocUnMute}},
-        {"blockwtce",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockWtce}},
-        {"unblockwtce",        {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockWtce}},
-        {"blockdj",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlockDj}},
-        {"unblockdj",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlockDj}},
-        {"charcurse",          {ACLFlags.value("MUTE"),         1, &AOClient::cmdCharCurse}},
-        {"uncharcurse",        {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnCharCurse}},
-        {"charselect",         {ACLFlags.value("NONE"),         0, &AOClient::cmdCharSelect}},
-        {"togglemusic",        {ACLFlags.value("CM"),           0, &AOClient::cmdToggleMusic}},
-        {"kickuid",            {ACLFlags.value("KICK"),         2, &AOClient::cmdKickUid}},
-        {"firstperson",        {ACLFlags.value("NONE"),         0, &AOClient::cmdFirstPerson}},
-        {"updateban",          {ACLFlags.value("BAN"),          3, &AOClient::cmdUpdateBan}},
-        {"changepass",         {ACLFlags.value("SUPER"),        1, &AOClient::cmdChangePassword}},
-        {"ignorebglist",       {ACLFlags.value("IGNORE_BGLIST"),0, &AOClient::cmdIgnoreBgList}},
-        {"togglemessage",      {ACLFlags.value("CM"),           0, &AOClient::cmdToggleAreaMessageOnJoin}},
-        {"clearmessage",       {ACLFlags.value("CM"),           0, &AOClient::cmdClearAreaMessage}},
-        {"areamessage",        {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMessage}},
-        {"notice",             {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNotice}},
-        {"noticeg",            {ACLFlags.value("SEND_NOTICE"),  1, &AOClient::cmdNoticeGlobal}},
-        {"clearcm",            {ACLFlags.value("KICK"),         0, &AOClient::cmdClearCM}},
-        {"areamessage",        {ACLFlags.value("CM"),           0, &AOClient::cmdAreaMessage}},
-        {"addsong",            {ACLFlags.value("CM"),           1, &AOClient::cmdAddSong}},
-        {"addcategory",        {ACLFlags.value("CM"),           1, &AOClient::cmdAddCategory}},
-        {"removeentry",        {ACLFlags.value("CM"),           1, &AOClient::cmdRemoveCategorySong}},
-        {"toggleroot",         {ACLFlags.value("CM"),           0, &AOClient::cmdToggleRootlist}},
-        {"clearcustom",        {ACLFlags.value("CM"),           0, &AOClient::cmdClearCustom}},
-        {"ipidinfo",           {ACLFlags.value("IPIDINFO"),     1, &AOClient::cmdIpidInfo}},
-        {"sneak",              {ACLFlags.value("NONE"),         0, &AOClient::cmdSneak}},
-        {"taketaked",          {ACLFlags.value("TAKETAKED"),    0, &AOClient::cmdTakeTakedChar}},
-        {"currentevimod",      {ACLFlags.value("CM"),           0, &AOClient::cmdCurrentEvimod}},
-        {"bgs",                {ACLFlags.value("NONE"),         0, &AOClient::cmdBgs}},
-        {"blind",              {ACLFlags.value("MUTE"),         1, &AOClient::cmdBlind}},
-        {"unblind",            {ACLFlags.value("MUTE"),         1, &AOClient::cmdUnBlind}},
-        {"currentbg",          {ACLFlags.value("NONE"),         0, &AOClient::cmdCurBg}},
-        {"sneak_mod",          {ACLFlags.value("SNEAK"),        0, &AOClient::cmdSneakMod}},
-        {"togglefloodguard",   {ACLFlags.value("CM"),           0, &AOClient::cmdToggleFloodguardActuve}},
-        {"togglechillmod",     {ACLFlags.value("CM"),           0, &AOClient::cmdToggleChillMod}},
-        {"toggleautomod",      {ACLFlags.value("CM"),           0, &AOClient::cmdToggleAutoMod}},
-        {"togglewuso",         {ACLFlags.value("WUSO"),         0, &AOClient::cmdToggleWebUsersSpectateOnly}},
-        {"removewuso",         {ACLFlags.value("WUSO"),         1, &AOClient::cmdRemoveWebUsersSpectateOnly}},
-        {"play_once",          {ACLFlags.value("NONE"),         1, &AOClient::cmdPlayOnce}},
-        {"areapassword",       {ACLFlags.value("CM"),           0, &AOClient::cmdSetAreaPassword}},
-        {"password",           {ACLFlags.value("NONE"),         1, &AOClient::cmdSetClientPassword}},
-        {"renamearea",         {ACLFlags.value("GM"),           1, &AOClient::cmdRenameArea}},
-        {"createarea",         {ACLFlags.value("GM"),           1, &AOClient::cmdCreateArea}},
-        {"removearea",         {ACLFlags.value("GM"),           1, &AOClient::cmdRemoveArea}},
-        {"saveareas",          {ACLFlags.value("NONE"),         1, &AOClient::cmdSaveAreas}},
-        {"permitareasaving",   {ACLFlags.value("MODCHAT"),      1, &AOClient::cmdPermitAreaSaving}},
-        {"swapareas",          {ACLFlags.value("GM"),           2, &AOClient::cmdSwapAreas}},
-        {"toggleprotected",    {ACLFlags.value("GM"),           0, &AOClient::cmdToggleProtected}},
-    };
 
     /**
      * @brief Filled with part of a packet if said packet could not be read fully from the client's socket.
@@ -2580,7 +2492,7 @@ class AOClient : public QObject {
     /**
      * @brief Pointer to the servers music manager instance.
      */
-    MusicManager* m_music_manager;
+    MusicManager *m_music_manager;
 
     /**
      * @brief A helper function to add recorded packets to an area's judgelog.
@@ -2591,7 +2503,7 @@ class AOClient : public QObject {
      *
      * @param action String containing the info that is being recorded.
      */
-    void updateJudgeLog(AreaData* area, AOClient* client, QString action);
+    void updateJudgeLog(AreaData *area, AOClient *client, QString action);
 
     /**
      * @brief A helper function for decoding AO encoding from a QString.
@@ -2610,81 +2522,80 @@ signals:
   /**
    * @brief Signal connected to universal logger. Sends IC chat usage to the logger.
    */
-  void logIC(const QString& f_charName, const QString& f_oocName, const QString& f_ipid,
-             const QString& f_areaName, const QString &f_message, const QString &f_uid,
+  void logIC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
+             const QString &f_areaName, const QString &f_message, const QString &f_uid,
              const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends OOC chat usage to the logger.
    */
-  void logOOC(const QString& f_charName, const QString& f_oocName, const QString& f_ipid,
-              const QString& f_areaName, const QString& f_message, const QString &f_uid,
+  void logOOC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
+              const QString &f_areaName, const QString &f_message, const QString &f_uid,
               const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends login attempt to the logger.
    */
-  void logLogin(const QString& f_charName, const QString& f_oocName, const QString& f_moderatorName,
-                const QString& f_ipid, const QString &f_areaName, const bool& f_success, const QString &f_uid,
+  void logLogin(const QString &f_charName, const QString &f_oocName, const QString &f_moderatorName,
+                const QString &f_ipid, const QString &f_areaName, const bool &f_success, const QString &f_uid,
                 const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends command usage to the logger.
    */
-  void logCMD(const QString& f_charName, const QString &f_ipid, const QString& f_oocName, const QString f_command,
+  void logCMD(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString f_command,
               const QString f_args, const QString f_areaName, const QString &f_uid, const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends player kick information to the logger.
    */
-  void logKick(const QString& f_moderator, const QString& f_targetIPID, const QString& f_reason, const QString &f_uid,
+  void logKick(const QString &f_moderator, const QString &f_targetIPID, const QString &f_reason, const QString &f_uid,
                const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends ban information to the logger.
    */
-  void logBan(const QString& f_moderator, const QString& f_targetIPID, const QString &f_duration, const QString& f_reason,
+  void logBan(const QString &f_moderator, const QString &f_targetIPID, const QString &f_duration, const QString &f_reason,
               const QString &f_uid, const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends modcall information to the logger, triggering a write of the buffer
    *        when modcall logging is used.
    */
-  void logModcall(const QString& f_charName, const QString &f_ipid, const QString& f_oocName, const QString& f_areaName,
+  void logModcall(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString &f_areaName,
                   const QString &f_uid, const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends disconnect information to the logger.
    */
-  void logDisconnect(const QString& f_char_name, const QString &f_ipid, const QString& f_ooc_name, const QString& f_area_name,
+  void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
                      const QString &f_uid, const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends change music information to the logger.
    */
-  void logMusic(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-              const QString& f_area_name, const QString& f_music, const QString &f_uid,
+  void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+              const QString &f_area_name, const QString &f_music, const QString &f_uid,
               const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends change character information to the logger.
    */
-  void logChangeChar(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-              const QString& f_area_name, const QString& f_changechar, const QString &f_uid,
+  void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+              const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
               const QString &f_hwid);
 
   /**
    * @brief Signal connected to universal logger. Sends change area information to the logger.
    */
-  void logChangeArea(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-              const QString& f_area_name, const QString& f_changearea, const QString &f_uid,
+  void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+              const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
               const QString &f_hwid);
 
   /**
    * @brief Signals the server that the client has disconnected and marks its userID as free again.
    */
-  void clientSuccessfullyDisconnected(const int& f_user_id);
-
+  void clientSuccessfullyDisconnected(const int &f_user_id);
 };
 
 #endif // AOCLIENT_H

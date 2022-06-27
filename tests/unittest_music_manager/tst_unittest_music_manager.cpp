@@ -11,9 +11,8 @@ namespace unittests {
 class MusicListManager : public QObject
 {
     Q_OBJECT
-public :
-
-    MusicManager* m_music_manager;
+public:
+  MusicManager *m_music_manager;
 
 private slots:
     /**
@@ -84,7 +83,7 @@ void MusicListManager::init()
     QStringList l_list = {};
     l_list << "==Music==" << "Announce The Truth (AJ).opus" << "Announce The Truth (JFA).opus";
 
-    m_music_manager = new MusicManager(nullptr, l_list ,{"my.cdn.com","your.cdn.com"}, l_test_list);
+    m_music_manager = new MusicManager(l_list, {"my.cdn.com", "your.cdn.com"}, l_test_list, nullptr);
 }
 
 void MusicListManager::registerArea()

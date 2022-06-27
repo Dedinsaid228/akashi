@@ -17,6 +17,11 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
 
+#include "include/area_data.h"
+#include "include/music_manager.h"
+#include "include/network/aopacket.h"
+#include "include/server.h"
+
 // This file is for commands under the music category in aoclient.h
 // Be sure to register the command in the header before adding it here!
 
@@ -39,7 +44,7 @@ void AOClient::cmdCurrentMusic(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
 
     if (l_area->currentMusic() != "" && l_area->currentMusic() != "~stop.mp3") // dummy track for stopping music
         sendServerMessage("The current song is " + l_area->currentMusic() + " played by " + l_area->musicPlayerBy());
@@ -78,7 +83,7 @@ void AOClient::cmdBlockDj(int argc, QStringList argv)
      }
 
     l_target->m_is_dj_blocked = true;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"BLOCKDJ","Blocked UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"BLOCKDJ","Blocked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnBlockDj(int argc, QStringList argv)
@@ -108,7 +113,7 @@ void AOClient::cmdUnBlockDj(int argc, QStringList argv)
     }
 
     l_target->m_is_dj_blocked = false;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNBLOCKDJ","Unblocked UID: " + QString::number(l_target->m_id),server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNBLOCKDJ","Unblocked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdToggleMusic(int argc, QStringList argv)
@@ -116,12 +121,12 @@ void AOClient::cmdToggleMusic(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* l_area = server->m_areas[m_current_area];
+    AreaData* l_area = server->getAreaById(m_current_area);
     l_area->toggleMusic();
     QString l_state = l_area->isMusicAllowed() ? "allowed." : "disallowed.";
 
     sendServerMessage("Music in this area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEMUSIC",l_state,server->m_areas[m_current_area]->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEMUSIC",l_state,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdAddSong(int argc, QStringList argv)

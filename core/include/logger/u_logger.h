@@ -18,13 +18,13 @@
 #ifndef U_LOGGER_H
 #define U_LOGGER_H
 
-#include <QObject>
-#include <QMap>
-#include <QQueue>
-#include <QDateTime>
 #include "include/config_manager.h"
 #include "include/logger/writer_full.h"
 #include "include/logger/writer_modcall.h"
+#include <QDateTime>
+#include <QMap>
+#include <QObject>
+#include <QQueue>
 
 /**
  * @brief The Universal Logger class to provide a common place to handle, store and write logs to file.
@@ -32,12 +32,13 @@
 class ULogger : public QObject
 {
     Q_OBJECT
-public:
+
+ public:
     /**
      * @brief Constructor for the universal logger. Determines which writer is initially created.
      * @param Pointer to the Server.
      */
-    ULogger(QObject* parent = nullptr);
+    ULogger(QObject *parent = nullptr);
 
     /**
      * @brief Deconstructor of the universal logger. Deletes its writer before deconstruction.
@@ -50,70 +51,70 @@ public:
      */
     QQueue<QString> buffer(const QString &f_areaName);
 
-public slots:
+ public slots:
 
     /**
      * @brief Adds an IC log entry to the area buffer and writes it to the respective log format.
      */
-    void logIC(const QString& f_char_name, const QString& f_ooc_name, const QString& f_ipid,
-               const QString& f_area_name, const QString &f_message, const QString &f_uid,
+    void logIC(const QString &f_char_name, const QString &f_ooc_name, const QString &f_ipid,
+               const QString &f_area_name, const QString &f_message, const QString &f_uid,
                const QString &f_hwid);
 
     /**
      * @brief Adds an OOC log entry to the area buffer and writes it to the respective log format.
      */
-    void logOOC(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-                const QString& f_area_name, const QString& f_message, const QString &f_uid,
+    void logOOC(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                const QString &f_area_name, const QString &f_message, const QString &f_uid,
                 const QString &f_hwid);
 
     /**
      * @brief Adds an login attempt to the area buffer and writes it to the respective log format.
      */
-    void logLogin(const QString& f_char_name, const QString& f_ooc_name, const QString& f_moderator_name,
-                  const QString& f_ipid, const QString &f_area_name, const bool& f_success, const QString &f_uid,
+    void logLogin(const QString &f_char_name, const QString &f_ooc_name, const QString &f_moderator_name,
+                  const QString &f_ipid, const QString &f_area_name, const bool &f_success, const QString &f_uid,
                   const QString &f_hwid);
 
     /**
      * @brief Adds a command usage to the area buffer and writes it to the respective log format.
      */
-    void logCMD(const QString& f_char_name, const QString &f_ipid, const QString& f_ooc_name, const QString& f_command,
-                const QString& f_args, const QString& f_area_name, const QString &f_uid, const QString &f_hwid);
+    void logCMD(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_command,
+                const QString &f_args, const QString &f_area_name, const QString &f_uid, const QString &f_hwid);
 
     /**
      * @brief Adds a player kick to the area buffer and writes it to the respective log format.
      */
-    void logKick(const QString& f_moderator, const QString& f_target_ipid, const QString &f_uid, const QString &f_hwid);
+    void logKick(const QString &f_moderator, const QString &f_target_ipid, const QString &f_uid, const QString &f_hwid);
 
     /**
      * @brief Adds a player ban to the area buffer and writes it to the respective log format.
      */
-    void logBan(const QString& f_moderator, const QString& f_target_ipid, const QString &f_duration, const QString &f_uid,
+    void logBan(const QString &f_moderator, const QString &f_target_ipid, const QString &f_duration, const QString &f_uid,
                 const QString &f_hwid);
 
     /**
      * @brief Adds a modcall event to the area buffer, also triggers modcall writing.
      */
-    void logModcall(const QString& f_char_name, const QString &f_ipid, const QString& f_ooc_name, const QString& f_area_name,
+    void logModcall(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
                     const QString &f_uid, const QString &f_hwid);
 
     /**
      * @brief Logs any connection attempt to the server, wether sucessful or not.
      */
-    void logConnectionAttempt(const QString& f_ipid, const QString& f_hwid);
+    void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
-    void logDisconnect(const QString& f_char_name, const QString &f_ipid, const QString& f_ooc_name, const QString& f_area_name,
+    void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString& f_area_name,
                        const QString &f_uid, const QString &f_hwid);
 
-    void logMusic(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-                const QString& f_area_name, const QString& f_music, const QString &f_uid,
+    void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                const QString &f_area_name, const QString &f_music, const QString &f_uid,
                 const QString &f_hwid);
 
-    void logChangeChar(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-                const QString& f_area_name, const QString& f_changechar, const QString &f_uid,
+    void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
                 const QString &f_hwid);
 
-    void logChangeArea(const QString& f_char_Name, const QString& f_ooc_name, const QString& f_ipid,
-                const QString& f_area_name, const QString& f_changearea, const QString &f_uid,
+    void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
                 const QString &f_hwid);
 
     /**
@@ -128,7 +129,7 @@ private:
      * @param Name of the area which buffer is modified.
      * @param Formatted QString to be added into the buffer.
      */
-    void updateAreaBuffer(const QString& f_areaName, const QString& f_log_entry);
+    void updateAreaBuffer(const QString &f_areaName, const QString &f_log_entry);
 
     /**
      * @brief QMap of all available area buffers.
@@ -140,7 +141,7 @@ private:
     /**
      * @brief Pointer to modcall writer. Handles QQueue delogging into area specific file.
      */
-    WriterModcall* writerModcall;
+    WriterModcall *writerModcall;
 
     /**
      * @brief Pointer to full writer. Handles single messages in one file.
@@ -154,7 +155,7 @@ private:
      *          This has the problem of lacking defaults that work for all when the file is missing.
      *          This QMap contains all default values and overwrites them on logger construction.
      */
-    QHash<QString,QString>m_logtext {
+    QHash<QString, QString>m_logtext{
         {"ic",          "[%1][%5][IC][%2(%3)][%4][%7][%8]: %6"},
         {"ooc",         "[%1][%5][OOC][%2(%3)][%4][%7][%8]: %6"},
         {"login",       "[%1][LOGIN][%2][%3][%4(%5)][%6][%7]"},
