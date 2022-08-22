@@ -1,19 +1,34 @@
-# akashi <img src="https://github.com/AttorneyOnline/akashi/blob/master/akashi/resource/icon/256.png" width=30 height=30>
-A C++ server for Attorney Online 2
+# kakashi
+Poorly made fork of the C++ server for Attorney Online 2 with additional functional.
+For a better understanding the work of this programm it is recommended to read the wiki, located in the same repo.
+
+Плохо сделанный форк сервера для Attorney Online 2, написанного на C++, с дополнительным функционалом.
+Для лучшего понимания работы данной программы рекомендуется прочитать вики, расположенное в этом же репозитории.
 
 # Build instructions
-Requires Qt >= 5.10, and Qt websockets
+
+Required Qt => 5.10 and Qt Websockets
+Необходимы Qt => 5.10 и Qt Websockets
+
 ```
-   git clone https://github.com/AttorneyOnline/akashi
-   cd akashi
+   #Installing dependencies
+   #Установка зависимостей
+   #Ubuntu 20.04:
+   sudo apt-get install qt5-default gcc g++ libqt5websockets5-dev
+
+   #Ubuntu 22.04:
+   sudo qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gcc g++ libqt5websockets5-dev
+
+   #Building
+   #Компиляция
+   git clone https://github.com/Ddedinya/kakashi
+   cd kakashi
    qmake
    make
 ```
 
-Copyright © scatterflower 2020-2021
+akashi is created by scatterflower, Sananto, in1tiate, MangosArentLiterature and other cool people.
+This fork is supported by Ddedinya.
 
-Copyright © Salanto 2021
-
-Copyright © in1tiate 2021
-
-Copyright © mangosarentliterature 2021
+akashi создан scatterflower, Sananto, in1tiate, MangosArentLiterature и другими крутыми людьми.
+Данный форк поддерживается Ddedinya, т.е. мной, агада.

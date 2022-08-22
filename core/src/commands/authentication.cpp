@@ -18,6 +18,7 @@
 #include "include/aoclient.h"
 
 #include "include/config_manager.h"
+#include "include/crypto_helper.h"
 #include "include/db_manager.h"
 #include "include/server.h"
 
@@ -117,16 +118,7 @@ void AOClient::cmdSetRootPass(int argc, QStringList argv)
     m_authenticated = false;
     ConfigManager::setAuthType(DataTypes::AuthType::ADVANCED);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
-    qsrand(QDateTime::currentMSecsSinceEpoch());
-    quint32 l_upper_salt = qrand();
-    quint32 l_lower_salt = qrand();
-    quint64 l_salt_number = (upper_salt << 32) | lower_salt;
-#else
-    quint64 l_salt_number = QRandomGenerator::system()->generate64();
-#endif
-
-    QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
+    QByteArray l_salt = CryptoHelper::randbytes(16);
 
     server->getDatabaseManager()->createUser("root", l_salt, argv[0], ACLRolesHandler::SUPER_ID);
     emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"rootpass",argv[0],server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
@@ -141,16 +133,7 @@ void AOClient::cmdAddUser(int argc, QStringList argv)
         return;
     }
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
-    qsrand(QDateTime::currentMSecsSinceEpoch());
-    quint32 l_upper_salt = qrand();
-    quint32 l_lower_salt = qrand();
-    quint64 l_salt_number = (upper_salt << 32) | lower_salt;
-#else
-    quint64 l_salt_number = QRandomGenerator::system()->generate64();
-#endif
-
-    QString l_salt = QStringLiteral("%1").arg(l_salt_number, 16, 16, QLatin1Char('0'));
+    QByteArray l_salt = CryptoHelper::randbytes(16);
 
     if (server->getDatabaseManager()->createUser(argv[0], l_salt, argv[1], ACLRolesHandler::NONE_ID)) {
             sendServerMessage("Created user " + argv[0] + ".\nUse /addperm to modify their permissions.");

@@ -18,7 +18,8 @@
 #include "include/aoclient.h"
 
 #include "include/area_data.h"
-#include "include/network/aopacket.h"
+#include "include/config_manager.h"
+#include "include/packet/packet_factory.h"
 #include "include/server.h"
 
 // This file is for commands under the messaging category in aoclient.h
@@ -82,15 +83,22 @@ void AOClient::cmdG(int argc, QStringList argv)
     QString l_sender_message = argv.join(" ");
     bool l_sender_auth = m_authenticated;
     bool l_sender_sneak = m_sneak_mod;
-    QString l_area = "[G][" + l_sender_area + "]";
+    QString l_areaname = "[G][" + l_sender_area + "]";
+
+    if (l_sender_message.size() > ConfigManager::maxCharacters()) {
+        sendServerMessage("Your message is too long!");
+        return;
+    }
+
+    autoMod();
 
     if (l_sender_auth && !l_sender_sneak)
-        l_area += "[M]";
+        l_areaname += "[M]";
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
         if (l_client->m_global_enabled)
-            l_client->sendPacket("CT", {l_area + l_sender_name, l_sender_message});
+            l_client->sendPacket("CT", {l_areaname + l_sender_name, l_sender_message});
     }
 
     emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"GLOBALCHAT",l_sender_message,l_sender_area, QString::number(m_id), m_hwid);
@@ -103,6 +111,13 @@ void AOClient::cmdNeed(int argc, QStringList argv)
 
     QString l_sender_area = server->getAreaName(m_current_area);
     QString l_sender_message = argv.join(" ");
+
+    if (l_sender_message.size() > ConfigManager::maxCharacters()) {
+        sendServerMessage("Your message is too long!");
+        return;
+    }
+
+    autoMod();
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
@@ -127,6 +142,7 @@ void AOClient::cmdSwitch(int argc, QStringList argv)
 
     if (changeCharacter(l_selected_char_id)) {
         m_char_id = l_selected_char_id;
+        m_is_spectator = false;
     }
     else {
         sendServerMessage("The character you picked is either taken or invalid.");
@@ -151,6 +167,7 @@ void AOClient::cmdRandomChar(int argc, QStringList argv)
 
     if (changeCharacter(l_selected_char_id)) {
         m_char_id = l_selected_char_id;
+        m_is_spectator = false;
     }
 }
 
@@ -216,7 +233,7 @@ void AOClient::cmdM(int argc, QStringList argv)
     QString l_sender_name = m_ooc_name;
     QString l_sender_message = argv.join(" ");
 
-    server->broadcast(AOPacket("CT", {"$M[" + QString::number(l_sender_area) + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
+    server->broadcast(PacketFactory::createPacket("CT", {"$M[" + QString::number(l_sender_area) + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
     emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"MODCHAT",l_sender_message,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     return;
 }

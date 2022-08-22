@@ -291,7 +291,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/bglock - locks the background of the current area, preventing it from being changed. [CM]\n"
                           "/bgunlock - unlocks the background of the current area, allowing it to be changed. [CM]\n"
                           "/togglewtce - toggles wether WTCE can be used in the area. [CM]\n"
-                          "/togleshouts - toggles wether shouts can be used in the area. [CM]");
+                          "/toggleshouts - toggles wether shouts can be used in the area. [CM]\n"
+                          "/togglestatus - toggles wether status can be changed in the area. [CM]");
     else if (argv[0] == "areaedit")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "The commands presented here require [GM] permission.\n"
@@ -318,7 +319,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/uncharcurse [uid] - uncharcurses a target client, allowing them to switch normally again. [MUTE]\n"
                           "/clearcm - removes all CMs from the current area. [KICK]\n"
                           "/disemvowel [uid] - removes all vowels from a target client's IC messages. [MUTE]\n"
-                          "/undisemvowel [uid] - undisemvowels a client. [MUTE]\n/gimp [uid] - replaces a target client's IC messages with strings randomly selected from gimp.txt. [MUTE]\n"
+                          "/undisemvowel [uid] - undisemvowels a client. [MUTE]\n"
+                          "/gimp [uid] - replaces a target client's IC messages with strings randomly selected from gimp.txt. [MUTE]\n"
                           "/ungimp [uid] - ungimps a client. [MUTE]\n"
                           "/ipidinfo [ipid] - find out the ip address and date of ipid creation. [IPIDINFO]\n"
                           "/taketaked - allow/deny yourself take taked characters. [TAKETAKED]\n"
@@ -416,7 +418,16 @@ void AOClient::cmdAbout(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    sendServerMessage("akashi by: \n scatterflower \n Salanto \n in1tiate \n mangosarentliterature \n Github: https://github.com/AttorneyOnline/akashi \n kakashi by Dedinsaid228. \n Based on akashi Grapefruit. \n Github: https://github.com/Dedinsaid228/kakashi");
+    sendServerMessage("akashi by:"
+                      "\n scatterflower"
+                      "\n Salanto"
+                      "\n in1tiate"
+                      "\n MangosArentLiterature"
+                      "\n and other cool guys!"
+                      "\n Github: https://github.com/AttorneyOnline/akashi "
+                      "\n kakashi by Ddedinya."
+                      "\n Based on akashi Grapefruit. "
+                      "\n Github: https://github.com/Ddedinya/kakashi");
 }
 
 void AOClient::cmdMute(int argc, QStringList argv)
@@ -623,7 +634,7 @@ void AOClient::cmdAllowBlankposting(int argc, QStringList argv)
 
     if (l_area->blankpostingAllowed() == false) {
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " has set blankposting in the area to forbidden.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"FIRBIDBLANKPOST","",server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"FORBIDBLANKPOST","",server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
     else {
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " has set blankposting in the area to allowed.");
@@ -740,27 +751,40 @@ void AOClient::cmdKickUid(int argc, QStringList argv)
 
     bool conv_ok = false;
     int l_uid = argv[0].toInt(&conv_ok);
-    if (!conv_ok) {
+    if (!conv_ok && argv[0] != "*") {
         sendServerMessage("Invalid user ID.");
         return;
     }
+    else if (conv_ok) {
+        AOClient* l_target = server->getClientByID(l_uid);
 
-    AOClient* l_target = server->getClientByID(l_uid);
+        if (l_target == nullptr) {
+            sendServerMessage("No client with that ID found.");
+            return;
+        }
 
-    if (l_target == nullptr) {
-        sendServerMessage("No client with that ID found.");
-        return;
+        if (l_target->m_id == m_id) {
+            sendServerMessage("Nope.");
+            return;
+        }
+
+        l_target->sendPacket("KK", {l_reason});
+        l_target->m_socket->close();
+        sendServerMessage("Kicked client with UID " + argv[0] + " for reason: " + l_reason);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"KICKUID","Kicked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+        }
+    else if (argv[0] == "*") { // kick all clients in the area
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREAKICK","Kicked all players from area",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        const QVector<AOClient *> l_clients = server->getClients();
+        for (AOClient *l_client : l_clients) {
+            if (l_client->m_current_area == m_current_area && l_client->m_id != m_id ) {
+                l_client->sendPacket("KK", {l_reason});
+                l_client->m_socket->close();
+            }
+        }
+        sendServerMessage("Kicked all clients for reason: " + l_reason);
+        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"KICKUID","Kicked all clients in area from the server",server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
-
-    if (l_target->m_id == m_id) {
-        sendServerMessage("Nope.");
-        return;
-    }
-
-    l_target->sendPacket("KK", {l_reason});
-    l_target->m_socket->close();
-    sendServerMessage("Kicked client with UID " + argv[0] + " for reason: " + l_reason);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"KICKUID","Kicked UID: " + QString::number(l_target->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUpdateBan(int argc, QStringList argv)

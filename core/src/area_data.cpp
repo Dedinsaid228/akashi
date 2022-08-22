@@ -21,7 +21,7 @@
 #include "include/area_data.h"
 #include "include/config_manager.h"
 #include "include/music_manager.h"
-#include "include/network/aopacket.h"
+#include "include/packet/packet_factory.h"
 
 AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = nullptr) :
     m_index(p_index),
@@ -31,6 +31,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_area_message("No area message set."),
     m_defHP(10),
     m_proHP(10),
+    m_currentMusic("~stop.mp3"),
     m_statement(0),
     m_judgelog(),
     m_lastICMessage(),
@@ -66,6 +67,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_floodguardactive = areas_ini->value("floodguard_active", "false").toBool();
     m_areapassword = areas_ini->value("password", "").toString();
     setEvidenceList(areas_ini->value("evidence", "").toStringList());
+    m_can_change_status = areas_ini->value("change_status","true").toBool();
     areas_ini->endGroup();
     QTimer *timer1 = new QTimer();
     m_timers.append(timer1);
@@ -653,6 +655,16 @@ QString AreaData::areaPassword()
 void AreaData::setAreaPassword(QString f_password)
 {
     m_areapassword = f_password;
+}
+
+bool AreaData::allowChangeStatus()
+{
+    return m_can_change_status;
+}
+
+void AreaData::toggleChangeStatus()
+{
+    m_can_change_status = !m_can_change_status;
 }
 
 void AreaData::setEvidenceList(QStringList f_evi_list)

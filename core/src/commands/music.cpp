@@ -19,7 +19,7 @@
 
 #include "include/area_data.h"
 #include "include/music_manager.h"
-#include "include/network/aopacket.h"
+#include "include/packet/packet_factory.h"
 #include "include/server.h"
 
 // This file is for commands under the music category in aoclient.h

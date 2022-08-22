@@ -19,7 +19,7 @@
 
 #include "include/area_data.h"
 #include "include/config_manager.h"
-#include "include/network/aopacket.h"
+#include "include/packet/packet_factory.h"
 #include "include/server.h"
 
 // This file is for functions used by various commands, defined in the command helper function category in aoclient.h
@@ -94,8 +94,7 @@ int AOClient::genRand(int min, int max)
     return random_number;
 
 #else
-    quint32 random_number = QRandomGenerator::system()->bounded(min, max + 1);
-    return random_number;
+    return QRandomGenerator::system()->bounded(min, max + 1);
 #endif
 }
 
@@ -242,7 +241,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     l_message += "notice:\n\n" + f_notice;
 
     sendServerMessageArea(l_message);
-    AOPacket l_packet("BB", {l_message});
+    AOPacket *l_packet = PacketFactory::createPacket("BB", {l_message});
 
     if (f_global)
         server->broadcast(l_packet);
@@ -292,7 +291,7 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     else
         l_play_once = "1";
 
-    AOPacket music_change("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
+    AOPacket *music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
     server->broadcast(music_change, m_current_area);
     l_area->changeMusic(l_sender_name, l_song);
     emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->getAreaById(m_current_area)->name(),l_song, QString::number(m_id), m_hwid);

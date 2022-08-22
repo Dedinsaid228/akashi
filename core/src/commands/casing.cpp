@@ -19,7 +19,7 @@
 
 #include "include/area_data.h"
 #include "include/config_manager.h"
-#include "include/network/aopacket.h"
+#include "include/packet/packet_factory.h"
 #include "include/server.h"
 
 // This file is for commands under the casing category in aoclient.h
@@ -141,8 +141,8 @@ void AOClient::cmdExamine(int argc, QStringList argv)
     if (l_area->testimony().size() -1 > 0)
     {
         l_area->restartTestimony();
-        server->broadcast(AOPacket("RT",{"testimony2"}), m_current_area);
-        server->broadcast(AOPacket("MS", {l_area->testimony()[0]}), m_current_area);
+        server->broadcast(PacketFactory::createPacket("RT",{"testimony2"}), m_current_area);
+        server->broadcast(PacketFactory::createPacket("MS", {l_area->testimony()[0]}), m_current_area);
         emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"PLAYBACKTESTIMONY","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         return;
     }
@@ -212,7 +212,7 @@ void AOClient::cmdPauseTestimony(int argc, QStringList argv)
     AreaData* l_area = server->getAreaById(m_current_area);
 
     l_area->setTestimonyRecording(AreaData::TestimonyRecording::STOPPED);
-    server->broadcast(AOPacket("RT",{"testimony1", "1"}), m_current_area);
+    server->broadcast(PacketFactory::createPacket("RT",{"testimony1", "1"}), m_current_area);
     sendServerMessage("Testimony has been stopped.");
     emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"STOPTESTIMONY","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }

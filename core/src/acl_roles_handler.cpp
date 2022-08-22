@@ -59,7 +59,7 @@ const QHash<ACLRole::Permission, QString> ACLRole::PERMISSION_CAPTIONS{
     },
     {
         ACLRole::Permission::UNCM,
-        "remove_gamemaster",
+        "remove_casemaster",
     },
     {
         ACLRole::Permission::SAVETEST,

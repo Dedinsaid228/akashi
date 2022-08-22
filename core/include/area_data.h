@@ -22,6 +22,7 @@
 #include <QElapsedTimer>
 #include <QMap>
 #include <QRegularExpression>
+#include <QRandomGenerator>
 #include <QSettings>
 #include <QString>
 #include <QTimer>
@@ -31,6 +32,7 @@
 class ConfigManager;
 class Logger;
 class MusicManager;
+class AOPacket;
 
 /**
  * @brief Represents an area on the server, a distinct "room" for people to chat in.
@@ -929,6 +931,20 @@ class AreaData : public QObject
     void setAreaPassword(QString f_password);
 
     /**
+     * @brief Return whether status can be changed in this area.
+     *
+     * @return See short description.
+     *
+     * @see #m_chillmod
+     */
+    bool allowChangeStatus();
+
+    /**
+     * @brief Toggles whether status can be changed in this area.
+     */
+    void toggleChangeStatus();
+
+    /**
      * @brief Sets the evidence list to area when the server starts.
      */
     void setEvidenceList(QStringList f_evi_list);
@@ -970,7 +986,7 @@ signals:
     /**
      * @brief Sends a packet to every client inside the area.
      */
-    void sendAreaPacket(AOPacket f_packet, int f_area_index);
+    void sendAreaPacket(AOPacket *f_packet, int f_area_index);
 
     void userJoinedArea(int f_area_index, int f_user_id);
 
@@ -1229,6 +1245,8 @@ signals:
      * @brief If false, shouts are stripped from all messages in the area.
      */
     bool m_can_use_shouts = true;
+
+    bool m_can_change_status = true;
 
   private slots:
     /**

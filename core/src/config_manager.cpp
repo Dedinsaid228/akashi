@@ -139,6 +139,11 @@ QStringList ConfigManager::backgrounds()
 
 MusicList ConfigManager::musiclist()
 {
+    // Make sure the list is empty before appending new data.
+    if (!m_ordered_list->empty()) {
+        m_ordered_list->clear();
+    }
+
     QStringList l_music_list;
     QFile l_file("config/music.txt");
     l_file.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -529,7 +534,7 @@ QString ConfigManager::LogText(QString f_logtype)
 
 int ConfigManager::autoModTrigger()
 {
-    return m_settings->value("Options/automodtrigseconds", 3).toInt();
+    return m_settings->value("Options/automodtrigseconds", 300).toInt();
 }
 
 QString ConfigManager::autoModBanDuration()

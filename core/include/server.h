@@ -30,6 +30,9 @@
 #include <QTimer>
 #include <QWebSocket>
 #include <QWebSocketServer>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QNetworkReply>
 
 #include "include/network/aopacket.h"
 
@@ -198,14 +201,14 @@ class Server : public QObject
      *
      * @note Does nothing if an area by the given index does not exist.
      */
-    void broadcast(AOPacket packet, int area_index);
+    void broadcast(AOPacket *packet, int area_index);
 
     /**
      * @brief Sends a packet to all clients in the server.
      *
      * @param packet The packet to send to the clients.
      */
-    void broadcast(AOPacket packet);
+    void broadcast(AOPacket *packet);
 
     /**
      * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
@@ -214,7 +217,7 @@ class Server : public QObject
      *
      * @param ENUM to determine the targets of the altered packet.
      */
-    void broadcast(AOPacket packet, TARGET_TYPE target);
+    void broadcast(AOPacket *packet, TARGET_TYPE target);
 
     /**
      * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
@@ -225,7 +228,7 @@ class Server : public QObject
      *
      * @param ENUM to determine the targets of the altered packet.
      */
-    void broadcast(AOPacket packet, AOPacket other_packet, enum TARGET_TYPE target);
+    void broadcast(AOPacket *packet, AOPacket *other_packet, enum TARGET_TYPE target);
 
     /**
      * @brief Sends a packet to a single client.
@@ -234,7 +237,7 @@ class Server : public QObject
      *
      * @param The temporary userID of the client.
      */
-    void unicast(AOPacket f_packet, int f_client_id);
+    void unicast(AOPacket *f_packet, int f_client_id);
 
     /**
      * @brief Returns the character's character ID (= their index in the character list).
@@ -250,6 +253,12 @@ class Server : public QObject
      * @brief Checks if an IP is in a subnet of the IPBanlist.
      **/
     bool isIPBanned(QHostAddress f_remote_IP);
+
+    void request_version(const std::function<void(QString)> &cb);
+
+    void check_version();
+
+    QString m_latest_version;
 
     /**
      * @brief Getter for an area specific buffer from the logger.
@@ -503,6 +512,8 @@ class Server : public QObject
      * @brief The port through which the server will accept WebSocket connections.
      */
     int ws_port;
+
+    QNetworkAccessManager *http;
 
     /**
       * @brief The collection of all currently connected clients.
