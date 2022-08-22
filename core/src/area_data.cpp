@@ -43,7 +43,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     QStringList name_split = p_name.split(":");
     name_split.removeFirst();
     m_name = name_split.join(":");
-    QSettings* areas_ini = ConfigManager::areaData();
+    QSettings *areas_ini = ConfigManager::areaData();
     areas_ini->setIniCodec("UTF-8");
     areas_ini->beginGroup(p_name);
     m_background = areas_ini->value("background", "gs4").toString();
@@ -53,7 +53,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_eviMod = QVariant(areas_ini->value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
     m_status = QVariant(areas_ini->value("status", "IDLE").toString().toUpper()).value<AreaData::Status>();
     m_locked = QVariant(areas_ini->value("lock_status", "FREE").toString().toUpper()).value<AreaData::LockStatus>();
-    m_blankpostingAllowed = areas_ini->value("blankposting_allowed","true").toBool();
+    m_blankpostingAllowed = areas_ini->value("blankposting_allowed", "true").toBool();
     m_area_message = areas_ini->value("area_message").toString();
     m_send_area_message = areas_ini->value("send_area_message_on_join", false).toBool();
     m_can_send_wtce = areas_ini->value("wtce_enabled", "true").toBool();
@@ -67,7 +67,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_floodguardactive = areas_ini->value("floodguard_active", "false").toBool();
     m_areapassword = areas_ini->value("password", "").toString();
     setEvidenceList(areas_ini->value("evidence", "").toStringList());
-    m_can_change_status = areas_ini->value("change_status","true").toBool();
+    m_can_change_status = areas_ini->value("change_status", "true").toBool();
     areas_ini->endGroup();
     QTimer *timer1 = new QTimer();
     m_timers.append(timer1);
@@ -82,15 +82,15 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
 }
 
 const QMap<QString, AreaData::Status> AreaData::map_statuses = {
-    {"idle",                    AreaData::Status::IDLE                },
-    {"rp",                      AreaData::Status::RP                  },
-    {"casing",                  AreaData::Status::CASING              },
-    {"lfp",                     AreaData::Status::LOOKING_FOR_PLAYERS },
-    {"looking-for-players",     AreaData::Status::LOOKING_FOR_PLAYERS },
-    {"recess",                  AreaData::Status::RECESS              },
-    {"gaming",                  AreaData::Status::GAMING              },
-    {"erp",                     AreaData::Status::ERP                 },
-    {"yablachki",               AreaData::Status::YABLACHKI           },
+    {"idle", AreaData::Status::IDLE},
+    {"rp", AreaData::Status::RP},
+    {"casing", AreaData::Status::CASING},
+    {"lfp", AreaData::Status::LOOKING_FOR_PLAYERS},
+    {"looking-for-players", AreaData::Status::LOOKING_FOR_PLAYERS},
+    {"recess", AreaData::Status::RECESS},
+    {"gaming", AreaData::Status::GAMING},
+    {"erp", AreaData::Status::ERP},
+    {"yablachki", AreaData::Status::YABLACHKI},
 };
 
 void AreaData::clientLeftArea(int f_charId, int f_userId)
@@ -192,7 +192,7 @@ bool AreaData::invite(int f_clientId)
 bool AreaData::uninvite(int f_clientId)
 {
     if (!m_invited.contains(f_clientId)) {
-         return false;
+        return false;
     }
 
     m_invited.removeAll(f_clientId);
@@ -506,7 +506,6 @@ void AreaData::setCurrentMusic(QString f_current_song)
     m_currentMusic = f_current_song;
 }
 
-
 int AreaData::proHP() const
 {
     return m_proHP;
@@ -517,7 +516,7 @@ void AreaData::changeHP(AreaData::Side f_side, int f_newHP)
     if (f_side == Side::DEFENCE) {
         m_defHP = std::min(std::max(0, f_newHP), 10);
     }
-    else if(f_side == Side::PROSECUTOR) {
+    else if (f_side == Side::PROSECUTOR) {
         m_proHP = std::min(std::max(0, f_newHP), 10);
     }
 }
@@ -682,7 +681,8 @@ void AreaData::setEvidenceList(QStringList f_evi_list)
 
             appendEvidence(l_evi);
         }
-        else return;
+        else
+            return;
     }
 }
 

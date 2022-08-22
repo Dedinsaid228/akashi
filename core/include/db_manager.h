@@ -44,7 +44,8 @@
 class DBManager : public QObject
 {
     Q_OBJECT
- public:
+
+  public:
     /**
      * @brief Constructor for the DBManager class.
      *
@@ -98,7 +99,8 @@ class DBManager : public QObject
     /**
      * @brief Details about a ban.
      */
-    struct BanInfo {
+    struct BanInfo
+    {
         QString ipid;       //!< The banned user's IPID.
         QHostAddress ip;    //!< The banned user's IP.
         QString hdid;       //!< The banned user's hardware ID.
@@ -209,7 +211,8 @@ class DBManager : public QObject
     /**
      * @brief Details about automoderator actions.
      */
-    struct automod {
+    struct automod
+    {
         QString ipid;       //!< User's IPID.
         unsigned long date; //!< Date of receipt of the last punishment from the automoderator.
         QString action;     //!< The action taken by the automoderator.
@@ -219,7 +222,8 @@ class DBManager : public QObject
     /**
      * @brief Details about warns issued by the automoderator.
      */
-    struct automodwarns {
+    struct automodwarns
+    {
         QString ipid;       //!< User's IPID.
         unsigned long date; //!< Date of receipt of the last punishment from the automoderator.
         int warns;          //!< Number of warns.
@@ -280,7 +284,6 @@ class DBManager : public QObject
      */
     void updateWarn(QString ipid, long date);
 
-
     /**
      * @brief Updates a ban.
      *
@@ -308,7 +311,8 @@ class DBManager : public QObject
     /**
      * @brief Details about user's IPID.
      */
-    struct idipinfo {
+    struct idipinfo
+    {
         QString ipid; //!< User's IPID.
         QString ip;   //!< User's IP.
         QString date; //!< The date the IPID was "created".
@@ -329,7 +333,7 @@ class DBManager : public QObject
      */
     bool ipidExist(QString ipid);
 
- private:
+  private:
     /**
      * @brief The name of the database connection driver.
      */

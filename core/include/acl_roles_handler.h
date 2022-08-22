@@ -1,15 +1,13 @@
 #ifndef ACL_ROLES_HANDLER_H
 #define ACL_ROLES_HANDLER_H
 
-
 #include <QFlags>
 #include <QHash>
 #include <QObject>
 
-
 class ACLRole
 {
-  Q_GADGET
+    Q_GADGET
 
   public:
     /**
@@ -45,7 +43,6 @@ class ACLRole
     Q_DECLARE_FLAGS(Permissions, Permission);
     Q_ENUM(Permission);
 
-
     /**
      * @brief Shared read-only captions for each permissions.
      *
@@ -53,12 +50,10 @@ class ACLRole
      */
     static const QHash<ACLRole::Permission, QString> PERMISSION_CAPTIONS;
 
-
     /**
      * @brief Constructs a role without any permissions.
      */
     ACLRole();
-
 
     /**
      * @brief Constructs a role of the given permissions.
@@ -67,12 +62,10 @@ class ACLRole
      */
     ACLRole(ACLRole::Permissions f_permissions);
 
-
     /**
      * @brief Destroys the role.
      */
     ~ACLRole();
-
 
     /**
      * @brief Returns the permission flags for this role.
@@ -80,7 +73,6 @@ class ACLRole
      * @return Permission flags.
      */
     ACLRole::Permissions getPermissions() const;
-
 
     /**
      * @brief Checks if a given permission is set.
@@ -91,7 +83,6 @@ class ACLRole
      */
     bool checkPermission(ACLRole::Permission f_permission) const;
 
-
     /**
      * @brief Sets the permission if f_mode is true or unsets if f_mode is false.
      *
@@ -101,14 +92,12 @@ class ACLRole
      */
     void setPermission(ACLRole::Permission f_permission, bool f_mode);
 
-
     /**
      * @brief Sets the permission flags to the given permission flags.
      *
      * @param f_permissions The permission flags to set to.
      */
     void setPermissions(ACLRole::Permissions f_permissions);
-
 
   private:
     /**
@@ -124,19 +113,16 @@ class ACLRolesHandler : public QObject
 {
     Q_OBJECT
 
-
   public:
     /**
      * @brief The identifier of the NONE role.
      */
     static const QString NONE_ID;
 
-
     /**
      * @brief The identifier of the SUPER role.
      */
     static const QString SUPER_ID;
-
 
     /**
      * @brief Constructs a role handler with parent object.
@@ -151,12 +137,10 @@ class ACLRolesHandler : public QObject
      */
     ACLRolesHandler(QObject *parent = nullptr);
 
-
     /**
      * Destroys the role handler.
      */
     ~ACLRolesHandler();
-
 
     /**
      * @brief Checks if a role with the given identifier exists.
@@ -167,7 +151,6 @@ class ACLRolesHandler : public QObject
      */
     bool roleExists(QString f_id);
 
-
     /**
      * @brief Returns a role with the given identifier. If the role does not exist, a default constructed role will be returned.
      *
@@ -176,7 +159,6 @@ class ACLRolesHandler : public QObject
      * @return A role.
      */
     ACLRole getRoleById(QString f_id);
-
 
     /**
      * @brief Inserts a role with the given identifier. If a role already exists, it will be overwritten. Read-only roles cannot be replaced and will return false.
@@ -189,7 +171,6 @@ class ACLRolesHandler : public QObject
      */
     bool insertRole(QString f_id, ACLRole f_role);
 
-
     /**
      * @brief Removes a role of the given identifier. Read-only roles cannot be removed and will return false.
      *
@@ -199,12 +180,10 @@ class ACLRolesHandler : public QObject
      */
     bool removeRole(QString f_id);
 
-
     /**
      * @brief Removes all roles.
      */
     void clearRoles();
-
 
     /**
      * @brief Clear the current roles and load the roles from the given file. The file must be INI format compatible.
@@ -214,7 +193,6 @@ class ACLRolesHandler : public QObject
      * @return True if successfull, false otherwise.
      */
     bool loadFile(QString f_filename);
-
 
     /**
      * @brief Save the current roles to the given file. The file is saved to the INI format.
@@ -234,19 +212,16 @@ class ACLRolesHandler : public QObject
      */
     bool checkPermissionsIni(QSettings *f_settings);
 
-
   private:
     /**
      * @brief Shared read-only standard roles with the appropriate permissions.
      */
     static const QHash<QString, ACLRole> readonly_roles;
 
-
     /**
      * @brief The roles of the handler.
      */
     QHash<QString, ACLRole> m_roles;
 };
-
 
 #endif // ACL_ROLES_HANDLER_H

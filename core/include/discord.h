@@ -30,7 +30,7 @@ class Discord : public QObject
 {
     Q_OBJECT
 
- public:
+  public:
     /**
      * @brief Constructor for the Discord object
      *
@@ -59,7 +59,7 @@ class Discord : public QObject
      */
     void stopUptimeTimer();
 
- public slots:
+  public slots:
     /**
      * @brief Handles a modcall webhook request.
      *
@@ -85,7 +85,7 @@ class Discord : public QObject
      */
     void onUptimeWebhookRequested();
 
- private:
+  private:
     /**
      * @brief The QNetworkAccessManager for webhooks.
      */
@@ -121,7 +121,7 @@ class Discord : public QObject
      */
     QHttpMultiPart *constructLogMultipart(const QQueue<QString> &f_buffer) const;
 
- private slots:
+  private slots:
     /**
      * @brief Handles a network reply from a webhook POST request.
      *
@@ -130,37 +130,37 @@ class Discord : public QObject
     void onReplyFinished(QNetworkReply *f_reply);
 
     /**
-      * @brief Sends a webhook POST request with the given JSON document.
-      *
-      * @param f_json The JSON document to send.
-      */
-     void postJsonWebhook(const QJsonDocument &f_json);
+     * @brief Sends a webhook POST request with the given JSON document.
+     *
+     * @param f_json The JSON document to send.
+     */
+    void postJsonWebhook(const QJsonDocument &f_json);
 
-     /**
-      * @brief Sends a webhook POST request with the given QHttpMultiPart.
-      *
-      * @param f_multipart The QHttpMultiPart to send.
-      */
-     void postMultipartWebhook(QHttpMultiPart &f_multipart);
+    /**
+     * @brief Sends a webhook POST request with the given QHttpMultiPart.
+     *
+     * @param f_multipart The QHttpMultiPart to send.
+     */
+    void postMultipartWebhook(QHttpMultiPart &f_multipart);
 
-     /**
-      * @brief Constructs a new JSON document for bans.
-      *
-      * @param f_ipid The IPID of the client.
-      * @param f_moderator The name of the moderator banning.
-      * @param f_duration The date the ban expires.
-      * @param f_reason The reason of the ban.
-      *
-      * @return A JSON document for the ban.
-      */
-     QJsonDocument constructBanJson(const QString  &f_ipid, const QString &f_moderator, const QString &f_duration, const QString &f_reason, const int &f_banID);
-     /**
-      * @brief Constructs a new JSON document for the server alive message.
-      * @param f_timeExpired formatted uptime as a string.
-      *
-      * @return A JSON document for the alive notification.
-      */
-     QJsonDocument constructUptimeJson(const QString &f_timeExpired);
+    /**
+     * @brief Constructs a new JSON document for bans.
+     *
+     * @param f_ipid The IPID of the client.
+     * @param f_moderator The name of the moderator banning.
+     * @param f_duration The date the ban expires.
+     * @param f_reason The reason of the ban.
+     *
+     * @return A JSON document for the ban.
+     */
+    QJsonDocument constructBanJson(const QString &f_ipid, const QString &f_moderator, const QString &f_duration, const QString &f_reason, const int &f_banID);
+    /**
+     * @brief Constructs a new JSON document for the server alive message.
+     * @param f_timeExpired formatted uptime as a string.
+     *
+     * @return A JSON document for the alive notification.
+     */
+    QJsonDocument constructUptimeJson(const QString &f_timeExpired);
 };
 
 #endif // DISCORD_H

@@ -145,7 +145,7 @@ void NetworkSocket::ws_readData(QString f_data)
 void NetworkSocket::write(AOPacket *f_packet)
 {
     if (m_socket_type == TCP) {
-         m_client_socket.tcp->write(f_packet->toUtf8());
+        m_client_socket.tcp->write(f_packet->toUtf8());
         m_client_socket.tcp->flush();
     }
     else {

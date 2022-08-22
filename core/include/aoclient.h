@@ -23,8 +23,8 @@
 #include <QDateTime>
 #include <QHostAddress>
 #include <QRegularExpression>
-#include <QtGlobal>
 #include <QTimer>
+#include <QtGlobal>
 
 #include "include/acl_roles_handler.h"
 #include "include/network/aopacket.h"
@@ -222,17 +222,17 @@ class AOClient : public QObject
      * @brief If true, the client may not use in-character chat.
      */
     bool m_is_muted = false;
-  
+
     /**
      * @brief If true, the client may not use out-of-character chat.
      */
     bool m_is_ooc_muted = false;
-  
+
     /**
      * @brief If true, the client may not use the music list.
      */
     bool m_is_dj_blocked = false;
-  
+
     /**
      * @brief If true, the client may not use the judge controls.
      */
@@ -262,7 +262,7 @@ class AOClient : public QObject
      * @briefIf true, the client can use Modcall.
      */
     bool m_usemodcall = true;
-    
+
     /**
      * @brief Represents the client's client software, and its version.
      *
@@ -271,10 +271,10 @@ class AOClient : public QObject
      */
     struct ClientVersion
     {
-      QString string; //!< The name of the client software, for example, `AO2`.
-      int release = -1; //!< The 'release' part of the version number. In Attorney Online's case, this is fixed at `2`.
-      int major = -1; //!< The 'major' part of the version number. In Attorney Online's case, this increases when a new feature is introduced (generally).
-      int minor = -1; //!< The 'minor' part of the version number. In Attorney Online's case, this increases for bugfix releases (generally).
+        QString string;   //!< The name of the client software, for example, `AO2`.
+        int release = -1; //!< The 'release' part of the version number. In Attorney Online's case, this is fixed at `2`.
+        int major = -1;   //!< The 'major' part of the version number. In Attorney Online's case, this increases when a new feature is introduced (generally).
+        int minor = -1;   //!< The 'minor' part of the version number. In Attorney Online's case, this increases for bugfix releases (generally).
     };
 
     /**
@@ -441,7 +441,7 @@ class AOClient : public QObject
     /**
      * @brief The main function of the automoderator.
      */
-    void autoMod(bool ic_chat=false);
+    void autoMod(bool ic_chat = false);
 
     /**
      * @brief An auxiliary function of the automoderator, which is responsible for the mute of the player.
@@ -466,27 +466,27 @@ class AOClient : public QObject
     void sendEvidenceList(AreaData *area) const;
 
     /**
-      * @brief Calls AOClient::updateEvidenceListHidCmNoCm() for every client in the current client's area.
-      *
-      * @param area The current client's area.
-      */
-     void sendEvidenceListHidCmNoCm(AreaData *area) const;
-
-     /**
-      * @brief Updates the evidence list in the area for the client.
-      *
-      * @param area The client's area.
-      */
-     void updateEvidenceList(AreaData *area);
+     * @brief Calls AOClient::updateEvidenceListHidCmNoCm() for every client in the current client's area.
+     *
+     * @param area The current client's area.
+     */
+    void sendEvidenceListHidCmNoCm(AreaData *area) const;
 
     /**
-      * @brief Updates the evidence list for better performance of evidencePresent();
-      *
-      * @param area The client's area.
-      */
-     void updateEvidenceListHidCmNoCm(AreaData *area);
+     * @brief Updates the evidence list in the area for the client.
+     *
+     * @param area The client's area.
+     */
+    void updateEvidenceList(AreaData *area);
 
-     bool evidencePresent(QString id);
+    /**
+     * @brief Updates the evidence list for better performance of evidencePresent();
+     *
+     * @param area The client's area.
+     */
+    void updateEvidenceListHidCmNoCm(AreaData *area);
+
+    bool evidencePresent(QString id);
 
     /**
      * @brief Removes excessive combining characters from a text.
@@ -525,7 +525,7 @@ class AOClient : public QObject
      *
      * @param new_area The ID of the new area.
      */
-    void changeArea(int new_area, bool ignore_cooldown=false);
+    void changeArea(int new_area, bool ignore_cooldown = false);
 
     /**
      * @brief Handles an incoming command, checking for authorisation and minimum argument count.
@@ -588,7 +588,6 @@ class AOClient : public QObject
      * @param action String containing the info that is being recorded.
      */
     void updateJudgeLog(AreaData *area, AOClient *client, QString action);
-
 
     /**
      * @brief Pointer to the servers music manager instance.
@@ -1394,7 +1393,7 @@ class AOClient : public QObject
      * @see #is_ooc_muted
      */
     void cmdOocMute(int argc, QStringList argv);
-  
+
     /**
      * @brief Removes the OOC-muted status from a client.
      *
@@ -1405,7 +1404,7 @@ class AOClient : public QObject
      * @see #is_ooc_muted
      */
     void cmdOocUnMute(int argc, QStringList argv);
-  
+
     /**
      * @brief WTCE-blocks a client.
      *
@@ -1416,7 +1415,7 @@ class AOClient : public QObject
      * @see #is_wtce_blocked
      */
     void cmdBlockWtce(int argc, QStringList argv);
-  
+
     /**
      * @brief Removes the WTCE-blocked status from a client.
      *
@@ -1427,7 +1426,7 @@ class AOClient : public QObject
      * @see #is_wtce_blocked
      */
     void cmdUnBlockWtce(int argc, QStringList argv);
-  
+
     /**
      * @brief Lists the last five bans made on the server.
      *
@@ -1533,110 +1532,110 @@ class AOClient : public QObject
      */
     void cmdNotice(int argc, QStringList argv);
 
-     /**
-      * @brief Pops up a notice for all clients in the server with a given message.
-      *
-      * @details Unlike cmdNotice, this command will send its notice to every client connected to the server.
-      *
-      * @see #cmdNotice
-      *
-      * @iscommand
-      */
-     void cmdNoticeGlobal(int argc, QStringList argv);
+    /**
+     * @brief Pops up a notice for all clients in the server with a given message.
+     *
+     * @details Unlike cmdNotice, this command will send its notice to every client connected to the server.
+     *
+     * @see #cmdNotice
+     *
+     * @iscommand
+     */
+    void cmdNoticeGlobal(int argc, QStringList argv);
 
-     /**
-      * @brief Removes all CMs from the current area.
-      *
-      * @details This command is a bandaid fix to the issue that clients may end up ghosting when improperly disconnected from the server.
-      *
-      * @iscommand
-      */
-     void cmdClearCM(int argc, QStringList argv);
+    /**
+     * @brief Removes all CMs from the current area.
+     *
+     * @details This command is a bandaid fix to the issue that clients may end up ghosting when improperly disconnected from the server.
+     *
+     * @iscommand
+     */
+    void cmdClearCM(int argc, QStringList argv);
 
-     /**
-      * @brief Removes all multiclient instances of a client on the server, excluding the one using the command.
-      *
-      * @details This command gracefully removes all multiclients from the server, disconnecting them and freeing their used character.
-      *
-      * @arg argv This command allows the user to specify if it should look for IPID or HWID matches. This is useful when a client mayb
-      * have been connected over IPv6 and the second connection is made over IPv4
-      *
-      * @iscommand
-      */
-     void cmdKickOther(int argc, QStringList argv);
+    /**
+     * @brief Removes all multiclient instances of a client on the server, excluding the one using the command.
+     *
+     * @details This command gracefully removes all multiclients from the server, disconnecting them and freeing their used character.
+     *
+     * @arg argv This command allows the user to specify if it should look for IPID or HWID matches. This is useful when a client mayb
+     * have been connected over IPv6 and the second connection is made over IPv4
+     *
+     * @iscommand
+     */
+    void cmdKickOther(int argc, QStringList argv);
 
-     /**
-      * @brief Get IPID information.
-      *
-      * @details The argument to this command is one - the client's IPID. This command gives the IP address and the date of "creation" of the IPID.
-      *
-      * @iscommand
-      */
-     void cmdIpidInfo(int argc, QStringList argv);
+    /**
+     * @brief Get IPID information.
+     *
+     * @details The argument to this command is one - the client's IPID. This command gives the IP address and the date of "creation" of the IPID.
+     *
+     * @iscommand
+     */
+    void cmdIpidInfo(int argc, QStringList argv);
 
-     /**
-      * @brief Allow/deny yourself to take the taken characters.
-      *
-      * @details No arguments.
-      *
-      * @iscommand
-      */
-     void cmdTakeTakedChar(int argc, QStringList argv);
+    /**
+     * @brief Allow/deny yourself to take the taken characters.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdTakeTakedChar(int argc, QStringList argv);
 
-     /**
-      * @brief Blind the targeted player from being able to see or talk IC/OOC.
-      *
-      * @details The only argument is the **target client's user ID**.
-      *
-      * @iscommand
-      *
-      * @see #blinded
-      */
-     void cmdBlind(int argc, QStringList argv);
+    /**
+     * @brief Blind the targeted player from being able to see or talk IC/OOC.
+     *
+     * @details The only argument is the **target client's user ID**.
+     *
+     * @iscommand
+     *
+     * @see #blinded
+     */
+    void cmdBlind(int argc, QStringList argv);
 
-     /**
-      * @brief Undo effects of the /blind command.
-      *
-      * @details The only argument is the **target client's user ID**.
-      *
-      * @iscommand
-      *
-      * @see #blinded
-      */
-     void cmdUnBlind(int argc, QStringList argv);
+    /**
+     * @brief Undo effects of the /blind command.
+     *
+     * @details The only argument is the **target client's user ID**.
+     *
+     * @iscommand
+     *
+     * @see #blinded
+     */
+    void cmdUnBlind(int argc, QStringList argv);
 
-     /**
-      * @brief Hide/show the status of the moderator.
-      *
-      * @details No arguments.
-      *
-      * @see #slient_mod
-      *
-      * @iscommand
-      */
-     void cmdSneakMod(int argc, QStringList argv);
+    /**
+     * @brief Hide/show the status of the moderator.
+     *
+     * @details No arguments.
+     *
+     * @see #slient_mod
+     *
+     * @iscommand
+     */
+    void cmdSneakMod(int argc, QStringList argv);
 
-     /**
-      * @brief Allow/deny WUSO Mod.
-      *
-      * @details No arguments.
-      *
-      * @see #wuso
-      *
-      * @iscommand
-      */
-     void cmdToggleWebUsersSpectateOnly(int argc, QStringList argv);
+    /**
+     * @brief Allow/deny WUSO Mod.
+     *
+     * @details No arguments.
+     *
+     * @see #wuso
+     *
+     * @iscommand
+     */
+    void cmdToggleWebUsersSpectateOnly(int argc, QStringList argv);
 
-     /**
-      * @brief Remove the WUSO action on the client.
-      *
-      * @details The only argument is the **target client's user ID**.
-      *
-      * @see #wuso
-      *
-      * @iscommand
-      */
-     void cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv);
+    /**
+     * @brief Remove the WUSO action on the client.
+     *
+     * @details The only argument is the **target client's user ID**.
+     *
+     * @see #wuso
+     *
+     * @iscommand
+     */
+    void cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv);
 
     ///@}
 
@@ -1708,7 +1707,7 @@ class AOClient : public QObject
      */
 
     void cmdSubTheme(int argc, QStringList argv);
-  
+
     /**
      * @brief Writes a "note card" in the current area.
      *
@@ -1718,14 +1717,14 @@ class AOClient : public QObject
      * @iscommand
      */
     void cmdNoteCard(int argc, QStringList argv);
-  
+
     /**
      * @brief Reveals all note cards in the current area.
      *
      * @iscommand
      */
     void cmdNoteCardReveal(int argc, QStringList argv);
-  
+
     /**
      * @brief Erases the client's note card from the area's list of cards.
      *
@@ -1743,7 +1742,7 @@ class AOClient : public QObject
      * @iscommand
      */
     void cmd8Ball(int argc, QStringList argv);
-    
+
     ///@}
 
     /**
@@ -1806,12 +1805,12 @@ class AOClient : public QObject
     void cmdG(int argc, QStringList argv);
 
     /**
-      * @brief Toggles whether the client will ignore @ref cmdG "global" messages or not.
-      *
-      * @details No arguments.
-      *
-      * @iscommand
-      */
+     * @brief Toggles whether the client will ignore @ref cmdG "global" messages or not.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
     void cmdToggleGlobal(int argc, QStringList argv);
 
     /**
@@ -1928,12 +1927,12 @@ class AOClient : public QObject
     void cmdToggleAdverts(int argc, QStringList argv);
 
     /**
-    * @brief Toggles whether this client is considered AFK.
-    *
-    * @details No arguments.
-    *
-    * @iscommand
-    */
+     * @brief Toggles whether this client is considered AFK.
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
     void cmdAfk(int argc, QStringList argv);
 
     /**
@@ -2284,30 +2283,30 @@ class AOClient : public QObject
      */
     bool checkPasswordRequirements(QString f_username, QString f_password);
 
-     /**
-      * @brief Sends a server notice.
-      *
-      * @param notice The notice to send out.
-      *
-      * @param global Whether or not the notice should be server-wide.
-      */
-   void sendNotice(QString f_notice, bool f_global = false);
+    /**
+     * @brief Sends a server notice.
+     *
+     * @param notice The notice to send out.
+     *
+     * @param global Whether or not the notice should be server-wide.
+     */
+    void sendNotice(QString f_notice, bool f_global = false);
 
-   /**
-    * @brief Plays music in the area.
-    *
-    * @param f_args Audio file name or link to it.
-    *
-    * @param f_once Loop music or not.
-    *
-    * @see #cmdPlay(int argc, QStringList argv)
-    *
-    * @see #cmdPlayOnce(int argc, QStringList argv)
-    */
-   void playMusic(QStringList f_args, bool f_once = false);
+    /**
+     * @brief Plays music in the area.
+     *
+     * @param f_args Audio file name or link to it.
+     *
+     * @param f_once Loop music or not.
+     *
+     * @see #cmdPlay(int argc, QStringList argv)
+     *
+     * @see #cmdPlayOnce(int argc, QStringList argv)
+     */
+    void playMusic(QStringList f_args, bool f_once = false);
 
-   QString getEviMod(int f_area);
-    
+    QString getEviMod(int f_area);
+
     /**
      * @brief Checks if a testimony contains '<' or '>'.
      *
@@ -2327,13 +2326,13 @@ class AOClient : public QObject
     bool change_auth_started = false;
 
     /**
-      * @property CommandInfo::action
-      *
-      * @brief A function reference that contains what the command actually does.
-      *
-      * @param int When called, this parameter will be filled with the argument count. @anchor commandArgc
-      * @param QStringList When called, this parameter will be filled the list of arguments. @anchor commandArgv
-      */
+     * @property CommandInfo::action
+     *
+     * @brief A function reference that contains what the command actually does.
+     *
+     * @param int When called, this parameter will be filled with the argument count. @anchor commandArgc
+     * @param QStringList When called, this parameter will be filled the list of arguments. @anchor commandArgv
+     */
 
     /**
      * @brief Filled with part of a packet if said packet could not be read fully from the client's socket.
@@ -2356,85 +2355,85 @@ class AOClient : public QObject
      */
     int last_read = 0;
 
-signals:
+  signals:
 
-  /**
-   * @brief Signal connected to universal logger. Sends IC chat usage to the logger.
-   */
-  void logIC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
-             const QString &f_areaName, const QString &f_message, const QString &f_uid,
-             const QString &f_hwid);
-
-  /**
-   * @brief Signal connected to universal logger. Sends OOC chat usage to the logger.
-   */
-  void logOOC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
-              const QString &f_areaName, const QString &f_message, const QString &f_uid,
-              const QString &f_hwid);
-
-  /**
-   * @brief Signal connected to universal logger. Sends login attempt to the logger.
-   */
-  void logLogin(const QString &f_charName, const QString &f_oocName, const QString &f_moderatorName,
-                const QString &f_ipid, const QString &f_areaName, const bool &f_success, const QString &f_uid,
-                const QString &f_hwid);
-
-  /**
-   * @brief Signal connected to universal logger. Sends command usage to the logger.
-   */
-  void logCMD(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString f_command,
-              const QString f_args, const QString f_areaName, const QString &f_uid, const QString &f_hwid);
-
-  /**
-   * @brief Signal connected to universal logger. Sends player kick information to the logger.
-   */
-  void logKick(const QString &f_moderator, const QString &f_targetIPID, const QString &f_reason, const QString &f_uid,
+    /**
+     * @brief Signal connected to universal logger. Sends IC chat usage to the logger.
+     */
+    void logIC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
+               const QString &f_areaName, const QString &f_message, const QString &f_uid,
                const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends ban information to the logger.
-   */
-  void logBan(const QString &f_moderator, const QString &f_targetIPID, const QString &f_duration, const QString &f_reason,
-              const QString &f_uid, const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends OOC chat usage to the logger.
+     */
+    void logOOC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
+                const QString &f_areaName, const QString &f_message, const QString &f_uid,
+                const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends modcall information to the logger, triggering a write of the buffer
-   *        when modcall logging is used.
-   */
-  void logModcall(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString &f_areaName,
-                  const QString &f_uid, const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends login attempt to the logger.
+     */
+    void logLogin(const QString &f_charName, const QString &f_oocName, const QString &f_moderatorName,
+                  const QString &f_ipid, const QString &f_areaName, const bool &f_success, const QString &f_uid,
+                  const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends disconnect information to the logger.
-   */
-  void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
-                     const QString &f_uid, const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends command usage to the logger.
+     */
+    void logCMD(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString f_command,
+                const QString f_args, const QString f_areaName, const QString &f_uid, const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends change music information to the logger.
-   */
-  void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-              const QString &f_area_name, const QString &f_music, const QString &f_uid,
-              const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends player kick information to the logger.
+     */
+    void logKick(const QString &f_moderator, const QString &f_targetIPID, const QString &f_reason, const QString &f_uid,
+                 const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends change character information to the logger.
-   */
-  void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-              const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
-              const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends ban information to the logger.
+     */
+    void logBan(const QString &f_moderator, const QString &f_targetIPID, const QString &f_duration, const QString &f_reason,
+                const QString &f_uid, const QString &f_hwid);
 
-  /**
-   * @brief Signal connected to universal logger. Sends change area information to the logger.
-   */
-  void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-              const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
-              const QString &f_hwid);
+    /**
+     * @brief Signal connected to universal logger. Sends modcall information to the logger, triggering a write of the buffer
+     *        when modcall logging is used.
+     */
+    void logModcall(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString &f_areaName,
+                    const QString &f_uid, const QString &f_hwid);
 
-  /**
-   * @brief Signals the server that the client has disconnected and marks its userID as free again.
-   */
-  void clientSuccessfullyDisconnected(const int &f_user_id);
+    /**
+     * @brief Signal connected to universal logger. Sends disconnect information to the logger.
+     */
+    void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
+                       const QString &f_uid, const QString &f_hwid);
+
+    /**
+     * @brief Signal connected to universal logger. Sends change music information to the logger.
+     */
+    void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                  const QString &f_area_name, const QString &f_music, const QString &f_uid,
+                  const QString &f_hwid);
+
+    /**
+     * @brief Signal connected to universal logger. Sends change character information to the logger.
+     */
+    void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                       const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
+                       const QString &f_hwid);
+
+    /**
+     * @brief Signal connected to universal logger. Sends change area information to the logger.
+     */
+    void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
+                       const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
+                       const QString &f_hwid);
+
+    /**
+     * @brief Signals the server that the client has disconnected and marks its userID as free again.
+     */
+    void clientSuccessfullyDisconnected(const int &f_user_id);
 };
 
 #endif // AOCLIENT_H

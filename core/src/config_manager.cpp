@@ -19,14 +19,14 @@
 
 #include <include/config_manager.h>
 
-QSettings* ConfigManager::m_settings = new QSettings("config/config.ini", QSettings::IniFormat);
-QSettings* ConfigManager::m_discord = new QSettings("config/discord.ini", QSettings::IniFormat);
-ConfigManager::CommandSettings* ConfigManager::m_commands = new CommandSettings();
-QSettings* ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings::IniFormat);
-QSettings* ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
-QElapsedTimer* ConfigManager::m_uptimeTimer = new QElapsedTimer;
-MusicList* ConfigManager::m_musicList = new MusicList;
-QStringList* ConfigManager::m_ordered_list = new QStringList;
+QSettings *ConfigManager::m_settings = new QSettings("config/config.ini", QSettings::IniFormat);
+QSettings *ConfigManager::m_discord = new QSettings("config/discord.ini", QSettings::IniFormat);
+ConfigManager::CommandSettings *ConfigManager::m_commands = new CommandSettings();
+QSettings *ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings::IniFormat);
+QSettings *ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
+QElapsedTimer *ConfigManager::m_uptimeTimer = new QElapsedTimer;
+MusicList *ConfigManager::m_musicList = new MusicList;
+QStringList *ConfigManager::m_ordered_list = new QStringList;
 
 bool ConfigManager::verifyServerConfig()
 {
@@ -34,14 +34,14 @@ bool ConfigManager::verifyServerConfig()
     QStringList l_directories{"config/", "config/text/"};
     for (const QString &l_directory : l_directories) {
         if (!dirExists(QFileInfo(l_directory))) {
-                qCritical() << l_directory + " does not exist!";
-                return false;
+            qCritical() << l_directory + " does not exist!";
+            return false;
         }
     }
 
     // Verify config files
     QStringList l_config_files{"config/config.ini", "config/areas.ini", "config/backgrounds.txt", "config/characters.txt", "config/music.txt",
-                              "config/discord.ini", "config/text/8ball.txt", "config/text/gimp.txt","config/text/cdns.txt"};
+                               "config/discord.ini", "config/text/8ball.txt", "config/text/gimp.txt", "config/text/cdns.txt"};
     for (const QString &l_file : l_config_files) {
         if (!fileExists(QFileInfo(l_file))) {
             qCritical() << l_file + " does not exist!";
@@ -108,7 +108,7 @@ bool ConfigManager::verifyServerConfig()
 
 QString ConfigManager::bindIP()
 {
-    return m_settings->value("Options/bind_ip","all").toString();
+    return m_settings->value("Options/bind_ip", "all").toString();
 }
 
 QStringList ConfigManager::charlist()
@@ -151,7 +151,7 @@ MusicList ConfigManager::musiclist()
         m_ordered_list->append(l_file.readLine().trimmed());
     }
     l_file.close();
-    if(m_ordered_list->contains(".")) // Add a default category if none exists
+    if (m_ordered_list->contains(".")) // Add a default category if none exists
         m_ordered_list->insert(0, "==Music==");
     return *m_musicList;
 }
@@ -161,7 +161,7 @@ QStringList ConfigManager::ordered_songs()
     return *m_ordered_list;
 }
 
-QSettings* ConfigManager::areaData()
+QSettings *ConfigManager::areaData()
 {
     return m_areas;
 }
@@ -169,7 +169,7 @@ QSettings* ConfigManager::areaData()
 QStringList ConfigManager::sanitizedAreaNames()
 {
     QStringList l_area_names = m_areas->childGroups(); // invisibly does a lexicographical sort, because Qt is great like that
-    std::sort(l_area_names.begin(), l_area_names.end(), [] (const QString &a, const QString &b) {return a.split(":")[0].toInt() < b.split(":")[0].toInt();});
+    std::sort(l_area_names.begin(), l_area_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); });
     QStringList l_sanitized_area_names;
     for (const QString &areaName : qAsConst(l_area_names)) {
         QStringList l_nameSplit = areaName.split(":");
@@ -444,13 +444,13 @@ QString ConfigManager::discordBanWebhookUrl()
 
 bool ConfigManager::discordUptimeEnabled()
 {
-    return m_discord->value("Discord/webhook_uptime_enabled","false").toBool();
+    return m_discord->value("Discord/webhook_uptime_enabled", "false").toBool();
 }
 
 int ConfigManager::discordUptimeTime()
 {
     bool ok;
-    int l_aliveTime = m_discord->value("Discord/webhook_uptime_time","60").toInt(&ok);
+    int l_aliveTime = m_discord->value("Discord/webhook_uptime_time", "60").toInt(&ok);
     if (!ok) {
         qWarning("alive_time is not an int");
         l_aliveTime = 60;
@@ -465,7 +465,7 @@ QString ConfigManager::discordUptimeWebhookUrl()
 
 QString ConfigManager::discordWebhookColor()
 {
-    return m_discord->value("Discord/webhook_color","13312842").toString();
+    return m_discord->value("Discord/webhook_color", "13312842").toString();
     const QString l_default_color = "13312842";
     QString l_color = m_discord->value("Discord/webhook_color", l_default_color).toString();
     if (l_color.isEmpty()) {
@@ -529,7 +529,7 @@ bool ConfigManager::passwordCanContainUsername()
 
 QString ConfigManager::LogText(QString f_logtype)
 {
-    return m_logtext->value("LogConfiguration/" + f_logtype,"").toString();
+    return m_logtext->value("LogConfiguration/" + f_logtype, "").toString();
 }
 
 int ConfigManager::autoModTrigger()
@@ -569,22 +569,22 @@ QStringList ConfigManager::cdnList()
 
 bool ConfigManager::advertiseServer()
 {
-    return m_settings->value("Advertiser/advertise","true").toBool();
+    return m_settings->value("Advertiser/advertise", "true").toBool();
 }
 
 bool ConfigManager::advertiserDebug()
 {
-    return m_settings->value("Advertiser/debug","true").toBool();
+    return m_settings->value("Advertiser/debug", "true").toBool();
 }
 
 QUrl ConfigManager::advertiserIP()
 {
-    return m_settings->value("Advertiser/ms_ip","").toUrl();
+    return m_settings->value("Advertiser/ms_ip", "").toUrl();
 }
 
 QString ConfigManager::advertiserHostname()
 {
-    return m_settings->value("Advertiser/hostname","").toString();
+    return m_settings->value("Advertiser/hostname", "").toString();
 }
 
 bool ConfigManager::advertiserCloudflareMode()
@@ -604,7 +604,7 @@ void ConfigManager::setMotd(const QString f_motd)
 
 bool ConfigManager::webUsersSpectableOnly()
 {
-    return m_settings->value("Options/wuso","false").toBool();
+    return m_settings->value("Options/wuso", "false").toBool();
 }
 
 void ConfigManager::webUsersSpectableOnlyToggle()

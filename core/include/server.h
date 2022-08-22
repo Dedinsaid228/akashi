@@ -21,7 +21,10 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QMap>
+#include <QNetworkReply>
 #include <QSettings>
 #include <QStack>
 #include <QString>
@@ -30,9 +33,6 @@
 #include <QTimer>
 #include <QWebSocket>
 #include <QWebSocketServer>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QNetworkReply>
 
 #include "include/network/aopacket.h"
 
@@ -128,7 +128,7 @@ class Server : public QObject
      * @return A list of clients whose HWID match. List may be empty.
      */
     QList<AOClient *> getClientsByHwid(QString f_hwid);
-    
+
     /**
      * @brief Gets a pointer to a client by user ID.
      *
@@ -273,13 +273,12 @@ class Server : public QObject
      */
     QStringList getAreaNames();
 
-   /**
-    * @brief Returns the list of areas in the server.
-    *
-    * @return A list of areas.
-    */
-   QVector<AreaData *> getAreas();
-
+    /**
+     * @brief Returns the list of areas in the server.
+     *
+     * @return A list of areas.
+     */
+    QVector<AreaData *> getAreas();
 
     /**
      * @brief Returns the number of areas in the server.
@@ -340,7 +339,6 @@ class Server : public QObject
      * @brief The server-wide global timer.
      */
     QTimer *timer;
-
 
     QStringList getCursedCharsTaken(AOClient *client, QStringList chars_taken);
 
@@ -460,7 +458,6 @@ class Server : public QObject
     void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
   private:
-
     /**
      * @brief The proxy used for WebSocket connections.
      *
@@ -516,97 +513,97 @@ class Server : public QObject
     QNetworkAccessManager *http;
 
     /**
-      * @brief The collection of all currently connected clients.
-      */
-     QVector<AOClient *> m_clients;
+     * @brief The collection of all currently connected clients.
+     */
+    QVector<AOClient *> m_clients;
 
-     /**
-      * @brief Collection of all clients with their userID as key.
-      */
-     QHash<int, AOClient *> m_clients_ids;
+    /**
+     * @brief Collection of all clients with their userID as key.
+     */
+    QHash<int, AOClient *> m_clients_ids;
 
-     /**
-      * @brief Stack of all available IDs for clients. When this is empty the server
-      * rejects any new connection attempt.
-      */
-     QStack<int> m_available_ids;
+    /**
+     * @brief Stack of all available IDs for clients. When this is empty the server
+     * rejects any new connection attempt.
+     */
+    QStack<int> m_available_ids;
 
-     /**
-      * @brief The overall player count in the server.
-      */
-     int m_player_count;
+    /**
+     * @brief The overall player count in the server.
+     */
+    int m_player_count;
 
-     /**
-      * @brief The characters available on the server to use.
-      */
-     QStringList m_characters;
+    /**
+     * @brief The characters available on the server to use.
+     */
+    QStringList m_characters;
 
-     /**
-      * @brief The areas on the server.
-      */
-     QVector<AreaData *> m_areas;
+    /**
+     * @brief The areas on the server.
+     */
+    QVector<AreaData *> m_areas;
 
-     /**
-      * @brief The names of the areas on the server.
-      *
-      * @details Equivalent to iterating over #areas and getting the area names individually, but grouped together
-      * here for faster access.
-      */
-     QStringList m_area_names;
+    /**
+     * @brief The names of the areas on the server.
+     *
+     * @details Equivalent to iterating over #areas and getting the area names individually, but grouped together
+     * here for faster access.
+     */
+    QStringList m_area_names;
 
-     /**
-      * @brief The available songs on the server.
-      *
-      * @details Does **not** include the area names, the actual music list packet should be constructed from
-      * #area_names and this combined.
-      */
-     QStringList m_music_list;
+    /**
+     * @brief The available songs on the server.
+     *
+     * @details Does **not** include the area names, the actual music list packet should be constructed from
+     * #area_names and this combined.
+     */
+    QStringList m_music_list;
 
-     /**
-      * @brief The backgrounds on the server that may be used in areas.
-      */
-     QStringList m_backgrounds;
+    /**
+     * @brief The backgrounds on the server that may be used in areas.
+     */
+    QStringList m_backgrounds;
 
-     /**
-      * @brief Collection of all IPs that are banned.
-      */
-     QStringList m_ipban_list;
+    /**
+     * @brief Collection of all IPs that are banned.
+     */
+    QStringList m_ipban_list;
 
-     /**
-      * @brief Timer until the next IC message can be sent.
-      */
-     QTimer *m_message_floodguard_timer;
+    /**
+     * @brief Timer until the next IC message can be sent.
+     */
+    QTimer *m_message_floodguard_timer;
 
-     /**
-      * @brief If false, IC messages will be rejected.
-      */
-     bool m_can_send_ic_messages = true;
+    /**
+     * @brief If false, IC messages will be rejected.
+     */
+    bool m_can_send_ic_messages = true;
 
-     /**
-      * @brief The database manager on the server, used to store users' bans and authorisation details.
-      */
-     DBManager *db_manager;
+    /**
+     * @brief The database manager on the server, used to store users' bans and authorisation details.
+     */
+    DBManager *db_manager;
 
-     /**
-      * @see ACLRolesHandler
-      */
-     ACLRolesHandler *acl_roles_handler;
+    /**
+     * @see ACLRolesHandler
+     */
+    ACLRolesHandler *acl_roles_handler;
 
-     /**
-      * @see CommandExtensionCollection
-      */
-     CommandExtensionCollection *command_extension_collection;
+    /**
+     * @see CommandExtensionCollection
+     */
+    CommandExtensionCollection *command_extension_collection;
 
-     /**
-      * @brief Connects new AOClient to logger and disconnect handling.
-      **/
-     void hookupAOClient(AOClient *client);
+    /**
+     * @brief Connects new AOClient to logger and disconnect handling.
+     **/
+    void hookupAOClient(AOClient *client);
 
-   private slots:
+  private slots:
 
-     /**
-      * @brief Allow game messages to be broadcasted.
-      */
-     void allowMessage();
+    /**
+     * @brief Allow game messages to be broadcasted.
+     */
+    void allowMessage();
 };
 #endif // SERVER_H

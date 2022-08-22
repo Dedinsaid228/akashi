@@ -26,7 +26,7 @@ AOPacket *PacketFactory::createPacket(QString raw_packet)
     packet_contents.removeFirst(); // Remove header
 
     if (!packet_contents.isEmpty())
-        packet_contents.removeLast();  // Remove anything trailing after delimiter
+        packet_contents.removeLast(); // Remove anything trailing after delimiter
 
     contents = packet_contents;
 

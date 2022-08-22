@@ -18,13 +18,12 @@
 #ifndef WRITER_MODCALL_H
 #define WRITER_MODCALL_H
 #include <QDateTime>
-#include <QObject>
-#include <QFile>
 #include <QDir>
+#include <QFile>
+#include <QObject>
 #include <QQueue>
 
 #include <QTextStream>
-
 
 /**
  * @brief A class to handle file interaction when writing the modcall buffer.
@@ -33,8 +32,7 @@ class WriterModcall : public QObject
 {
     Q_OBJECT
 
-
- public:
+  public:
     /**
      * @brief Constructor for modcall logwriter
      *
@@ -57,7 +55,7 @@ class WriterModcall : public QObject
      */
     void flush(const QString f_area_name, QQueue<QString> f_buffer);
 
- private:
+  private:
     /**
      * @brief Filename of the logfile used.
      */

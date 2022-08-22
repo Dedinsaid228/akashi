@@ -300,20 +300,20 @@ class ConfigManager
     static QString discordBanWebhookUrl();
 
     /**
-      * @brief Returns if the Webhook sends an alive message.
-      */
+     * @brief Returns if the Webhook sends an alive message.
+     */
     static bool discordUptimeEnabled();
 
-     /**
-       * @brief Returns the time between posting.
-       */
+    /**
+     * @brief Returns the time between posting.
+     */
     static int discordUptimeTime();
 
-     /**
-       * @brief Returns the Discord Uptime Webhook URL.
-       *
-       * @return See short description.
-       */
+    /**
+     * @brief Returns the Discord Uptime Webhook URL.
+     *
+     * @return See short description.
+     */
     static QString discordUptimeWebhookUrl();
 
     /**
@@ -455,7 +455,6 @@ class ConfigManager
      */
     static qint64 uptime();
 
-
     /**
      * @brief Sets the server's authorization type.
      *
@@ -489,8 +488,7 @@ class ConfigManager
      */
     static void reloadSettings();
 
-
- private:
+  private:
     /**
      * @brief Checks if a file exists and is valid.
      *
@@ -537,7 +535,7 @@ class ConfigManager
     /**
      * @brief Stores all of the area valus.
      */
-    static QSettings* m_areas;
+    static QSettings *m_areas;
 
     /**
      * @brief Stores all adjustable logstrings.

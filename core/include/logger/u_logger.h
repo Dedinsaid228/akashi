@@ -33,7 +33,7 @@ class ULogger : public QObject
 {
     Q_OBJECT
 
- public:
+  public:
     /**
      * @brief Constructor for the universal logger. Determines which writer is initially created.
      * @param Pointer to the Server.
@@ -51,7 +51,7 @@ class ULogger : public QObject
      */
     QQueue<QString> buffer(const QString &f_areaName);
 
- public slots:
+  public slots:
 
     /**
      * @brief Adds an IC log entry to the area buffer and writes it to the respective log format.
@@ -102,28 +102,27 @@ class ULogger : public QObject
      */
     void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
-    void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString& f_area_name,
+    void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
                        const QString &f_uid, const QString &f_hwid);
 
     void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-                const QString &f_area_name, const QString &f_music, const QString &f_uid,
-                const QString &f_hwid);
+                  const QString &f_area_name, const QString &f_music, const QString &f_uid,
+                  const QString &f_hwid);
 
     void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-                const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
-                const QString &f_hwid);
+                       const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
+                       const QString &f_hwid);
 
     void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
-                const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
-                const QString &f_hwid);
+                       const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
+                       const QString &f_hwid);
 
     /**
      * @brief Loads template strings for the logger.
      */
     void loadLogtext();
 
-private:
-
+  private:
     /**
      * @brief Updates the area buffer with a new entry, moving old ones if the buffer exceesed the maximum size.
      * @param Name of the area which buffer is modified.
@@ -146,8 +145,7 @@ private:
     /**
      * @brief Pointer to full writer. Handles single messages in one file.
      */
-    WriterFull* writerFull;
-
+    WriterFull *writerFull;
 
     /**
      * @brief Table that contains template strings for text-based logger format.
@@ -155,23 +153,23 @@ private:
      *          This has the problem of lacking defaults that work for all when the file is missing.
      *          This QMap contains all default values and overwrites them on logger construction.
      */
-    QHash<QString, QString>m_logtext{
-        {"ic",          "[%1][%5][IC][%2(%3)][%4][%7][%8]: %6"},
-        {"ooc",         "[%1][%5][OOC][%2(%3)][%4][%7][%8]: %6"},
-        {"login",       "[%1][LOGIN][%2][%3][%4(%5)][%6][%7]"},
-        {"cmdlogin",    "[%1][%2][LOGIN][%5][%3(%4)][%6][%7]"},
+    QHash<QString, QString> m_logtext{
+        {"ic", "[%1][%5][IC][%2(%3)][%4][%7][%8]: %6"},
+        {"ooc", "[%1][%5][OOC][%2(%3)][%4][%7][%8]: %6"},
+        {"login", "[%1][LOGIN][%2][%3][%4(%5)][%6][%7]"},
+        {"cmdlogin", "[%1][%2][LOGIN][%5][%3(%4)][%6][%7]"},
         {"cmdrootpass", "[%1][%2][ROOTPASS][%5][%3(%4)][%6][%7]"},
-        {"cmdadduser",  "[%1][%2][USERADD][%6][%3(%4)][%7][%8]: %5"},
-        {"cmd",         "[%1][%2][%5][%7][%3(%4)][%8][%9]: %6"},
-        {"kick",        "[%1][%2][%4][%5][KICK][%3]"},
-        {"ban",         "[%1][%2][%5][%6][BAN][%3][%4]"},
-        {"modcall",     "[%1][%2][MODCALL][%5][%3(%4)][%6][%7]"},
-        {"connect",     "[%1][CONNECT][%2][%3]"},
-        {"disconnect",  "[%1][%2][DISCONNECT][%5][%3(%4)][%6][%7]"},
-        {"music",       "[%1][%5][CHANGEMUSIC][%2(%3)][%4][%7][%8]: %6"},
-        {"changechar",  "[%1][%5][CHANGECHAR][%2(%3)][%4][%7][%8]: %6"},
-        {"changearea",  "[%1][%5][CHANGEAREA][%2(%3)][%4][%7][%8]: %6"},
+        {"cmdadduser", "[%1][%2][USERADD][%6][%3(%4)][%7][%8]: %5"},
+        {"cmd", "[%1][%2][%5][%7][%3(%4)][%8][%9]: %6"},
+        {"kick", "[%1][%2][%4][%5][KICK][%3]"},
+        {"ban", "[%1][%2][%5][%6][BAN][%3][%4]"},
+        {"modcall", "[%1][%2][MODCALL][%5][%3(%4)][%6][%7]"},
+        {"connect", "[%1][CONNECT][%2][%3]"},
+        {"disconnect", "[%1][%2][DISCONNECT][%5][%3(%4)][%6][%7]"},
+        {"music", "[%1][%5][CHANGEMUSIC][%2(%3)][%4][%7][%8]: %6"},
+        {"changechar", "[%1][%5][CHANGECHAR][%2(%3)][%4][%7][%8]: %6"},
+        {"changearea", "[%1][%5][CHANGEAREA][%2(%3)][%4][%7][%8]: %6"},
     };
 };
 
-#endif //U_LOGGER_H
+#endif // U_LOGGER_H

@@ -27,14 +27,14 @@ class DataTypes
 {
     Q_GADGET
 
- public:
+  public:
     /**
      * @brief Custom type for authorization types.
      */
     enum class AuthType
     {
-            SIMPLE,
-            ADVANCED
+        SIMPLE,
+        ADVANCED
     };
     Q_ENUM(AuthType);
 
@@ -50,13 +50,13 @@ class DataTypes
     Q_ENUM(LogType)
 };
 
-template<typename T>
+template <typename T>
 T toDataType(const QString &f_string)
 {
     return QVariant(f_string).value<T>();
 }
 
-template<typename T>
+template <typename T>
 QString fromDataType(const T &f_t)
 {
     return QVariant::fromValue(f_t).toString();

@@ -45,7 +45,6 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
 
     QString version_message = "This server uses kakashi " + QCoreApplication::applicationVersion() + ".";
 
-
     if (QCoreApplication::applicationVersion() == "unstable")
         version_message += "See: https://github.com/Ddedinya/kakashi";
     else if (client.getServer()->m_latest_version.isEmpty())

@@ -27,7 +27,7 @@
 #include "include/packet/packet_factory.h"
 #include "include/server.h"
 
-void AOClient::sendEvidenceList(AreaData* area) const
+void AOClient::sendEvidenceList(AreaData *area) const
 {
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
@@ -45,7 +45,7 @@ void AOClient::sendEvidenceListHidCmNoCm(AreaData *area) const
     }
 }
 
-void AOClient::updateEvidenceList(AreaData* area)
+void AOClient::updateEvidenceList(AreaData *area)
 {
     QStringList l_evidence_list;
     QString l_evidence_format("%1&%2&%3");
@@ -137,7 +137,7 @@ QString AOClient::dezalgo(QString p_text)
 
 bool AOClient::checkEvidenceAccess(AreaData *area)
 {
-    switch(area->eviMod()) {
+    switch (area->eviMod()) {
     case AreaData::EvidenceMod::FFA:
         return true;
     case AreaData::EvidenceMod::CM:
@@ -150,7 +150,7 @@ bool AOClient::checkEvidenceAccess(AreaData *area)
     }
 }
 
-void AOClient::updateJudgeLog(AreaData* area, AOClient* client, QString action)
+void AOClient::updateJudgeLog(AreaData *area, AOClient *client, QString action)
 {
     QString l_timestamp = QTime::currentTime().toString("hh:mm:ss");
     QString l_uid = QString::number(client->m_id);
@@ -158,17 +158,14 @@ void AOClient::updateJudgeLog(AreaData* area, AOClient* client, QString action)
     QString l_ipid = client->getIpid();
     QString l_message = action;
     QString l_logmessage = QString("[%1]: [%2] %3 (%4) %5").arg(l_timestamp, l_uid, l_char_name, l_ipid, l_message);
-
     area->appendJudgelog(l_logmessage);
 }
 
 QString AOClient::decodeMessage(QString incoming_message)
 {
-   QString decoded_message = incoming_message.replace("<num>", "#")
-                                             .replace("<percent>", "%")
-                                             .replace("<dollar>", "$")
-                                             .replace("<and>", "&");
-
+    QString decoded_message = incoming_message.replace("<num>", "#")
+                                  .replace("<percent>", "%")
+                                  .replace("<dollar>", "$")
+                                  .replace("<and>", "&");
     return decoded_message;
 }
-

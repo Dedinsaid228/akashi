@@ -29,7 +29,7 @@ void AOClient::addStatement(QStringList packet)
         return;
     }
 
-    AreaData* area = server->getAreaById(m_current_area);
+    AreaData *area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
 
     if (c_statement >= -1) {
@@ -48,10 +48,10 @@ void AOClient::addStatement(QStringList packet)
             }
         }
         else if (area->testimonyRecording() == AreaData::TestimonyRecording::ADD) {
-                packet[14] = "1";
-                area->addStatement(c_statement, packet);
-                area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
-            }
+            packet[14] = "1";
+            area->addStatement(c_statement, packet);
+            area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
+        }
         else {
             sendServerMessage("Unable to add more statements. The maximum amount of statements has been reached.");
             area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
@@ -65,7 +65,7 @@ QStringList AOClient::updateStatement(QStringList packet)
         return packet;
     }
 
-    AreaData* area = server->getAreaById(m_current_area);
+    AreaData *area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
 
     area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
@@ -84,11 +84,11 @@ QStringList AOClient::updateStatement(QStringList packet)
 
 void AOClient::clearTestimony()
 {
-    AreaData* area = server->getAreaById(m_current_area);
+    AreaData *area = server->getAreaById(m_current_area);
     area->clearTestimony();
 }
 
-bool AOClient::checkTestimonySymbols(const QString& message)
+bool AOClient::checkTestimonySymbols(const QString &message)
 {
     if (message.contains('>') || message.contains('<')) {
         sendServerMessage("Unable to add statements containing '>' or '<'.");

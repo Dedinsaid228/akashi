@@ -51,7 +51,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
 
     client.getServer()->broadcast(validated_packet, client.m_current_area);
 
-    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name,client.m_ipid,area->name(),client.m_last_message, QString::number(client.m_id), client.m_hwid);
+    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid);
     area->updateLastICMessage(validated_packet->getContent());
     area->updateLastICMessageOwner(client.m_ipid);
 
@@ -151,10 +151,7 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
 
     QString l_incoming_msg = client.dezalgo(l_incoming_args[4].toString().trimmed());
 
-    if (!area->lastICMessage().isEmpty()
-            && l_incoming_msg == area->lastICMessage()[4]
-            && client.m_ipid  == area->lastICMessageOwner()
-            && l_incoming_msg != "")
+    if (!area->lastICMessage().isEmpty() && l_incoming_msg == area->lastICMessage()[4] && client.m_ipid == area->lastICMessageOwner() && l_incoming_msg != "")
         return l_invalid;
 
     if (l_incoming_msg == "" && area->blankpostingAllowed() == false) {
@@ -190,9 +187,9 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
     l_args.append(l_incoming_args[5].toString());
     if (client.m_pos != l_incoming_args[5].toString()) {
         if (l_incoming_args[5].toString() == "hidden") {
-                client.sendServerMessage("This position cannot be used.");
-                return l_invalid;
-            }
+            client.sendServerMessage("This position cannot be used.");
+            return l_invalid;
+        }
 
         client.m_pos = l_incoming_args[5].toString();
         client.updateEvidenceList(client.getServer()->getAreaById(client.m_current_area));

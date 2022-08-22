@@ -26,8 +26,8 @@ DBManager::DBManager() :
         qWarning().noquote() << tr("Database Info: Database not found. Attempting to create new database.");
     }
     else {
-        //We should only check if a file is readable/writeable when it actually exists.
-        if(!db_info.isReadable() || !db_info.isWritable())
+        // We should only check if a file is readable/writeable when it actually exists.
+        if (!db_info.isReadable() || !db_info.isWritable())
             qCritical() << tr("Database Error: Missing permissions. Check if \"%1\" is writable.").arg(db_filename);
     }
 
@@ -75,9 +75,11 @@ QPair<bool, QString> DBManager::isIPBanned(QString ipid)
 
         if (ban_time + duration > current_time)
             return {true, reason};
-        else return {false, nullptr};
+        else
+            return {false, nullptr};
     }
-    else return {false, nullptr};
+    else
+        return {false, nullptr};
 }
 
 QPair<bool, QString> DBManager::isHDIDBanned(QString hdid)
@@ -100,9 +102,11 @@ QPair<bool, QString> DBManager::isHDIDBanned(QString hdid)
 
         if (ban_time + duration > current_time)
             return {true, reason};
-        else return {false, nullptr};
+        else
+            return {false, nullptr};
     }
-    else return {false, nullptr};
+    else
+        return {false, nullptr};
 }
 
 int DBManager::getBanID(QString hdid)
@@ -120,7 +124,6 @@ int DBManager::getBanID(QString hdid)
         return -1;
     }
 }
-
 
 int DBManager::getBanID(QHostAddress ip)
 {
@@ -511,8 +514,6 @@ void DBManager::updateWarn(QString ipid, int warns)
 {
     QSqlQuery query;
 
-    qDebug() << warns;
-
     query.prepare("UPDATE automodwarns SET WARNS = ? WHERE IPID = ?");
     query.addBindValue(warns);
     query.addBindValue(ipid);
@@ -616,7 +617,7 @@ bool DBManager::ipidExist(QString ipid)
     while (query.next()) {
         idipinfo ipidip;
         ipidip.ipid = query.value(1).toString();
-        ipidip.ip =   query.value(2).toString();
+        ipidip.ip = query.value(2).toString();
         ipidip.date = query.value(3).toString();
 
         if (!ipidip.ip.isEmpty())
@@ -626,7 +627,6 @@ bool DBManager::ipidExist(QString ipid)
     return true;
 }
 
-
 void DBManager::ipidip(QString ipid, QString ip, QString date)
 {
     QSqlQuery query;
@@ -634,7 +634,7 @@ void DBManager::ipidip(QString ipid, QString ip, QString date)
     bool exist = ipidExist(ipid);
 
     if (exist == false)
-            return;
+        return;
 
     query.prepare("INSERT INTO IPIDIP(IPID, IP, CREATED) VALUES(?, ?, ?)");
     query.addBindValue(ipid);
@@ -658,7 +658,7 @@ QList<DBManager::idipinfo> DBManager::getIpidInfo(QString ipid)
     while (query.next()) {
         idipinfo ipidip;
         ipidip.ipid = query.value(1).toString();
-        ipidip.ip =   query.value(2).toString();
+        ipidip.ip = query.value(2).toString();
         ipidip.date = query.value(3).toString();
         return_list.append(ipidip);
     }
@@ -666,7 +666,6 @@ QList<DBManager::idipinfo> DBManager::getIpidInfo(QString ipid)
     std::reverse(return_list.begin(), return_list.end());
     return return_list;
 }
-
 
 DBManager::~DBManager()
 {

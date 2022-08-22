@@ -44,7 +44,7 @@ void AOClient::cmdCM(int argc, QStringList argv)
         QString l_sender_name = getSenderName(m_id);
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is now CM in this area.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NEW AREA OWNER","Owner UID: " + QString::number(m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW AREA OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         arup(ARUPType::CM, true);
         sendEvidenceList(server->getAreaById(m_current_area));
     }
@@ -71,7 +71,7 @@ void AOClient::cmdCM(int argc, QStringList argv)
         QString l_sender_name = getSenderName(l_owner_candidate->m_id);
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is now CM in this area.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NEW AREA OWNER","Owner UID: " + QString::number(l_owner_candidate->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW AREA OWNER", "Owner UID: " + QString::number(l_owner_candidate->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         arup(ARUPType::CM, true);
         sendEvidenceList(server->getAreaById(m_current_area));
     }
@@ -93,7 +93,7 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
         QString l_sender_name = getSenderName(m_id);
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " no longer CM in this area.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"REMOVE AREA OWNER","Owner UID: " + QString::number(m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         sendServerMessage("You are no longer CM in this area.");
     }
     else {
@@ -120,7 +120,7 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
         QString l_sender_name = getSenderName(target->m_id);
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " no longer CM in this area.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"REMOVE AREA OWNER","Owner UID: " + QString::number(target->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         target->sendServerMessage("You have been unCMed.");
     }
 
@@ -158,7 +158,7 @@ void AOClient::cmdInvite(int argc, QStringList argv)
 
     sendServerMessage("You invited ID " + argv[0]);
     target_client->sendServerMessage("You were invited and given access to " + area->name());
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"IVNITE","Invited UID: " + QString::number(target_client->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "IVNITE", "Invited UID: " + QString::number(target_client->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdUnInvite(int argc, QStringList argv)
@@ -191,7 +191,7 @@ void AOClient::cmdUnInvite(int argc, QStringList argv)
 
     sendServerMessage("You uninvited ID " + argv[0]);
     target_client->sendServerMessage("You were uninvited from " + l_area->name());
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UNIVNITE","Uninvited UID: " + QString::number(target_client->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNIVNITE", "Uninvited UID: " + QString::number(target_client->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdLock(int argc, QStringList argv)
@@ -216,7 +216,7 @@ void AOClient::cmdLock(int argc, QStringList argv)
         }
     }
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREALOCK","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREALOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::LOCKED, true);
 }
 
@@ -242,7 +242,7 @@ void AOClient::cmdSpectatable(int argc, QStringList argv)
         }
     }
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREASPECTATABLE","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREASPECTATABLE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::LOCKED, true);
 }
 
@@ -260,7 +260,7 @@ void AOClient::cmdAreaMute(int argc, QStringList argv)
 
     sendServerMessageArea("This area is now muted.");
     l_area->spectatable();
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREAMUTE","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAMUTE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::LOCKED, true);
 }
 void AOClient::cmdUnLock(int argc, QStringList argv)
@@ -277,7 +277,7 @@ void AOClient::cmdUnLock(int argc, QStringList argv)
 
     sendServerMessageArea("This area is now unlocked.");
     l_area->unlock();
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREAUNLOCK","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAUNLOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::LOCKED, true);
 }
 
@@ -354,23 +354,23 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
         l_client_to_kick->changeArea(0);
         l_area->uninvite(l_client_to_kick->m_id);
         l_area->removeOwner(l_client_to_kick->m_id);
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREAKICK","Kicked UID: " + QString::number(l_client_to_kick->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         arup(ARUPType::CM, true);
         sendServerMessage("Client " + argv[0] + " kicked from area.");
         l_client_to_kick->sendServerMessage("You kicked from area.");
     }
     else if (argv[0] == "*") { // kick all clients in the area
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"AREAKICK","Kicked all players from area",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players from area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         const QVector<AOClient *> l_clients = server->getClients();
         for (AOClient *l_client : l_clients) {
-            if (l_client->m_current_area == m_current_area && l_client->m_id != m_id ) {
+            if (l_client->m_current_area == m_current_area && l_client->m_id != m_id) {
                 l_client->changeArea(0);
                 l_area->uninvite(l_client->m_id);
                 l_area->removeOwner(l_client->m_id);
                 l_client->sendServerMessage("You kicked from area.");
             }
-        arup(ARUPType::CM, true);
-        sendServerMessage("Clients kicked from area.");
+            arup(ARUPType::CM, true);
+            sendServerMessage("Clients kicked from area.");
         }
     }
 }
@@ -379,7 +379,7 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    AreaData* l_area = server->getAreaById(m_current_area);
+    AreaData *l_area = server->getAreaById(m_current_area);
     bool ok;
     int l_idx = argv[0].toInt(&ok);
     int l_idz = argv[1].toInt(&ok);
@@ -389,7 +389,7 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
         return;
     }
 
-    AOClient* l_client_to_kick = server->getClientByID(l_idx);
+    AOClient *l_client_to_kick = server->getClientByID(l_idx);
 
     if (l_client_to_kick == nullptr) {
         sendServerMessage("No client with that ID found.");
@@ -399,7 +399,7 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
     l_client_to_kick->changeArea(l_idz);
     l_area->uninvite(l_client_to_kick->m_id);
     l_area->removeOwner(l_client_to_kick->m_id);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"MODAREAKICK","Kicked UID: " + QString::number(l_client_to_kick->m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODAREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::CM, true);
     sendServerMessage("Client " + argv[0] + " kicked from area.");
     l_client_to_kick->sendServerMessage("You kicked from area by moderator.");
@@ -424,7 +424,7 @@ void AOClient::cmdSetBackground(int argc, QStringList argv)
             }
 
             sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " changed the background to " + f_background);
-            emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SETBACKGROUND","Client UID: " + QString::number(m_id),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+            emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SETBACKGROUND", "Client UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
         }
         else
             sendServerMessage("Invalid background name.");
@@ -446,7 +446,7 @@ void AOClient::cmdBgLock(int argc, QStringList argv)
     };
 
     server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), "[" + QString::number(m_id) + "] " + l_sender_name + " locked the background.", "1"}), m_current_area);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"BGLOCK","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BGLOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdBgUnlock(int argc, QStringList argv)
@@ -462,7 +462,7 @@ void AOClient::cmdBgUnlock(int argc, QStringList argv)
     };
 
     server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), "[" + QString::number(m_id) + "] " + l_sender_name + " unlocked the background.", "1"}), m_current_area);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"BGUNLOCK","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BGUNLOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdStatus(int argc, QStringList argv)
@@ -488,12 +488,12 @@ void AOClient::cmdStatus(int argc, QStringList argv)
     if (l_area->changeStatus(l_arg)) {
         arup(ARUPType::STATUS, true);
         server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), "[" + QString::number(m_id) + "] " + l_sender_name + " changed status to " + l_arg.toUpper(), "1"}), m_current_area);
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SETSTATUS",l_arg.toUpper(),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SETSTATUS", l_arg.toUpper(), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     }
     else {
         const QStringList keys = AreaData::map_statuses.keys();
         sendServerMessage("That does not look like a valid status. Valid statuses are " + keys.join(", "));
-   }
+    }
 }
 
 void AOClient::cmdJudgeLog(int argc, QStringList argv)
@@ -509,12 +509,12 @@ void AOClient::cmdJudgeLog(int argc, QStringList argv)
     }
 
     QString l_message = l_area->judgelog().join("\n");
-    //Judgelog contains an IPID, so we shouldn't send that unless the caller has appropriate permissions
+    // Judgelog contains an IPID, so we shouldn't send that unless the caller has appropriate permissions
 
     if (checkPermission(ACLRole::KICK) || checkPermission(ACLRole::BAN))
         sendServerMessage(l_message);
     else {
-        QString filteredmessage = l_message.remove(QRegularExpression("[(].*[)]")); //Filter out anything between two parentheses. This should only ever be the IPID
+        QString filteredmessage = l_message.remove(QRegularExpression("[(].*[)]")); // Filter out anything between two parentheses. This should only ever be the IPID
         sendServerMessage(filteredmessage);
     }
 }
@@ -524,12 +524,12 @@ void AOClient::cmdIgnoreBgList(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    AreaData* area = server->getAreaById(m_current_area);
+    AreaData *area = server->getAreaById(m_current_area);
 
     area->toggleIgnoreBgList();
     QString state = area->ignoreBgList() ? "ignored." : "enforced.";
     sendServerMessage("BG list in this area is now " + state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"IGNOREBGLIST",state,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "IGNOREBGLIST", state, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdAreaMessage(int argc, QStringList argv)
@@ -544,7 +544,7 @@ void AOClient::cmdAreaMessage(int argc, QStringList argv)
     if (argc >= 1) {
         l_area->changeAreaMessage(argv.join(" "));
         sendServerMessage("Updated this area's message.");
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"UPDATEAREAMESSAGE",argv.join(" "),server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UPDATEAREAMESSAGE", argv.join(" "), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     }
 }
 
@@ -560,7 +560,7 @@ void AOClient::cmdToggleAreaMessageOnJoin(int argc, QStringList argv)
     QString l_state = l_area->sendAreaMessageOnJoin() ? "enabled." : "disabled.";
 
     sendServerMessage("Sending message on area join is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEAREAMESSAGE",l_state,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEAREAMESSAGE", l_state, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdToggleWtce(int argc, QStringList argv)
@@ -594,10 +594,10 @@ void AOClient::cmdClearAreaMessage(int argc, QStringList argv)
 
     l_area->changeAreaMessage(QString{});
 
-    if (l_area->sendAreaMessageOnJoin()) //Turn off the automatic sending.
-        cmdToggleAreaMessageOnJoin(0,QStringList{}); //Dummy values.
+    if (l_area->sendAreaMessageOnJoin())              // Turn off the automatic sending.
+        cmdToggleAreaMessageOnJoin(0, QStringList{}); // Dummy values.
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CLEARAREAMESSAGE","",server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CLEARAREAMESSAGE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdSneak(int argc, QStringList argv)
@@ -625,7 +625,7 @@ void AOClient::cmdBgs(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    QStringList l_bgs  = server->getBackgrounds();
+    QStringList l_bgs = server->getBackgrounds();
 
     sendServerMessage("Backgrounds:\n" + l_bgs.join("\n"));
 }
@@ -653,7 +653,7 @@ void AOClient::cmdToggleFloodguardActuve(int argc, QStringList argv)
     QString l_state = l_area->floodguardActive() ? "actived." : "disabled.";
 
     sendServerMessage("Floodguard in this area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEFLOODGUARD",l_state,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEFLOODGUARD", l_state, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdToggleChillMod(int argc, QStringList argv)
@@ -668,7 +668,7 @@ void AOClient::cmdToggleChillMod(int argc, QStringList argv)
     QString l_state = l_area->chillMod() ? "actived." : "disabled.";
 
     sendServerMessage("Chill Mod in this area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLECHILLMOD",l_state,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLECHILLMOD", l_state, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdToggleAutoMod(int argc, QStringList argv)
@@ -683,12 +683,12 @@ void AOClient::cmdToggleAutoMod(int argc, QStringList argv)
     QString l_state = l_area->autoMod() ? "actived." : "disabled.";
 
     sendServerMessage("Automoderator in this area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEAUTOMOD",l_state,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEAUTOMOD", l_state, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdSetAreaPassword(int argc, QStringList argv)
 {
-    AreaData* l_area = server->getAreaById(m_current_area);
+    AreaData *l_area = server->getAreaById(m_current_area);
 
     if (argc == 0)
         sendServerMessage("Area password: " + l_area->areaPassword());
@@ -730,7 +730,7 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
         }
 
         if (area == server->getAreaName(m_current_area)) {
-            emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"RENAMEAREA",l_area_name,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+            emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RENAMEAREA", l_area_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
             server->renameArea(l_area_name, i);
             server->broadcast(PacketFactory::createPacket("FA", server->getAreaNames()));
 
@@ -770,7 +770,7 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
         l_client->fullArup();
 
     sendServerMessage("Area " + argv.join(" ") + " has been created!");
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"CREATEAREA",l_area_name,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CREATEAREA", l_area_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdRemoveArea(int argc, QStringList argv)
@@ -792,18 +792,18 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
-         if (l_client->m_current_area == l_area)
-             l_client->changeArea(0, true);
-        }
+        if (l_client->m_current_area == l_area)
+            l_client->changeArea(0, true);
+    }
 
-   server->removeArea(l_area);
-   server->broadcast(PacketFactory::createPacket("FA", server->getAreaNames()));
+    server->removeArea(l_area);
+    server->broadcast(PacketFactory::createPacket("FA", server->getAreaNames()));
 
-   for (AOClient *l_client : l_clients)
-       l_client->fullArup();
+    for (AOClient *l_client : l_clients)
+        l_client->fullArup();
 
-   sendServerMessage("Area " + QString::number(l_area) + " has been removed!");
-   emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"DELETEAREA",QString::number(l_area),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    sendServerMessage("Area " + QString::number(l_area) + " has been removed!");
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "DELETEAREA", QString::number(l_area), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdSaveAreas(int argc, QStringList argv)
@@ -832,7 +832,7 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
             QTextStream file_stream(&new_areas_ini);
             file_stream.setCodec("UTF-8");
             for (int i = 0; i < server->getAreaCount(); i++) {
-                AreaData* l_area = server->getAreaById(i);
+                AreaData *l_area = server->getAreaById(i);
                 QStringList l_evidence_list;
                 QString l_evidence_format("%1%2name%3desc%4image");
                 int l_evidence_count = 0;
@@ -842,38 +842,38 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                     l_evidence_count++;
                 }
                 file_stream << "[" + QString::number(i) + ":" + server->getAreaName(i) + "]" +
-                               "\nbackground=" + QVariant(l_area->background()).toString() +
-                               "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
-                               "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
-                               "\nevidence_mod=" + getEviMod(i) +
-                               "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
-                               "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
-                               "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
-                               "\nautomod=" + QVariant(l_area->autoMod()).toString() +
-                               "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
-                               "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
-                               "\npassword=" + l_area->areaPassword() +
-                               "\nevidence=" + l_evidence_list.join(",") +
-                               "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
+                                   "\nbackground=" + QVariant(l_area->background()).toString() +
+                                   "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
+                                   "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
+                                   "\nevidence_mod=" + getEviMod(i) +
+                                   "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
+                                   "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
+                                   "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
+                                   "\nautomod=" + QVariant(l_area->autoMod()).toString() +
+                                   "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
+                                   "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
+                                   "\npassword=" + l_area->areaPassword() +
+                                   "\nevidence=" + l_evidence_list.join(",") +
+                                   "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
             }
         }
         new_areas_ini.close();
 
         sendServerMessage("New areas.ini file created!");
         m_area_saving = false;
-        emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SAVEAREAS",l_areas_ini_name,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SAVEAREAS", l_areas_ini_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
     }
     else {
         sendServerMessage("You don't have permission to save a areas. Please contact a moderator for permission.");
         return;
-   }
+    }
 }
 
 void AOClient::cmdPermitAreaSaving(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    AOClient* l_client = server->getClientByID(argv[0].toInt());
+    AOClient *l_client = server->getClientByID(argv[0].toInt());
 
     if (l_client == nullptr) {
         sendServerMessage("Invalid ID.");
@@ -881,7 +881,7 @@ void AOClient::cmdPermitAreaSaving(int argc, QStringList argv)
     }
 
     l_client->m_area_saving = true;
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"ALLOWAREASAVING","Target UID: " + QString::number(l_client->m_id),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "ALLOWAREASAVING", "Target UID: " + QString::number(l_client->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdSwapAreas(int argc, QStringList argv)
@@ -903,34 +903,33 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
-         if (l_client->m_current_area == l_area1 || l_client->m_current_area == l_area2)
-             l_client->changeArea(0, true);
+        if (l_client->m_current_area == l_area1 || l_client->m_current_area == l_area2)
+            l_client->changeArea(0, true);
     }
 
     server->swapAreas(l_area1, l_area2);
     server->broadcast(PacketFactory::createPacket("FA", server->getAreaNames()));
 
     for (AOClient *l_client : l_clients)
-         l_client->fullArup();
+        l_client->fullArup();
 
     sendServerMessage("The areas " + QString::number(l_area1) + " and " + QString::number(l_area2) + " have been swapped.");
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"SWAPAREAS",QString::number(l_area1) + " and " + QString::number(l_area2),server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SWAPAREAS", QString::number(l_area1) + " and " + QString::number(l_area2), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
-
 
 void AOClient::cmdToggleProtected(int argc, QStringList argv)
 {
     Q_UNUSED(argc)
     Q_UNUSED(argv)
 
-    AreaData* l_area = server->getAreaById(m_current_area);
+    AreaData *l_area = server->getAreaById(m_current_area);
 
     l_area->toggleIsProtected();
 
     QString l_state = l_area->isProtected() ? "protected." : "not protected.";
 
     sendServerMessage("This area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLEPROTECTED",l_state,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEPROTECTED", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
 
 void AOClient::cmdToggleStatus(int argc, QStringList argv)
@@ -938,12 +937,12 @@ void AOClient::cmdToggleStatus(int argc, QStringList argv)
     Q_UNUSED(argc)
     Q_UNUSED(argv)
 
-    AreaData* l_area = server->getAreaById(m_current_area);
+    AreaData *l_area = server->getAreaById(m_current_area);
 
     l_area->toggleChangeStatus();
 
     QString l_state = l_area->allowChangeStatus() ? "allowed." : "prohibited.";
 
     sendServerMessage("Change area status " + l_state);
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"TOGGLESTATUS",l_state,server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLESTATUS", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }

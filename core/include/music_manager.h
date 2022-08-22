@@ -31,8 +31,8 @@ class ConfigManager;
 class MusicManager : public QObject
 {
     Q_OBJECT
-public:
 
+  public:
     /**
      * @brief Constructor for the server-wide musiclist manager.
      *
@@ -91,7 +91,7 @@ public:
      *
      * @return Returns true on success, false on fail.
      */
-    bool addCustomSong(QString f_song_name, QString f_real_name, int f_duration, int f_area_id, bool f_server_starting=false);
+    bool addCustomSong(QString f_song_name, QString f_real_name, int f_duration, int f_area_id, bool f_server_starting = false);
 
     /**
      * @brief Attempts to add the new category to the custom musiclist.
@@ -100,7 +100,7 @@ public:
      *
      * @return Returns true on saccess, false on fail.
      */
-    bool addCustomCategory(QString f_category_name, int f_area_id, bool f_server_starting=false);
+    bool addCustomCategory(QString f_category_name, int f_area_id, bool f_server_starting = false);
 
     /**
      * @brief Removes either a song or a category from the custom list.
@@ -157,7 +157,7 @@ public:
      */
     QStringList getCustomMusicList(int f_area);
 
- public slots:
+  public slots:
 
     /**
      * @brief Updates the root musiclist and CDN list.
@@ -169,7 +169,7 @@ public:
      */
     void userJoinedArea(int f_area_index, int f_user_id);
 
- signals:
+  signals:
 
     /**
      * @brief Sends the FM packet with the musiclist of the area when a client enters.
@@ -189,7 +189,7 @@ public:
      */
     void sendAreaFMPacket(AOPacket *f_packet, int f_area_index);
 
- private:
+  private:
     /**
      * @brief Contains all custom lists of all areas in the server.
      */

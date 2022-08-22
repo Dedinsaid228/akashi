@@ -211,7 +211,7 @@ bool ACLRolesHandler::loadFile(QString f_file_name)
         l_settings.beginGroup(i_group);
         if (l_role_records.contains(l_upper_group)) {
             qWarning() << "[ACL Role Handler]"
-                                   << "warning: role" << l_upper_group << "already exist";
+                       << "warning: role" << l_upper_group << "already exist";
         }
         l_role_records.append(l_upper_group);
 
@@ -219,9 +219,9 @@ bool ACLRolesHandler::loadFile(QString f_file_name)
         const QList<ACLRole::Permission> l_permissions = ACLRole::PERMISSION_CAPTIONS.keys();
         for (const ACLRole::Permission &i_permission : l_permissions) {
             const QVariant l_value = l_settings.value(ACLRole::PERMISSION_CAPTIONS.value(i_permission));
-                        if (l_value.isValid()) {
-                            l_role.setPermission(i_permission, l_value.toBool());
-                        }
+            if (l_value.isValid()) {
+                l_role.setPermission(i_permission, l_value.toBool());
+            }
         }
         m_roles.insert(l_upper_group, std::move(l_role));
 

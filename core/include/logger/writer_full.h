@@ -30,13 +30,14 @@ class WriterFull : public QObject
 {
     Q_OBJECT
 
- public:
+  public:
     /**
      * @brief Constructor for full logwriter
      *
      * @param QObject pointer to the parent object.
      */
-    WriterFull(QObject *parent = nullptr);;
+    WriterFull(QObject *parent = nullptr);
+    ;
 
     /**
      * @brief Deconstructor for full logwriter.
@@ -58,7 +59,7 @@ class WriterFull : public QObject
      */
     void flush(const QString f_entry, const QString f_area_name);
 
- private:
+  private:
     /**
      * @brief Filename of the logfile used. This will always be the time the server starts up.
      */

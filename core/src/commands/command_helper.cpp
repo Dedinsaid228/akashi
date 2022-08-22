@@ -52,8 +52,8 @@ QStringList AOClient::buildAreaList(int area_idx)
     case AreaData::LockStatus::SPECTATABLE:
         entries.append("[SPECTATABLE]");
         break;
-   case AreaData::LockStatus::FREE:
-   default:
+    case AreaData::LockStatus::FREE:
+    default:
         break;
     }
 
@@ -76,7 +76,7 @@ QStringList AOClient::buildAreaList(int area_idx)
             if (!m_authenticated && area->owners().contains(m_id))
                 char_entry += ": " + l_client->m_ooc_name;
             if (l_client->m_authenticated && !l_client->m_sneak_mod)
-               char_entry.insert(0, "[M]");
+                char_entry.insert(0, "[M]");
             if (l_client->m_is_afk)
                 char_entry.insert(0, "[AFK]");
             entries.append(char_entry);
@@ -123,7 +123,6 @@ void AOClient::diceThrower(int argc, QStringList argv, bool p_roll)
     }
 
     sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(l_dice) + "d" + QString::number(l_sides) + ". Results: " + total_results);
-
 }
 
 QString AOClient::getAreaTimer(int area_idx, int timer_idx)
@@ -248,7 +247,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     else
         server->broadcast(l_packet, m_current_area);
 
-    emit logCMD((m_current_char + " " + m_showname),m_ipid, m_ooc_name,"NOTICE",f_notice,server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
 }
 
 void AOClient::playMusic(QStringList f_args, bool f_once)
@@ -264,7 +263,7 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     }
 
     m_last_music_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-    AreaData* l_area = server->getAreaById(m_current_area);
+    AreaData *l_area = server->getAreaById(m_current_area);
 
     if (l_area->isMusicAllowed() == false && !checkPermission(ACLRole::CM)) {
         sendServerMessage("Music is disabled in this area.");
@@ -294,12 +293,12 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     AOPacket *music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
     server->broadcast(music_change, m_current_area);
     l_area->changeMusic(l_sender_name, l_song);
-    emit logMusic((m_current_char + " " + m_showname), m_ooc_name,m_ipid,server->getAreaById(m_current_area)->name(),l_song, QString::number(m_id), m_hwid);
+    emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid);
 }
 
 QString AOClient::getSenderName(int f_uid)
 {
-    AOClient* l_target = server->getClientByID(f_uid);
+    AOClient *l_target = server->getClientByID(f_uid);
 
     if (l_target->m_showname.isEmpty() && l_target->m_current_char.isEmpty())
         return "Spectator";
@@ -311,7 +310,7 @@ QString AOClient::getSenderName(int f_uid)
 
 QString AOClient::getEviMod(int f_area)
 {
-    AreaData* l_area = server->getAreaById(f_area);
+    AreaData *l_area = server->getAreaById(f_area);
 
     switch (l_area->eviMod()) {
     case AreaData::EvidenceMod::FFA:

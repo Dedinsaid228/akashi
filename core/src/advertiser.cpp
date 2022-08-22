@@ -25,7 +25,6 @@ Advertiser::Advertiser()
     connect(m_manager, &QNetworkAccessManager::finished,
             this, &Advertiser::msRequestFinished);
 
-
     m_name = ConfigManager::serverName();
     m_hostname = ConfigManager::advertiserHostname();
     m_description = ConfigManager::serverDescription();

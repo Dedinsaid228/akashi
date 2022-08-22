@@ -28,19 +28,18 @@ class Advertiser : public QObject
 {
     Q_OBJECT
 
-public:
+  public:
     /**
      * @brief Constructor for the HTTP_Advertiser class.
      */
     explicit Advertiser();
-
 
     /**
      *  @brief Deconstructor for the HTTP_Advertiser class. Yes, that's it. Can't say more about it.
      */
     ~Advertiser();
 
- public slots:
+  public slots:
 
     /**
      * @brief Establishes a connection with masterserver to register or update the listing on the masterserver.
@@ -63,7 +62,7 @@ public:
      */
     void updateAdvertiserSettings();
 
-private:
+  private:
     /**
      * @brief Pointer to the network manager, necessary to execute POST requests to the masterserver.
      */

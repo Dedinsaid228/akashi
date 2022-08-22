@@ -21,8 +21,8 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QMap>
-#include <QRegularExpression>
 #include <QRandomGenerator>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QString>
 #include <QTimer>
@@ -39,7 +39,7 @@ class AOPacket;
  */
 class AreaData : public QObject
 {
-  Q_OBJECT
+    Q_OBJECT
 
   public:
     /**
@@ -67,15 +67,16 @@ class AreaData : public QObject
      * @details This is purely aesthetic, and serves no functional purpose from a gameplay perspective.
      * It's only benefit is giving the users a rough idea as to what is going on in an area.
      */
-    enum Status {
-      IDLE,                //!< The area is currently not busy with anything, or the area is empty.
-      RP,                  //!< There is some (non-Ace Attorney-related) roleplay going on in the area.
-      CASING,              //!< An Ace Attorney or Danganronpa-styled case is currently being held in the area.
-      LOOKING_FOR_PLAYERS, //!< Something is being planned in the area, but it needs more players.
-      RECESS,              //!< The area is currently taking a break from casing, but will continue later.
-      GAMING,              //!< The users inside the area are playing some game outside of AO, and are using the area to communicate.
-      ERP,                 //!< Comic status, never mind.
-      YABLACHKI            //!< Uh... I'll just leave this here: https://www.youtube.com/watch?v=K4tsKL7WlgM
+    enum Status
+    {
+        IDLE,                //!< The area is currently not busy with anything, or the area is empty.
+        RP,                  //!< There is some (non-Ace Attorney-related) roleplay going on in the area.
+        CASING,              //!< An Ace Attorney or Danganronpa-styled case is currently being held in the area.
+        LOOKING_FOR_PLAYERS, //!< Something is being planned in the area, but it needs more players.
+        RECESS,              //!< The area is currently taking a break from casing, but will continue later.
+        GAMING,              //!< The users inside the area are playing some game outside of AO, and are using the area to communicate.
+        ERP,                 //!< Comic status, never mind.
+        YABLACHKI            //!< Uh... I'll just leave this here: https://www.youtube.com/watch?v=K4tsKL7WlgM
     };
 
     /// Exposes the metadata of the Status enum.
@@ -86,9 +87,9 @@ class AreaData : public QObject
      */
     enum LockStatus
     {
-      FREE,
-      LOCKED,
-      SPECTATABLE
+        FREE,
+        LOCKED,
+        SPECTATABLE
     };
 
     /**
@@ -202,8 +203,8 @@ class AreaData : public QObject
      */
     enum class TestimonyProgress
     {
-        OK, //!< The expected statement was selected.
-        LOOPED, //!< The "next" statement would have been beyond the testimony's limits, so the first one was selected.
+        OK,              //!< The expected statement was selected.
+        LOOPED,          //!< The "next" statement would have been beyond the testimony's limits, so the first one was selected.
         STAYED_AT_FIRST, //!< The "previous" statement would have been before the first, so the selection stayed at the first.
     };
 
@@ -212,7 +213,7 @@ class AreaData : public QObject
      */
     enum class Side
     {
-        DEFENCE, //!< Self-explanatory.
+        DEFENCE,    //!< Self-explanatory.
         PROSECUTOR, //!< Self-explanatory.
     };
 
@@ -982,7 +983,7 @@ class AreaData : public QObject
      */
     void startMessageFloodguard(int f_duration);
 
-signals:
+  signals:
     /**
      * @brief Sends a packet to every client inside the area.
      */
@@ -990,7 +991,7 @@ signals:
 
     void userJoinedArea(int f_area_index, int f_user_id);
 
- private:
+  private:
     /**
      * @brief The list of timers available in the area.
      */
@@ -1165,11 +1166,10 @@ signals:
      */
     TestimonyRecording m_testimonyRecording;
 
-
     QVector<QStringList> m_testimony; //!< Vector of all statements saved. Index 0 is always the title of the testimony.
     int m_statement;                  //!< Keeps track of the currently played statement.
 
-     /**
+    /**
      * @brief The judgelog of an area.
      *
      * @details This list contains up to 10 recorded packets of the most recent judge actions (WT/CE or penalty updates) in an area.

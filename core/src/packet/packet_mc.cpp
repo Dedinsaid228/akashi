@@ -75,7 +75,7 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
         QString l_sender_name = client.getSenderName(client.m_id);
 
         area->changeMusic(l_sender_name, l_final_song);
-        emit client.logMusic((client.m_current_char + " " + client.m_showname), client.m_ooc_name,client.m_ipid,client.getServer()->getAreaName(client.m_current_area),l_final_song, QString::number(client.m_id), client.m_hwid);
+        emit client.logMusic((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, client.getServer()->getAreaName(client.m_current_area), l_final_song, QString::number(client.m_id), client.m_hwid);
         return;
     }
 

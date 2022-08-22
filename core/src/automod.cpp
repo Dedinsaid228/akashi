@@ -3,14 +3,12 @@
 #include "include/db_manager.h"
 #include "include/server.h"
 
-
 void AOClient::autoMod(bool ic_chat)
 {
     int l_warn = server->getDatabaseManager()->getWarnNum(m_ipid);
     long l_currentdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
 
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - server->getDatabaseManager()->getWarnDate(m_ipid)
-            > parseTime(ConfigManager::autoModWarnTerm()) && l_warn != 0 && l_warn != 1) {
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - server->getDatabaseManager()->getWarnDate(m_ipid) > parseTime(ConfigManager::autoModWarnTerm()) && l_warn != 0 && l_warn != 1) {
         long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
         server->getDatabaseManager()->updateWarn(m_ipid, l_warn - 1);
         server->getDatabaseManager()->updateWarn(m_ipid, l_date);
@@ -41,10 +39,16 @@ void AOClient::autoMod(bool ic_chat)
         int l_haznum = server->getDatabaseManager()->getHazNum(m_ipid);
 
         switch (l_haznum) {
-            case 0:
-            case 1: autoMute(ic_chat, l_haznum); break;
-            case 2: autoKick(); break;
-            case 3: autoBan(); break;
+        case 0:
+        case 1:
+            autoMute(ic_chat, l_haznum);
+            break;
+        case 2:
+            autoKick();
+            break;
+        case 3:
+            autoBan();
+            break;
         }
     }
 
@@ -53,7 +57,7 @@ void AOClient::autoMod(bool ic_chat)
 
 void AOClient::autoMute(bool ic_chat, int haznum)
 {
-    AOClient* target = server->getClientByID(m_id);
+    AOClient *target = server->getClientByID(m_id);
 
     if (ic_chat)
         target->m_is_muted = true;
@@ -67,11 +71,11 @@ void AOClient::autoMute(bool ic_chat, int haznum)
     l_num.haznum = 2;
 
     if (haznum == 0)
-       server->getDatabaseManager()->addHazNum(l_num);
+        server->getDatabaseManager()->addHazNum(l_num);
     else {
         long date = l_num.date;
 
-        emit logCMD("Automoderator","", "","MUTE","Muted UID: " + QString::number(target->m_id),server->getAreaById(m_current_area)->name(), "", "");
+        emit logCMD("Automoderator", "", "", "MUTE", "Muted UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), "", "");
         server->getDatabaseManager()->updateHazNum(m_ipid, date);
         server->getDatabaseManager()->updateHazNum(m_ipid, l_num.action);
         server->getDatabaseManager()->updateHazNum(m_ipid, l_num.haznum);
@@ -80,8 +84,8 @@ void AOClient::autoMute(bool ic_chat, int haznum)
 
 void AOClient::autoKick()
 {
-    const QList<AOClient*> l_targets = server->getClientsByIpid(m_ipid);
-    for (AOClient* l_client : l_targets) {
+    const QList<AOClient *> l_targets = server->getClientsByIpid(m_ipid);
+    for (AOClient *l_client : l_targets) {
         l_client->sendPacket("KK", {"You were kicked by a automoderator."});
         l_client->m_socket->close();
     }
@@ -120,8 +124,8 @@ void AOClient::autoBan()
     l_ban.time = QDateTime::currentDateTime().toSecsSinceEpoch();
     bool ban_logged = false;
 
-    const QList<AOClient*> l_targets = server->getClientsByIpid(l_ban.ipid);
-    for (AOClient* l_client : l_targets) {
+    const QList<AOClient *> l_targets = server->getClientsByIpid(l_ban.ipid);
+    for (AOClient *l_client : l_targets) {
         if (!ban_logged) {
             l_ban.ip = l_client->m_remote_ip;
             l_ban.hdid = l_client->m_hwid;
@@ -142,7 +146,7 @@ void AOClient::autoBan()
         l_client->sendPacket("KB", {l_ban.reason + "\nID: " + QString::number(l_ban_id) + "\nUntil: " + l_ban_duration});
         l_client->m_socket->close();
 
-        emit logBan(l_ban.moderator,l_ban.ipid,l_ban_duration,l_ban.reason, "","");
+        emit logBan(l_ban.moderator, l_ban.ipid, l_ban_duration, l_ban.reason, "", "");
         if (ConfigManager::discordBanWebhookEnabled())
             emit server->banWebhookRequest(l_ban.ipid, l_ban.moderator, l_ban_duration, l_ban.reason, l_ban_id);
 
