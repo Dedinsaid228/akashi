@@ -24,7 +24,7 @@ jobs:
       with:
         clang-format-version: '14'
         check-path: '.'
-
+        
   build-linux:
     needs: formatting-check
     # The type of runner that the job will run on
@@ -40,7 +40,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install qt5-default libqt5websockets5-dev g++ make
-
       # Runs a set of commands using the runners shell
       - name: qmake and build
         run: |
@@ -48,7 +47,7 @@ jobs:
           qmake
           make
           mv bin/config_sample bin/config
-
+          
       - name: Run tests
         run: |
             cd ${{github.workspace}}/bin_tests/
@@ -61,15 +60,15 @@ jobs:
         with:
           name: akashi-linux
           path: bin/
-          
-    coverage:
+  
+  coverage:
     needs: build-linux
     runs-on: ubuntu-latest
 
     steps:
        # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
-
+      
       # Runs a single command using the runners shell
       - name: Install dependencies
         run: |
@@ -88,6 +87,7 @@ jobs:
             for test in ./unittest_*; do
               LD_LIBRARY_PATH=../bin:$LD_LIBRARY_PATH ./$test
             done;
+
       - name: Copy coverage files
         run: |
           cd ${{github.workspace}}/core
@@ -95,6 +95,7 @@ jobs:
           cd ..
           mkdir coverage
           cp core/*.gcov coverage/
+
       - name: Codecov
         uses: codecov/codecov-action@v3.1.0
         with:
@@ -105,7 +106,7 @@ jobs:
         with:
           name: coverage statistics
           path: coverage/
-  
+
   build-windows:
     needs: formatting-check
     runs-on: windows-latest
@@ -134,14 +135,14 @@ jobs:
           windeployqt bin\akashi.exe --release --no-opengl-sw
           mv bin\config_sample bin\config
 
-      - name: Run tests
-        run: | 
-            for test in ./unittest_*; do
-              LD_LIBRARY_PATH=../bin:$LD_LIBRARY_PATH ./$test
-            done;
-        working-directory: ${{ github.workspace }}/bin_tests
-        shell: bash
-        
+# As QTest seems to be non-functional on Windows runners this is commented out. If a solution is found, please fix and uncomment - 27.06.2022 / Salanto         
+#      - name: Run tests
+#        run: |
+#            windeployqt .\unittest_music_manager.exe --no-translations
+#            $tests = Get-ChildItem -Filter "unittest_*.exe" -Path ".\" | Select -ExpandProperty Name
+#            foreach ($test in $tests) {Write-Host(& ".\$test")}
+#        working-directory: ${{ github.workspace }}/bin_tests
+
       - name: Deploy OpenSSL
         run: |
           curl https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1p.zip --output openssl-1.1.1p.zip
