@@ -12,4 +12,3 @@ class PacketRC : public AOPacket
     virtual bool validatePacket() const;
 };
 #endif
-
