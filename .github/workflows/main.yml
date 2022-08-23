@@ -44,6 +44,7 @@ jobs:
       - name: qmake and build
         run: |
           cd $GITHUB_WORKSPACE
+          mkdir bin/logs
           qmake
           make
           mv bin/config_sample bin/config
@@ -130,6 +131,7 @@ jobs:
       - name: Build
         run: |
           cd $Env:GITHUB_WORKSPACE
+          mkdir bin\logs
           qmake "CONFIG += qtquickcompiler" kakashi.pro
           nmake
           windeployqt bin\akashi.exe --release --no-opengl-sw
