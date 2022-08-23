@@ -130,7 +130,7 @@ jobs:
       - name: Build
         run: |
           cd $Env:GITHUB_WORKSPACE
-          qmake "CONFIG += qtquickcompiler" akashi.pro
+          qmake "CONFIG += qtquickcompiler" kakashi.pro
           nmake
           windeployqt bin\akashi.exe --release --no-opengl-sw
           mv bin\config_sample bin\config
