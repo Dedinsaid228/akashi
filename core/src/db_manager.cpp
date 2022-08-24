@@ -16,6 +16,7 @@
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/db_manager.h"
+#include "qdir.h"
 
 DBManager::DBManager() :
     DRIVER("QSQLITE")
@@ -23,6 +24,7 @@ DBManager::DBManager() :
     const QString db_filename = "logs/akashi.db";
     QFileInfo db_info(db_filename);
     if (!db_info.exists()) {
+        QDir().mkdir("logs");
         qWarning().noquote() << tr("Database Info: Database not found. Attempting to create new database.");
     }
     else {
