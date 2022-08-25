@@ -1,6 +1,6 @@
 # kakashi
 Poorly made fork of the C++ server for Attorney Online 2 with additional functional.
-For a better understanding the work of this programm it is recommended to read the wiki, located in the same repo.
+For a better understanding the work of this program it is recommended to read the wiki, located in the same repo.
 
 Плохо сделанный форк сервера для Attorney Online 2, написанного на C++, с дополнительным функционалом.
 Для лучшего понимания работы данной программы рекомендуется прочитать вики, расположенное в этом же репозитории.
@@ -8,7 +8,7 @@ For a better understanding the work of this programm it is recommended to read t
 # Build instructions
 
 Required Qt => 5.10 and Qt Websockets
-Необходимы Qt => 5.10 и Qt Websockets
+Требуются Qt => 5.10 и Qt Websockets
 
 ```
    #Installing dependencies
