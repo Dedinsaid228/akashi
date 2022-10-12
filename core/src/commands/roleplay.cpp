@@ -221,7 +221,7 @@ void AOClient::cmdVote(int argc, QStringList argv)
 {
     AreaData *l_area = server->getAreaById(m_current_area);
 
-    if (argc == 0 && checkPermission(ACLRole::CM)) {  
+    if (argc == 0 && checkPermission(ACLRole::CM)) {
         l_area->toggleVote();
 
         QString l_state = l_area->isVoteStarted() ? "started!" : "forcibly stopped!";
