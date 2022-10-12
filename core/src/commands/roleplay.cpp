@@ -216,3 +216,86 @@ void AOClient::cmdSubTheme(int argc, QStringList argv)
 
     sendServerMessageArea("Subtheme was set to " + l_subtheme);
 }
+
+void AOClient::cmdVote(int argc, QStringList argv)
+{
+    AreaData *l_area = server->getAreaById(m_current_area);
+
+    if (argc == 0 && checkPermission(ACLRole::CM)) {  
+        l_area->toggleVote();
+
+        QString l_state = l_area->isVoteStarted() ? "started!" : "forcibly stopped!";
+        sendServerMessageArea("Voting is " + l_state);
+
+        if (l_area->isVoteStarted()) {
+            QString l_candidates = "Candidates: \n";
+            int l_candidates_count = 0;
+            const QVector<AOClient *> l_clients = server->getClients();
+
+            for (AOClient *l_client : l_clients) {
+                if ((l_area->lockStatus() == AreaData::LockStatus::FREE || l_area->invited().contains(l_client->m_id)) && l_client->m_ipid != m_ipid && l_client->m_current_area == m_current_area) {
+                    l_client->m_can_vote = true;
+                    l_client->m_vote_candidate = true;
+                    l_client->m_vote_points = 0;
+                    l_candidates_count++;
+                    l_candidates += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + "\n";
+                }
+            }
+
+            if (l_candidates_count <= 2) {
+                sendServerMessageArea("ERROR! Candidates were not found or there are few of them. Voting has been stopped. Please find more players. \n"
+                                      "- CM that started voting does not count, as well as all its open clients.\n"
+                                      "- If area is set to SPECTATABLE or LOCKED, then only invited clients can be candidates.");
+                l_area->toggleVote();
+                return;
+            }
+
+            sendServerMessageArea(l_candidates);
+        }
+        else
+            endVote();
+    }
+    else if (argc > 0 && m_can_vote) {
+        if (argc > 1) {
+            sendServerMessage("Too many arguments!");
+            return;
+        }
+
+        bool l_ok;
+        AOClient *l_target_client = server->getClientByID(argv[0].toInt(&l_ok));
+
+        if (!l_ok) {
+            sendServerMessage("That doesn't look like a valid ID.");
+            return;
+        }
+
+        if (l_target_client == nullptr) {
+            sendServerMessage("Unable to find client with ID " + argv[0] + ".");
+            return;
+        }
+
+        if (!l_target_client->m_vote_candidate) {
+            sendServerMessage("This client is not a candidate!");
+            return;
+        }
+
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " voted.");
+        l_target_client->m_vote_points++;
+
+        m_can_vote = false;
+        bool l_all_voted = true;
+        const QVector<AOClient *> l_clients = server->getClients();
+
+        for (AOClient *l_client : l_clients) {
+            if (l_client->m_current_area == m_current_area && l_client->m_can_vote)
+                l_all_voted = false;
+        }
+
+        if (l_all_voted) {
+            endVote();
+            l_area->toggleVote();
+        }
+    }
+    else
+        sendServerMessage("You didn't provide an ID, you have already voted, or you are not allowed to use the command.");
+}

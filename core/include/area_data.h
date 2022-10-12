@@ -197,6 +197,15 @@ class AreaData : public QObject
     /// Exposes the metadata of the TestimonyRecording enum.
     Q_ENUM(TestimonyRecording);
 
+    enum OocType
+    {
+        ALL,
+        INVITED,
+        CM
+    };
+
+    Q_ENUM(OocType);
+
     /**
      * @brief Determines how the testimony progressed after advancement was called in a direction
      * (Either to next or previous statement).
@@ -976,6 +985,14 @@ class AreaData : public QObject
      */
     bool isShoutAllowed() const;
 
+    bool isVoteStarted() const;
+
+    void toggleVote();
+
+    AreaData::OocType oocType() const;
+
+    void setOocType(const OocType &f_oocType_r);
+
     /**
      * @brief Starts a timer that determines whether a game message may be broadcasted or not.
      *
@@ -1247,6 +1264,10 @@ class AreaData : public QObject
     bool m_can_use_shouts = true;
 
     bool m_can_change_status = true;
+
+    bool m_vote_started = false;
+
+    OocType m_ooc_type;
 
   private slots:
     /**

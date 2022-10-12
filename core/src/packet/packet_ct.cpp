@@ -32,6 +32,11 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
+    if (((area->oocType() == AreaData::OocType::INVITED && !area->invited().contains(client.m_id)) || (area->oocType() == AreaData::OocType::CM && !client.checkPermission(ACLRole::CM))) && !m_content[1].startsWith("/")) {
+        client.sendServerMessageArea("Only invited players or CMs can speak in this area.");
+        return;
+    }
+
     client.m_ooc_name = client.dezalgo(m_content[0]).replace(QRegExp("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&"), ""); // no fucky wucky shit here
     if (client.m_ooc_name.isEmpty() || client.m_ooc_name == ConfigManager::serverName())                      // impersonation & empty name protection
         return;

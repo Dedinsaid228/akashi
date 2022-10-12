@@ -259,9 +259,15 @@ class AOClient : public QObject
     bool m_wuso = false;
 
     /**
-     * @briefIf true, the client can use Modcall.
+     * @brief If true, the client can use Modcall.
      */
     bool m_usemodcall = true;
+
+    bool m_can_vote = false;
+
+    bool m_vote_candidate = false;
+
+    int m_vote_points = 0;
 
     /**
      * @brief Represents the client's client software, and its version.
@@ -1270,6 +1276,8 @@ class AOClient : public QObject
 
     void cmdToggleStatus(int argc, QStringList argv);
 
+    void cmdOocType(int argc, QStringList argv);
+
     ///@}
 
     /**
@@ -1705,8 +1713,9 @@ class AOClient : public QObject
      *
      * @iscommand
      */
-
     void cmdSubTheme(int argc, QStringList argv);
+
+    void cmdVote(int argc, QStringList argv);
 
     /**
      * @brief Writes a "note card" in the current area.
@@ -2306,6 +2315,8 @@ class AOClient : public QObject
     void playMusic(QStringList f_args, bool f_once = false);
 
     QString getEviMod(int f_area);
+
+    void endVote();
 
     /**
      * @brief Checks if a testimony contains '<' or '>'.

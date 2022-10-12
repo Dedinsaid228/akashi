@@ -43,7 +43,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.fullArup(); // Give client all the area data
     client.getServer()->check_version();
 
-    QString version_message = "This server uses kakashi " + QCoreApplication::applicationVersion() + ".";
+    QString version_message = "This server uses kakashi " + QCoreApplication::applicationVersion() + ". ";
 
     if (QCoreApplication::applicationVersion() == "unstable")
         version_message += "See: https://github.com/Ddedinya/kakashi";

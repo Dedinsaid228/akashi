@@ -75,6 +75,8 @@ QStringList AOClient::buildAreaList(int area_idx)
                 char_entry += " (" + l_client->getIpid() + "): " + l_client->m_ooc_name;
             if (!m_authenticated && area->owners().contains(m_id))
                 char_entry += ": " + l_client->m_ooc_name;
+            if (l_client->m_vote_candidate)
+                char_entry.insert(0, "[VC]");
             if (l_client->m_authenticated && !l_client->m_sneak_mod)
                 char_entry.insert(0, "[M]");
             if (l_client->m_is_afk)
@@ -323,4 +325,32 @@ QString AOClient::getEviMod(int f_area)
         return "MOD";
     }
     return "UNKNOWN";
+}
+
+void AOClient::endVote()
+{
+    QString l_message = "Results: \nWinner(-s) is ";
+    QString l_winner;
+    int l_winner_points;
+    l_winner_points = 0;
+    QString l_results;
+    const QVector<AOClient *> l_clients = server->getClients();
+
+    for (AOClient *l_client : l_clients) {
+        if (l_client->m_vote_candidate) {
+            l_client->m_can_vote = false;
+            l_client->m_vote_candidate = false;
+
+            if (l_client->m_vote_points > l_winner_points) {
+                l_winner_points = l_client->m_vote_points;
+                l_winner = "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id);
+            }
+            else if (l_client->m_vote_points == l_winner_points)
+                l_winner = l_winner + ", [" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id);
+
+            l_results += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " +  QString::number(l_client->m_vote_points) + "\n";
+        }
+    }
+
+    sendServerMessageArea(l_message + l_winner + "\n" + l_results);
 }

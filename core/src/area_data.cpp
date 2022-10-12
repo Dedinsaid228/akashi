@@ -68,6 +68,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_areapassword = areas_ini->value("password", "").toString();
     setEvidenceList(areas_ini->value("evidence", "").toStringList());
     m_can_change_status = areas_ini->value("change_status", "true").toBool();
+    m_ooc_type = QVariant(areas_ini->value("ooc_type", "ALL").toString().toUpper()).value<AreaData::OocType>();
     areas_ini->endGroup();
     QTimer *timer1 = new QTimer();
     m_timers.append(timer1);
@@ -694,4 +695,24 @@ QVector<int> AreaData::joinedIDs() const
 void AreaData::allowMessage()
 {
     m_can_send_ic_messages = true;
+}
+
+bool AreaData::isVoteStarted() const
+{
+    return m_vote_started;
+}
+
+void AreaData::toggleVote()
+{
+    m_vote_started = !m_vote_started;
+}
+
+AreaData::OocType AreaData::oocType() const
+{
+    return m_ooc_type;
+}
+
+void AreaData::setOocType(const OocType &f_oocType_r)
+{
+    m_ooc_type = f_oocType_r;
 }

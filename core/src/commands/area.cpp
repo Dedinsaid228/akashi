@@ -946,3 +946,23 @@ void AOClient::cmdToggleStatus(int argc, QStringList argv)
     sendServerMessage("Change area status " + l_state);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLESTATUS", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
 }
+
+void AOClient::cmdOocType(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    AreaData *l_area = server->getAreaById(m_current_area);
+    argv[0] = argv[0].toLower();
+
+    if (argv[0] == "all")
+        l_area->setOocType(AreaData::OocType::ALL);
+    else if (argv[0] == "invited")
+        l_area->setOocType(AreaData::OocType::INVITED);
+    else if (argv[0] == "cm")
+        l_area->setOocType(AreaData::OocType::CM);
+    else {
+        sendServerMessage("Invalid OOC chat type.");
+        return;
+    }
+    sendServerMessage("Changed OOC chat type.");
+}

@@ -237,7 +237,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/subtheme [subtheme name] - changes the subtheme of all clients in the current area. [CM]\n"
                           "/notecard [message] - writes a note card in the current area.\n"
                           "/notecard_reveal - reveals all note cards in the current area. [CM]\n"
-                          "/notecard_clear - сlears a note card.");
+                          "/notecard_clear - сlears a note card.\n"
+                          "/vote (id) - without arguments - start/end voting (requires permission CM), with arguments - vote for the candidate.");
     else if (argv[0] == "testimony")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area, "
@@ -291,7 +292,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/bgunlock - unlocks the background of the current area, allowing it to be changed. [CM]\n"
                           "/togglewtce - toggles wether WTCE can be used in the area. [CM]\n"
                           "/toggleshouts - toggles wether shouts can be used in the area. [CM]\n"
-                          "/togglestatus - toggles wether status can be changed in the area. [CM]");
+                          "/togglestatus - toggles wether status can be changed in the area. [CM]\n"
+                          "/ooc_type [all/invited/cm] - allow everyone to speak in OOC chat, only invited clients or only CMs. [CM]");
     else if (argv[0] == "areaedit")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "The commands presented here require [GM] permission.\n"
