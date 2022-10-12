@@ -348,7 +348,7 @@ void AOClient::endVote()
             else if (l_client->m_vote_points == l_winner_points)
                 l_winner = l_winner + ", [" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id);
 
-            l_results += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " +  QString::number(l_client->m_vote_points) + "\n";
+            l_results += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " + QString::number(l_client->m_vote_points) + "\n";
         }
     }
 
