@@ -275,7 +275,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
     }
 
     if (!server->getAreaById(new_area)->areaPassword().isEmpty() && m_password != server->getAreaById(new_area)->areaPassword() && !checkPermission(ACLRole::BYPASS_LOCKS)) {
-        sendServerMessage("Area [" + QString::number(new_area) + "] "  + server->getAreaName(new_area) + " is passworded.");
+        sendServerMessage("Area [" + QString::number(new_area) + "] " + server->getAreaName(new_area) + " is passworded.");
         return;
     }
 
