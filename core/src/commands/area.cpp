@@ -263,6 +263,7 @@ void AOClient::cmdAreaMute(int argc, QStringList argv)
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAMUTE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
     arup(ARUPType::LOCKED, true);
 }
+
 void AOClient::cmdUnLock(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
@@ -853,6 +854,17 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                                    "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
                                    "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
                                    "\npassword=" + l_area->areaPassword() +
+                                   "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
+                                   "\nstatus=" + getAreaStatus(i) +
+                                   "\nlock_status=" + getLockStatus(i) +
+                                   "\narea_message=" + l_area->areaMessage() +
+                                   "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +
+                                   "\nwtce_enabled=" + QVariant(l_area->isWtceAllowed()).toString() +
+                                   "\nshouts_enabled=" + QVariant(l_area->isShoutAllowed()).toString() +
+                                   "\ntoggle_music=" + QVariant(l_area->isMusicAllowed()).toString() +
+                                   "\nshownames_allowed=" + QVariant(l_area->shownameAllowed()).toString() +
+                                   "\nchange_status=" + QVariant(l_area->allowChangeStatus()).toString() +
+                                   "\nooc_type=" + getOocType(i) +
                                    "\nevidence=" + l_evidence_list.join(",") +
                                    "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
             }

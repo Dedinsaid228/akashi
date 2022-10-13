@@ -36,32 +36,30 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
     }
 
     AOPacket *validated_packet = validateIcPacket(client);
+
     if (validated_packet->getPacketInfo().header == "INVALID")
         return;
-
-    bool evipresent = client.evidencePresent(validated_packet->getContent()[11]);
-
-    if (evipresent)
-        client.sendEvidenceListHidCmNoCm(area);
 
     if (client.m_pos != "" && client.m_pos.toLower() != "hidden")
         validated_packet->setContentField(5, client.m_pos);
 
     bool floodguard = area->floodguardActive();
+    bool evipresent = client.evidencePresent(validated_packet->getContent()[11]);
+
+    if (evipresent)
+        client.sendEvidenceListHidCmNoCm(area);
 
     client.getServer()->broadcast(validated_packet, client.m_current_area);
+
+    if (evipresent)
+        client.sendEvidenceList(area);
 
     emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid);
     area->updateLastICMessage(validated_packet->getContent());
     area->updateLastICMessageOwner(client.m_ipid);
 
-    if (evipresent)
-        client.sendEvidenceList(area);
-
     if (floodguard)
         area->startMessageFloodguard(ConfigManager::messageFloodguard());
-
-    client.getServer()->startMessageFloodguard(ConfigManager::globalMessageFloodguard());
 }
 
 AOPacket *PacketMS::validateIcPacket(AOClient &client) const
@@ -136,15 +134,10 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
         client.m_emote = "";
     l_args.append(client.m_emote);
 
-    // message text
-    if (l_incoming_args[4].toString().size() > ConfigManager::maxCharacters()) {
-        client.sendServerMessage("Your message is too long!");
-        return l_invalid;
-    }
-
     bool l_chillmod = area->chillMod();
 
-    if (l_chillmod == true && l_incoming_args[4].toString().size() > ConfigManager::maxCharactersChillMod()) {
+    // message text
+    if (l_incoming_args[4].toString().size() > ConfigManager::maxCharacters() || (l_chillmod && l_incoming_args[4].toString().size() > ConfigManager::maxCharactersChillMod())) {
         client.sendServerMessage("Your message is too long!");
         return l_invalid;
     }
@@ -244,7 +237,7 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
     }
 
     // evidence
-    int evi_idx = l_incoming_args[11].toInt();
+    int evi_idx = client.m_evi_list[l_incoming_args[11].toInt()];
     if (evi_idx > area->evidence().length())
         return l_invalid;
     l_args.append(QString::number(evi_idx));

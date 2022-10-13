@@ -421,12 +421,6 @@ bool Server::isMessageAllowed() const
     return m_can_send_ic_messages;
 }
 
-void Server::startMessageFloodguard(int f_duration)
-{
-    m_can_send_ic_messages = false;
-    m_message_floodguard_timer->start(f_duration);
-}
-
 QHostAddress Server::parseToIPv4(QHostAddress f_remote_ip)
 {
     bool l_ok;

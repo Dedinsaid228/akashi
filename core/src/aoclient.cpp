@@ -167,7 +167,9 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"permitareasaving", {{ACLRole::MODCHAT}, 1, &AOClient::cmdPermitAreaSaving}},
     {"swapareas", {{ACLRole::GM}, 2, &AOClient::cmdSwapAreas}},
     {"toggleprotected", {{ACLRole::GM}, 0, &AOClient::cmdToggleProtected}},
-    {"togglestatus", {{ACLRole::CM}, 0, &AOClient::cmdToggleStatus}}};
+    {"togglestatus", {{ACLRole::CM}, 0, &AOClient::cmdToggleStatus}},
+    {"vote", {{ACLRole::NONE}, 0, &AOClient::cmdVote}},
+    {"ooc_type", {{ACLRole::CM}, 1, &AOClient::cmdOocType}}};
 
 void AOClient::clientDisconnected()
 {
@@ -268,12 +270,12 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
     }
 
     if (server->getAreaById(new_area)->lockStatus() == AreaData::LockStatus::LOCKED && !server->getAreaById(new_area)->invited().contains(m_id) && !checkPermission(ACLRole::BYPASS_LOCKS)) {
-        sendServerMessage("Area " + server->getAreaName(m_current_area) + " is locked.");
+        sendServerMessage("Area [" + QString::number(new_area) + "] " + server->getAreaName(new_area) + " is locked.");
         return;
     }
 
     if (!server->getAreaById(new_area)->areaPassword().isEmpty() && m_password != server->getAreaById(new_area)->areaPassword() && !checkPermission(ACLRole::BYPASS_LOCKS)) {
-        sendServerMessage("Area " + server->getAreaName(m_current_area) + " is passworded.");
+        sendServerMessage("Area [" + QString::number(new_area) + "] "  + server->getAreaName(new_area) + " is passworded.");
         return;
     }
 
@@ -281,6 +283,9 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
         sendServerMessage("You change area very often!");
         return;
     }
+
+    if (m_blinded)
+        return;
 
     m_last_area_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
 
@@ -327,7 +332,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
         }
     }
 
-    sendServerMessage("You moved to area " + server->getAreaName(m_current_area));
+    sendServerMessage("You moved to area [" + QString::number(m_current_area) + "] " + server->getAreaName(m_current_area));
 
     if (server->getAreaById(m_current_area)->sendAreaMessageOnJoin())
         sendServerMessage(server->getAreaById(m_current_area)->areaMessage());
@@ -604,6 +609,7 @@ AOClient::AOClient(Server *p_server, NetworkSocket *socket, QObject *parent, int
     m_joined(false),
     m_current_area(0),
     m_current_char(""),
+    m_vote_points(0),
     m_socket(socket),
     m_music_manager(p_manager),
     m_last_wtce_time(0),

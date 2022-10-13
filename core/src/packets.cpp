@@ -49,8 +49,10 @@ void AOClient::updateEvidenceList(AreaData *area)
 {
     QStringList l_evidence_list;
     QString l_evidence_format("%1&%2&%3");
-
+    int l_evidence_id = 0;
+    m_evi_list = {0};
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
+
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
             QRegularExpression l_regex("<owner=(.*?)>");
@@ -60,12 +62,15 @@ void AOClient::updateEvidenceList(AreaData *area)
                 QStringList owners = l_match.captured(1).split(",");
 
                 if (!owners.contains("all", Qt::CaseSensitivity::CaseInsensitive) && !owners.contains(m_pos, Qt::CaseSensitivity::CaseInsensitive)) {
+                    l_evidence_id++;
                     continue;
                 }
             }
             // no match = show it to all
         }
         l_evidence_list.append(l_evidence_format.arg(evidence.name, evidence.description, evidence.image));
+        l_evidence_id++;
+        m_evi_list.append(l_evidence_id);
     }
 
     sendPacket(PacketFactory::createPacket("LE", l_evidence_list));
@@ -73,11 +78,10 @@ void AOClient::updateEvidenceList(AreaData *area)
 
 void AOClient::updateEvidenceListHidCmNoCm(AreaData *area)
 {
-
     QStringList l_evidence_list;
     QString l_evidence_format("%1&%2&%3");
-
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
+
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
             QRegularExpression l_regex("<owner=(.*?)>");

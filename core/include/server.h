@@ -350,13 +350,6 @@ class Server : public QObject
     bool isMessageAllowed() const;
 
     /**
-     * @brief Starts a global timer that determines whatever a game message may be broadcasted or not.
-     *
-     * @param f_duration The duration of the message floodguard timer.
-     */
-    void startMessageFloodguard(int f_duration);
-
-    /**
      * @brief Attempts to parse a IPv6 mapped IPv4 to an IPv4.
      */
     QHostAddress parseToIPv4(QHostAddress f_remote_ip);

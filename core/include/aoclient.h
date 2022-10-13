@@ -269,6 +269,8 @@ class AOClient : public QObject
 
     int m_vote_points = 0;
 
+    QList<int> m_evi_list;
+
     /**
      * @brief Represents the client's client software, and its version.
      *
@@ -2315,6 +2317,12 @@ class AOClient : public QObject
     void playMusic(QStringList f_args, bool f_once = false);
 
     QString getEviMod(int f_area);
+
+    QString getAreaStatus(int f_area);
+
+    QString getLockStatus(int f_area);
+
+    QString getOocType(int f_area);
 
     void endVote();
 

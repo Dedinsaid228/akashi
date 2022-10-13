@@ -327,6 +327,61 @@ QString AOClient::getEviMod(int f_area)
     return "UNKNOWN";
 }
 
+QString AOClient::getAreaStatus(int f_area)
+{
+    AreaData *l_area = server->getAreaById(f_area);
+
+    switch (l_area->status()) {
+    case AreaData::Status::IDLE:
+        return "IDLE";
+    case AreaData::Status::CASING:
+        return "CASING";
+    case AreaData::Status::GAMING:
+        return "GAMING";
+    case AreaData::Status::LOOKING_FOR_PLAYERS:
+        return "LOOKING_FOR_PLAYERS";
+    case AreaData::Status::RP:
+        return "RP";
+    case AreaData::Status::RECESS:
+        return "RECESS";
+    case AreaData::Status::ERP:
+        return "ERP";
+    case AreaData::Status::YABLACHKI:
+        return "YABLACHKI";
+    }
+    return "UNKNOWN";
+}
+
+QString AOClient::getLockStatus(int f_area)
+{
+    AreaData *l_area = server->getAreaById(f_area);
+
+    switch (l_area->lockStatus()) {
+    case AreaData::LockStatus::FREE:
+        return "FREE";
+    case AreaData::LockStatus::SPECTATABLE:
+        return "SPECTATABLE";
+    case AreaData::LockStatus::LOCKED:
+        return "LOCKED";
+    }
+    return "UNKNOWN";
+}
+
+QString AOClient::getOocType(int f_area)
+{
+    AreaData *l_area = server->getAreaById(f_area);
+
+    switch (l_area->oocType()) {
+    case AreaData::OocType::ALL:
+        return "ALL";
+    case AreaData::OocType::CM:
+        return "CM";
+    case AreaData::OocType::INVITED:
+        return "INVITED";
+    }
+    return "UNKNOWN";
+}
+
 void AOClient::endVote()
 {
     QString l_message = "Results: \nWinner(-s) is ";
