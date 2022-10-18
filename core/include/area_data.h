@@ -989,6 +989,10 @@ class AreaData : public QObject
 
     void toggleVote();
 
+    int getHub();
+
+    void setHub(int f_index);
+
     AreaData::OocType oocType() const;
 
     void setOocType(const OocType &f_oocType_r);
@@ -1268,6 +1272,8 @@ class AreaData : public QObject
     bool m_vote_started = false;
 
     OocType m_ooc_type;
+
+    int m_hub;
 
   private slots:
     /**

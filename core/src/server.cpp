@@ -25,6 +25,7 @@
 #include "include/config_manager.h"
 #include "include/db_manager.h"
 #include "include/discord.h"
+#include "include/hub_data.h"
 #include "include/logger/u_logger.h"
 #include "include/music_manager.h"
 #include "include/network/network_socket.h"
@@ -145,6 +146,15 @@ void Server::start()
         areas_ini->endGroup();
     }
 
+    // Assembles the hub list
+    m_hub_names = ConfigManager::sanitizedHubNames();
+    QStringList raw_hub_names = ConfigManager::rawHubNames();
+    for (int i = 0; i < raw_hub_names.length(); i++) {
+        QString hub_name = raw_hub_names[i];
+        HubData *l_hub = new HubData(hub_name, i);
+        m_hubs.insert(i, l_hub);
+    }
+
     // Get IP bans
     m_ipban_list = ConfigManager::iprangeBans();
 
@@ -171,9 +181,9 @@ void Server::renameArea(QString f_areaNewName, int f_areaIndex)
     m_area_names[f_areaIndex] = f_areaNewName;
 }
 
-void Server::addArea(QString f_areaName, int f_areaIndex)
+void Server::addArea(QString f_areaName, int f_areaIndex, QString f_hubIndex)
 {
-    AreaData *l_area = new AreaData(f_areaName, f_areaIndex, music_manager);
+    AreaData *l_area = new AreaData(QString::number(f_areaIndex) + ":" + f_hubIndex + ":" + f_areaName, f_areaIndex, music_manager);
     m_areas.insert(f_areaIndex, l_area);
     m_area_names.insert(f_areaIndex, f_areaName);
     connect(l_area, &AreaData::sendAreaPacket, this,
@@ -205,6 +215,11 @@ void Server::swapAreas(int f_area1, int f_area2)
     m_areas.swapItemsAt(f_area1, f_area2);
     m_area_names.swapItemsAt(f_area1, f_area2);
 #endif
+}
+
+void Server::renameHub(QString f_hubNewName, int f_hubIndex)
+{
+    m_hub_names[f_hubIndex] = f_hubNewName;
 }
 
 void Server::clientConnected()
@@ -444,6 +459,14 @@ void Server::reloadSettings()
     command_extension_collection->loadFile("config/command_extensions.ini");
 }
 
+void Server::hubListen(QString message, int area_index, QString sender_name)
+{
+    for (AOClient *client : qAsConst(m_clients)) {
+        if (!client->m_blinded && client->m_hub_bugged && client->m_hub == getAreaById(area_index)->getHub())
+            client->sendServerMessage(sender_name + " in " + getAreaName(area_index) + ": " + message);
+    }
+}
+
 void Server::broadcast(AOPacket *packet, int area_index)
 {
     QVector<int> l_client_ids = m_areas.value(area_index)->joinedIDs();
@@ -496,6 +519,14 @@ void Server::broadcast(AOPacket *packet, AOPacket *other_packet, TARGET_TYPE tar
     default:
         // Unimplemented, so not handled.
         break;
+    }
+}
+
+void Server::broadcast(int hub_index, AOPacket *packet)
+{
+    for (AOClient *client : qAsConst(m_clients)) {
+        if (!client->m_blinded && client->m_hub == hub_index)
+            client->sendPacket(packet);
     }
 }
 
@@ -577,9 +608,25 @@ QVector<AreaData *> Server::getAreas()
     return m_areas;
 }
 
+QVector<AreaData *> Server::getClientAreas(int f_id)
+{
+    AOClient *l_client = getClientByID(f_id);
+    QVector<AreaData *> l_areas;
+
+    for (int i = 0; i < l_client->m_area_list.size(); i++)
+        l_areas.append(m_areas[l_client->m_area_list[i]]);
+
+    return l_areas;
+}
+
 int Server::getAreaCount()
 {
     return m_areas.length();
+}
+
+int Server::getHubsCount()
+{
+    return m_hubs.length();
 }
 
 AreaData *Server::getAreaById(int f_area_id)
@@ -603,12 +650,45 @@ QStringList Server::getAreaNames()
     return m_area_names;
 }
 
+QStringList Server::getClientAreaNames(int f_id)
+{
+    AOClient *l_client = getClientByID(f_id);
+    QStringList l_area_names;
+
+    for (int i = 0; i < l_client->m_area_list.size(); i++)
+        l_area_names.append(m_area_names[l_client->m_area_list[i]]);
+
+    return l_area_names;
+}
+
 QString Server::getAreaName(int f_area_id)
 {
     QString l_name;
 
     if (f_area_id >= 0 && f_area_id < m_area_names.length()) {
         l_name = m_area_names.at(f_area_id);
+    }
+
+    return l_name;
+}
+
+HubData *Server::getHubById(int f_hub_id)
+{
+    HubData *l_hub = nullptr;
+
+    if (f_hub_id >= 0 && f_hub_id < m_areas.length()) {
+        l_hub = m_hubs.at(f_hub_id);
+    }
+
+    return l_hub;
+}
+
+QString Server::getHubName(int f_hub_id)
+{
+    QString l_name;
+
+    if (f_hub_id >= 0 && f_hub_id < m_hub_names.length()) {
+        l_name = m_hub_names.at(f_hub_id);
     }
 
     return l_name;

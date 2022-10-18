@@ -83,7 +83,7 @@ void AOClient::cmdBlockDj(int argc, QStringList argv)
     }
 
     l_target->m_is_dj_blocked = true;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BLOCKDJ", "Blocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BLOCKDJ", "Blocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdUnBlockDj(int argc, QStringList argv)
@@ -113,7 +113,7 @@ void AOClient::cmdUnBlockDj(int argc, QStringList argv)
     }
 
     l_target->m_is_dj_blocked = false;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNBLOCKDJ", "Unblocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNBLOCKDJ", "Unblocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdToggleMusic(int argc, QStringList argv)
@@ -126,7 +126,7 @@ void AOClient::cmdToggleMusic(int argc, QStringList argv)
     QString l_state = l_area->isMusicAllowed() ? "allowed." : "disallowed.";
 
     sendServerMessage("Music in this area is now " + l_state);
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEMUSIC", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEMUSIC", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdAddSong(int argc, QStringList argv)

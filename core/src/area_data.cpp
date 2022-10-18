@@ -42,6 +42,8 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
 {
     QStringList name_split = p_name.split(":");
     name_split.removeFirst();
+    m_hub = name_split[0].toInt();
+    name_split.removeFirst();
     m_name = name_split.join(":");
     QSettings *areas_ini = ConfigManager::areaData();
     areas_ini->setIniCodec("UTF-8");
@@ -55,7 +57,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_locked = QVariant(areas_ini->value("lock_status", "FREE").toString().toUpper()).value<AreaData::LockStatus>();
     m_blankpostingAllowed = areas_ini->value("blankposting_allowed", "true").toBool();
     m_area_message = areas_ini->value("area_message").toString();
-    m_send_area_message = areas_ini->value("send_area_message_on_join", false).toBool();
+    m_send_area_message = areas_ini->value("send_area_message_on_join", "false").toBool();
     m_can_send_wtce = areas_ini->value("wtce_enabled", "true").toBool();
     m_can_use_shouts = areas_ini->value("shouts_enabled", "true").toBool();
     m_forceImmediate = areas_ini->value("force_immediate", "false").toBool();
@@ -715,4 +717,14 @@ AreaData::OocType AreaData::oocType() const
 void AreaData::setOocType(const OocType &f_oocType_r)
 {
     m_ooc_type = f_oocType_r;
+}
+
+int AreaData::getHub()
+{
+    return m_hub;
+}
+
+void AreaData::setHub(int f_index)
+{
+    m_hub = f_index;
 }

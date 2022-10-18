@@ -19,6 +19,7 @@
 
 #include "include/area_data.h"
 #include "include/config_manager.h"
+#include "include/hub_data.h"
 #include "include/packet/packet_factory.h"
 #include "include/server.h"
 
@@ -43,6 +44,9 @@ QStringList AOClient::buildAreaList(int area_idx)
     if (area->playerCount() == 0)
         return entries;
 
+    if (area->getHub() != m_hub)
+        return entries;
+
     entries.append("=== " + area_name + " ===");
 
     switch (area->lockStatus()) {
@@ -57,6 +61,11 @@ QStringList AOClient::buildAreaList(int area_idx)
         break;
     }
 
+    if (server->getHubById(m_hub)->getHidePlayerCount()) {
+        entries.append("[" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
+        return entries;
+    }
+
     entries.append("[" + QString::number(area->playerCount()) + " users][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
 
     const QVector<AOClient *> l_clients = server->getClients();
@@ -67,6 +76,8 @@ QStringList AOClient::buildAreaList(int area_idx)
                 char_entry += "Spectator";
             if (area->owners().contains(l_client->m_id))
                 char_entry.insert(0, "[CM]");
+            if (server->getHubById(l_client->m_hub)->hubOwners().contains(l_client->m_id))
+                char_entry.insert(0, "[GM]");
             if (l_client->m_showname != "")
                 char_entry += " (" + l_client->m_showname + ")";
             if (l_client->m_pos != "" && l_client->m_current_char != "")
@@ -249,7 +260,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     else
         server->broadcast(l_packet, m_current_area);
 
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::playMusic(QStringList f_args, bool f_once)
@@ -295,7 +306,7 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
     AOPacket *music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
     server->broadcast(music_change, m_current_area);
     l_area->changeMusic(l_sender_name, l_song);
-    emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid);
+    emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 QString AOClient::getSenderName(int f_uid)
@@ -382,6 +393,21 @@ QString AOClient::getOocType(int f_area)
     return "UNKNOWN";
 }
 
+QString AOClient::getHubLockStatus(int f_hub)
+{
+    HubData *l_hub = server->getHubById(f_hub);
+
+    switch (l_hub->hubLockStatus()) {
+    case HubData::HubLockStatus::FREE:
+        return "FREE";
+    case HubData::HubLockStatus::SPECTATABLE:
+        return "SPECTATABLE";
+    case HubData::HubLockStatus::LOCKED:
+        return "LOCKED";
+    }
+    return "UNKNOWN";
+}
+
 void AOClient::endVote()
 {
     QString l_message = "Results: \nWinner(-s) is ";
@@ -403,9 +429,9 @@ void AOClient::endVote()
             else if (l_client->m_vote_points == l_winner_points)
                 l_winner = l_winner + ", [" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id);
 
-            l_results += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " + QString::number(l_client->m_vote_points) + "\n";
+            l_results += "\n[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " + QString::number(l_client->m_vote_points);
         }
     }
 
-    sendServerMessageArea(l_message + l_winner + "\n" + l_results);
+    sendServerMessageArea(l_message + l_winner + l_results);
 }

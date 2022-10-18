@@ -131,6 +131,18 @@ bool AOClient::evidencePresent(QString id)
     return false;
 }
 
+void AOClient::getAreaList()
+{
+    m_area_list.clear();
+
+    for (int i = 0; i < server->getAreaCount(); i++) {
+        AreaData *l_area = server->getAreaById(i);
+
+        if (l_area->getHub() == m_hub)
+            m_area_list.append(i);
+    }
+}
+
 QString AOClient::dezalgo(QString p_text)
 {
     QRegularExpression rxp("([̴̵̶̷̸̡̢̧̨̛̖̗̘̙̜̝̞̟̠̣̤̥̦̩̪̫̬̭̮̯̰̱̲̳̹̺̻̼͇͈͉͍͎̀́̂̃̄̅̆̇̈̉̊̋̌̍̎̏̐̑̒̓̔̽̾̿̀́͂̓̈́͆͊͋͌̕̚ͅ͏͓͔͕͖͙͚͐͑͒͗͛ͣͤͥͦͧͨͩͪͫͬͭͮͯ͘͜͟͢͝͞͠͡])");

@@ -271,6 +271,12 @@ class AOClient : public QObject
 
     QList<int> m_evi_list;
 
+    int m_hub = 0;
+
+    QList<int> m_area_list;
+
+    bool m_hub_bugged = false;
+
     /**
      * @brief Represents the client's client software, and its version.
      *
@@ -495,6 +501,8 @@ class AOClient : public QObject
     void updateEvidenceListHidCmNoCm(AreaData *area);
 
     bool evidencePresent(QString id);
+
+    void getAreaList();
 
     /**
      * @brief Removes excessive combining characters from a text.
@@ -2324,6 +2332,8 @@ class AOClient : public QObject
 
     QString getOocType(int f_area);
 
+    QString getHubLockStatus(int f_hub);
+
     void endVote();
 
     /**
@@ -2334,6 +2344,39 @@ class AOClient : public QObject
      * @return True if it contains '<' or '>' symbols, otherwise false.
      */
     bool checkTestimonySymbols(const QString &message);
+    ///@}
+
+    /**
+     * @name Hubs
+     *
+     * @brief All functions that detail the actions of commands,
+     * that are also related to hub management.
+     */
+    ///@{
+
+    void cmdHub(int argc, QStringList argv);
+
+    void cmdGm(int argc, QStringList argv);
+
+    void cmdUnGm(int argc, QStringList argv);
+
+    void cmdHubProtected(int argc, QStringList argv);
+
+    void cmdHidePlayerCount(int argc, QStringList argv);
+
+    void cmdHubRename(int argc, QStringList argv);
+
+    void cmdHubListening(int argc, QStringList argv);
+
+    void cmdHubUnlock(int argc, QStringList argv);
+
+    void cmdHubSpectate(int argc, QStringList argv);
+
+    void cmdHubLock(int argc, QStringList argv);
+
+    void cmdHubInvite(int argc, QStringList argv);
+
+    void cmdHubUnInvite(int argc, QStringList argv);
     ///@}
 
     /**
@@ -2381,27 +2424,27 @@ class AOClient : public QObject
      */
     void logIC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
                const QString &f_areaName, const QString &f_message, const QString &f_uid,
-               const QString &f_hwid);
+               const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends OOC chat usage to the logger.
      */
     void logOOC(const QString &f_charName, const QString &f_oocName, const QString &f_ipid,
                 const QString &f_areaName, const QString &f_message, const QString &f_uid,
-                const QString &f_hwid);
+                const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends login attempt to the logger.
      */
     void logLogin(const QString &f_charName, const QString &f_oocName, const QString &f_moderatorName,
                   const QString &f_ipid, const QString &f_areaName, const bool &f_success, const QString &f_uid,
-                  const QString &f_hwid);
+                  const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends command usage to the logger.
      */
     void logCMD(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString f_command,
-                const QString f_args, const QString f_areaName, const QString &f_uid, const QString &f_hwid);
+                const QString f_args, const QString f_areaName, const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends player kick information to the logger.
@@ -2420,34 +2463,34 @@ class AOClient : public QObject
      *        when modcall logging is used.
      */
     void logModcall(const QString &f_charName, const QString &f_ipid, const QString &f_oocName, const QString &f_areaName,
-                    const QString &f_uid, const QString &f_hwid);
+                    const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends disconnect information to the logger.
      */
     void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
-                       const QString &f_uid, const QString &f_hwid);
+                       const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends change music information to the logger.
      */
     void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                   const QString &f_area_name, const QString &f_music, const QString &f_uid,
-                  const QString &f_hwid);
+                  const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends change character information to the logger.
      */
     void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
-                       const QString &f_hwid);
+                       const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signal connected to universal logger. Sends change area information to the logger.
      */
     void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
-                       const QString &f_hwid);
+                       const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Signals the server that the client has disconnected and marks its userID as free again.

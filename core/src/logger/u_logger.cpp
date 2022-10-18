@@ -46,20 +46,20 @@ ULogger::~ULogger()
 }
 
 void ULogger::logIC(const QString &f_char_name, const QString &f_ooc_name, const QString &f_ipid,
-                    const QString &f_area_name, const QString &f_message, const QString &f_uid, const QString &f_hwid)
+                    const QString &f_area_name, const QString &f_message, const QString &f_uid, const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QString l_logEntry = QString(m_logtext.value("ic") + "\n").arg(l_time, f_char_name, f_ooc_name, f_ipid, f_area_name, f_message, f_uid, f_hwid);
+    QString l_logEntry = QString(m_logtext.value("ic") + "\n").arg(l_time, f_char_name, f_ooc_name, f_ipid, f_area_name, f_message, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 
 void ULogger::logOOC(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                      const QString &f_area_name, const QString &f_message, const QString &f_uid,
-                     const QString &f_hwid)
+                     const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString l_logEntry = QString(m_logtext.value("ooc") + "\n")
-                             .arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_message, f_uid, f_hwid);
+                             .arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_message, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 
@@ -76,7 +76,7 @@ void ULogger::logLogin(const QString &f_char_name, const QString &f_ooc_name, co
 
 void ULogger::logCMD(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_command,
                      const QString &f_args, const QString &f_area_name, const QString &f_uid,
-                     const QString &f_hwid)
+                     const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString l_logEntry;
@@ -84,19 +84,19 @@ void ULogger::logCMD(const QString &f_char_name, const QString &f_ipid, const QS
     // These must be filtered out
     if (f_command == "login") {
         l_logEntry = QString(m_logtext.value("cmdlogin") + "\n")
-                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid);
+                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
     }
     else if (f_command == "rootpass") {
         l_logEntry = QString(m_logtext.value("cmdrootpass") + "\n")
-                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid);
+                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
     }
     else if (f_command == "adduser" && !f_args.isEmpty()) {
         l_logEntry = QString(m_logtext.value("adduser") + "\n")
-                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_args.at(0), f_ipid, f_uid, f_hwid);
+                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_args.at(0), f_ipid, f_uid, f_hwid, f_hub);
     }
     else {
         l_logEntry = QString(m_logtext.value("cmd") + "\n")
-                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_command, f_args, f_ipid, f_uid, f_hwid);
+                         .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_command, f_args, f_ipid, f_uid, f_hwid, f_hub);
     }
     updateAreaBuffer(f_area_name, l_logEntry);
 }
@@ -120,11 +120,11 @@ void ULogger::logBan(const QString &f_moderator, const QString &f_target_ipid, c
 }
 
 void ULogger::logModcall(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name, const QString &f_uid,
-                         const QString &f_hwid)
+                         const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString l_logEvent = QString(m_logtext.value("modcall") + "\n")
-                             .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid);
+                             .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEvent);
 
     if (ConfigManager::loggingType() == DataTypes::LogType::MODCALL) {
@@ -141,38 +141,38 @@ void ULogger::logConnectionAttempt(const QString &f_ipid, const QString &f_hwid)
 }
 
 void ULogger::logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name, const QString &f_uid,
-                            const QString &f_hwid)
+                            const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
     QString l_logEvent = QString(m_logtext.value("disconnect") + "\n")
-                             .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid);
+                             .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEvent);
 }
 
 void ULogger::logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_music, const QString &f_uid,
-                       const QString &f_hwid)
+                       const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QString l_logEntry = QString(m_logtext.value("music") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_music, f_uid, f_hwid);
+    QString l_logEntry = QString(m_logtext.value("music") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_music, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 
 void ULogger::logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                             const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
-                            const QString &f_hwid)
+                            const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QString l_logEntry = QString(m_logtext.value("changechar") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_changechar, f_uid, f_hwid);
+    QString l_logEntry = QString(m_logtext.value("changechar") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_changechar, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 
 void ULogger::logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                             const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
-                            const QString &f_hwid)
+                            const QString &f_hwid, const QString &f_hub)
 {
     QString l_time = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss");
-    QString l_logEntry = QString(m_logtext.value("changearea") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_changearea, f_uid, f_hwid);
+    QString l_logEntry = QString(m_logtext.value("changearea") + "\n").arg(l_time, f_char_Name, f_ooc_name, f_ipid, f_area_name, f_changearea, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 

@@ -75,7 +75,7 @@ void AOClient::autoMute(bool ic_chat, int haznum)
     else {
         long date = l_num.date;
 
-        emit logCMD("Automoderator", "", "", "MUTE", "Muted UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), "", "");
+        emit logCMD("Automoderator", "", "", "MUTE", "Muted UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), "", "", "");
         server->getDatabaseManager()->updateHazNum(m_ipid, date);
         server->getDatabaseManager()->updateHazNum(m_ipid, l_num.action);
         server->getDatabaseManager()->updateHazNum(m_ipid, l_num.haznum);

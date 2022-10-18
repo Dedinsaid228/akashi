@@ -228,7 +228,7 @@ void AOClient::cmdVote(int argc, QStringList argv)
         sendServerMessageArea("Voting is " + l_state);
 
         if (l_area->isVoteStarted()) {
-            QString l_candidates = "Candidates: \n";
+            QString l_candidates = "Candidates:";
             int l_candidates_count = 0;
             const QVector<AOClient *> l_clients = server->getClients();
 
@@ -238,12 +238,12 @@ void AOClient::cmdVote(int argc, QStringList argv)
                     l_client->m_vote_candidate = true;
                     l_client->m_vote_points = 0;
                     l_candidates_count++;
-                    l_candidates += "[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + "\n";
+                    l_candidates += "\n[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id);
                 }
             }
 
             if (l_candidates_count <= 2) {
-                sendServerMessageArea("ERROR! Candidates were not found or there are few of them. Voting has been stopped. Please find more players. \n"
+                sendServerMessageArea("ERROR! Candidates were not found or there are few of them. Voting has been stopped. Please find more players.\n"
                                       "- CM that started voting does not count, as well as all its open clients.\n"
                                       "- If area is set to SPECTATABLE or LOCKED, then only invited clients can be candidates.");
                 l_area->toggleVote();

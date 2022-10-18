@@ -92,7 +92,7 @@ class ConfigManager
      * @brief Returns the content of
      * @return
      */
-    static QSettings *hubsData();
+    static QSettings *hubsData(); // How long is this here? 0_0
 
     /**
      * @brief Returns a sanitized QStringList of the areas.
@@ -107,6 +107,10 @@ class ConfigManager
      * @return See short description.
      */
     static QStringList rawAreaNames();
+
+    static QStringList sanitizedHubNames();
+
+    static QStringList rawHubNames();
 
     /**
      * @brief Returns the maximum number of players the server will allow.
@@ -529,6 +533,8 @@ class ConfigManager
      * @brief Stores all of the area valus.
      */
     static QSettings *m_areas;
+
+    static QSettings *m_hubs;
 
     /**
      * @brief Stores all adjustable logstrings.

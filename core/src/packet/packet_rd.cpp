@@ -1,5 +1,6 @@
 #include "include/packet/packet_rd.h"
 #include "include/config_manager.h"
+#include "include/hub_data.h"
 #include "include/server.h"
 
 #include <QDebug>
@@ -33,9 +34,10 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.m_joined = true;
     client.getServer()->updateCharsTaken(area);
     client.sendEvidenceList(area);
+    client.getAreaList();
     client.sendPacket("HP", {"1", QString::number(area->defHP())});
     client.sendPacket("HP", {"2", QString::number(area->proHP())});
-    client.sendPacket("FA", client.getServer()->getAreaNames());
+    client.sendPacket("FA", client.getServer()->getClientAreaNames(client.m_id));
     // Here lies OPPASS, the genius of FanatSors who send the modpass to everyone in plain text.
     client.sendPacket("DONE");
     client.sendPacket("BN", {area->background(), client.m_pos});
@@ -82,6 +84,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
 
     emit client.joined();
     client.getServer()->increasePlayerCount();
+    client.getServer()->getHubById(client.m_hub)->clientJoinedHub();
     area->clientJoinedArea(-1, client.m_id);
     client.arup(client.ARUPType::PLAYER_COUNT, true); // Tell everyone there is a new player
 

@@ -40,6 +40,7 @@ class ACLRolesHandler;
 class Advertiser;
 class AOClient;
 class AreaData;
+class HubData;
 class CommandExtensionCollection;
 class ConfigManager;
 class DBManager;
@@ -173,7 +174,7 @@ class Server : public QObject
     /**
      * @brief Adds a new area.
      */
-    void addArea(QString f_areaName, int f_areaIndex);
+    void addArea(QString f_areaName, int f_areaIndex, QString f_hubIndex);
 
     /**
      * @brief Deletes the selected area.
@@ -184,6 +185,8 @@ class Server : public QObject
      * @brief Swaps the selected areas.
      */
     void swapAreas(int f_area1, int f_area2);
+
+    void renameHub(QString f_hubNewName, int f_hubIndex);
 
     /**
      * @brief Updates which characters are taken in the given area, and sends out an update packet to
@@ -230,6 +233,8 @@ class Server : public QObject
      */
     void broadcast(AOPacket *packet, AOPacket *other_packet, enum TARGET_TYPE target);
 
+    void broadcast(int hub_index, AOPacket *packet);
+
     /**
      * @brief Sends a packet to a single client.
      *
@@ -273,6 +278,8 @@ class Server : public QObject
      */
     QStringList getAreaNames();
 
+    QStringList getClientAreaNames(int f_id);
+
     /**
      * @brief Returns the list of areas in the server.
      *
@@ -280,10 +287,14 @@ class Server : public QObject
      */
     QVector<AreaData *> getAreas();
 
+    QVector<AreaData *> getClientAreas(int f_id);
+
     /**
      * @brief Returns the number of areas in the server.
      */
     int getAreaCount();
+
+    int getHubsCount();
 
     /**
      * @brief The characters available on the server to use.
@@ -303,6 +314,10 @@ class Server : public QObject
      * @return The name of the area or empty.
      */
     QString getAreaName(int f_area_id);
+
+    HubData *getHubById(int f_hub_id);
+
+    QString getHubName(int f_hub_id);
 
     /**
      * @brief Returns the available songs on the server.
@@ -358,6 +373,8 @@ class Server : public QObject
      * @brief Convenience class to call a reload of available configuraiton elements.
      */
     void reloadSettings();
+
+    void hubListen(QString message, int area_index, QString sender_name);
 
   public slots:
     /**
@@ -543,6 +560,10 @@ class Server : public QObject
      * here for faster access.
      */
     QStringList m_area_names;
+
+    QVector<HubData *> m_hubs;
+
+    QStringList m_hub_names;
 
     /**
      * @brief The available songs on the server.

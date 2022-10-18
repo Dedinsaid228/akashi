@@ -1,5 +1,6 @@
 #include "include/packet/packet_ms.h"
 #include "include/config_manager.h"
+#include "include/hub_data.h"
 #include "include/packet/packet_factory.h"
 #include "include/server.h"
 
@@ -50,11 +51,12 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
         client.sendEvidenceListHidCmNoCm(area);
 
     client.getServer()->broadcast(validated_packet, client.m_current_area);
+    client.getServer()->hubListen(m_content[4], client.m_current_area, client.getSenderName(client.m_id));
 
     if (evipresent)
         client.sendEvidenceList(area);
 
-    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid);
+    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid, QString::number(client.m_hub));
     area->updateLastICMessage(validated_packet->getContent());
     area->updateLastICMessageOwner(client.m_ipid);
 
@@ -80,7 +82,8 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
         // Spectators cannot use IC
         return l_invalid;
     AreaData *area = client.getServer()->getAreaById(client.m_current_area);
-    if (area->lockStatus() == AreaData::LockStatus::SPECTATABLE && !area->invited().contains(client.m_id) && !client.checkPermission(ACLRole::BYPASS_LOCKS))
+    HubData *hub = client.getServer()->getHubById(client.m_hub);
+    if ((area->lockStatus() == AreaData::LockStatus::SPECTATABLE || hub->hubLockStatus() == HubData::HubLockStatus::SPECTATABLE) && (!area->invited().contains(client.m_id) || !hub->hubInvited().contains(client.m_id)) && !client.checkPermission(ACLRole::BYPASS_LOCKS))
         // Non-invited players cannot speak in spectatable areas
         return l_invalid;
 

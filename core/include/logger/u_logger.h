@@ -58,14 +58,14 @@ class ULogger : public QObject
      */
     void logIC(const QString &f_char_name, const QString &f_ooc_name, const QString &f_ipid,
                const QString &f_area_name, const QString &f_message, const QString &f_uid,
-               const QString &f_hwid);
+               const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Adds an OOC log entry to the area buffer and writes it to the respective log format.
      */
     void logOOC(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                 const QString &f_area_name, const QString &f_message, const QString &f_uid,
-                const QString &f_hwid);
+                const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Adds an login attempt to the area buffer and writes it to the respective log format.
@@ -78,7 +78,7 @@ class ULogger : public QObject
      * @brief Adds a command usage to the area buffer and writes it to the respective log format.
      */
     void logCMD(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_command,
-                const QString &f_args, const QString &f_area_name, const QString &f_uid, const QString &f_hwid);
+                const QString &f_args, const QString &f_area_name, const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Adds a player kick to the area buffer and writes it to the respective log format.
@@ -95,7 +95,7 @@ class ULogger : public QObject
      * @brief Adds a modcall event to the area buffer, also triggers modcall writing.
      */
     void logModcall(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
-                    const QString &f_uid, const QString &f_hwid);
+                    const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Logs any connection attempt to the server, wether sucessful or not.
@@ -103,19 +103,19 @@ class ULogger : public QObject
     void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
     void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
-                       const QString &f_uid, const QString &f_hwid);
+                       const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                   const QString &f_area_name, const QString &f_music, const QString &f_uid,
-                  const QString &f_hwid);
+                  const QString &f_hwid, const QString &f_hub);
 
     void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
-                       const QString &f_hwid);
+                       const QString &f_hwid, const QString &f_hub);
 
     void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
-                       const QString &f_hwid);
+                       const QString &f_hwid, const QString &f_hub);
 
     /**
      * @brief Loads template strings for the logger.
@@ -154,21 +154,21 @@ class ULogger : public QObject
      *          This QMap contains all default values and overwrites them on logger construction.
      */
     QHash<QString, QString> m_logtext{
-        {"ic", "[%1][%5][IC][%2(%3)][%4][%7][%8]: %6"},
-        {"ooc", "[%1][%5][OOC][%2(%3)][%4][%7][%8]: %6"},
+        {"ic", "[%1][%5][%9][IC][%2(%3)][%4][%7][%8]: %6"},
+        {"ooc", "[%1][%5][%9][OOC][%2(%3)][%4][%7][%8]: %6"},
         {"login", "[%1][LOGIN][%2][%3][%4(%5)][%6][%7]"},
-        {"cmdlogin", "[%1][%2][LOGIN][%5][%3(%4)][%6][%7]"},
-        {"cmdrootpass", "[%1][%2][ROOTPASS][%5][%3(%4)][%6][%7]"},
-        {"cmdadduser", "[%1][%2][USERADD][%6][%3(%4)][%7][%8]: %5"},
-        {"cmd", "[%1][%2][%5][%7][%3(%4)][%8][%9]: %6"},
+        {"cmdlogin", "[%1][%2][%8][LOGIN][%5][%3(%4)][%6][%7]"},
+        {"cmdrootpass", "[%1][%2][%8][ROOTPASS][%5][%3(%4)][%6][%7]"},
+        {"cmdadduser", "[%1][%2][%9][USERADD][%6][%3(%4)][%7][%8]: %5"},
+        {"cmd", "[%1][%2][%10][%5][%7][%3(%4)][%8][%9]: %6"},
         {"kick", "[%1][%2][%4][%5][KICK][%3]"},
         {"ban", "[%1][%2][%5][%6][BAN][%3][%4]"},
-        {"modcall", "[%1][%2][MODCALL][%5][%3(%4)][%6][%7]"},
+        {"modcall", "[%1][%2][%8][MODCALL][%5][%3(%4)][%6][%7]"},
         {"connect", "[%1][CONNECT][%2][%3]"},
-        {"disconnect", "[%1][%2][DISCONNECT][%5][%3(%4)][%6][%7]"},
-        {"music", "[%1][%5][CHANGEMUSIC][%2(%3)][%4][%7][%8]: %6"},
-        {"changechar", "[%1][%5][CHANGECHAR][%2(%3)][%4][%7][%8]: %6"},
-        {"changearea", "[%1][%5][CHANGEAREA][%2(%3)][%4][%7][%8]: %6"},
+        {"disconnect", "[%1][%2][%8][DISCONNECT][%5][%3(%4)][%6][%7]"},
+        {"music", "[%1][%5][%9][CHANGEMUSIC][%4][%2(%3)][%7][%8]: %6"},
+        {"changechar", "[%1][%5][%9][CHANGECHAR][%4][%2(%3)][%7][%8]: %6"},
+        {"changearea", "[%1][%5][%9][CHANGEAREA][%2(%3)][%4][%7][%8]: %6"},
     };
 };
 

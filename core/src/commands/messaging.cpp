@@ -101,7 +101,7 @@ void AOClient::cmdG(int argc, QStringList argv)
             l_client->sendPacket("CT", {l_areaname + l_sender_name, l_sender_message});
     }
 
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "GLOBALCHAT", l_sender_message, l_sender_area, QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "GLOBALCHAT", l_sender_message, l_sender_area, QString::number(m_id), m_hwid, QString::number(m_hub));
     return;
 }
 
@@ -126,7 +126,7 @@ void AOClient::cmdNeed(int argc, QStringList argv)
         }
     }
 
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEED", l_sender_message, l_sender_area, QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEED", l_sender_message, l_sender_area, QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdSwitch(int argc, QStringList argv)
@@ -234,7 +234,7 @@ void AOClient::cmdM(int argc, QStringList argv)
     QString l_sender_message = argv.join(" ");
 
     server->broadcast(PacketFactory::createPacket("CT", {"$M[" + QString::number(l_sender_area) + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODCHAT", l_sender_message, server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODCHAT", l_sender_message, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
     return;
 }
 
@@ -269,7 +269,7 @@ void AOClient::cmdGimp(int argc, QStringList argv)
     }
 
     l_target->m_is_gimped = true;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "GIMP", "Gimped UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "GIMP", "Gimped UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdUnGimp(int argc, QStringList argv)
@@ -299,7 +299,7 @@ void AOClient::cmdUnGimp(int argc, QStringList argv)
     }
 
     l_target->m_is_gimped = false;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNGIMP", "Ungimped UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNGIMP", "Ungimped UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdDisemvowel(int argc, QStringList argv)
@@ -333,7 +333,7 @@ void AOClient::cmdDisemvowel(int argc, QStringList argv)
     }
 
     l_target->m_is_disemvoweled = true;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "DISEMVOWEL", "Disemvoweled UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "DISEMVOWEL", "Disemvoweled UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
@@ -363,7 +363,7 @@ void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
     }
 
     l_target->m_is_disemvoweled = false;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNDISEMVOWEL", "Undisemvoweled UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNDISEMVOWEL", "Undisemvoweled UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdShake(int argc, QStringList argv)
@@ -397,7 +397,7 @@ void AOClient::cmdShake(int argc, QStringList argv)
     }
 
     l_target->m_is_shaken = true;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SHAKE", "Shaked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SHAKE", "Shaked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdUnShake(int argc, QStringList argv)
@@ -427,7 +427,7 @@ void AOClient::cmdUnShake(int argc, QStringList argv)
     }
 
     l_target->m_is_shaken = false;
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNSHAKE", "Unshaked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNSHAKE", "Unshaked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdMutePM(int argc, QStringList argv)
@@ -533,7 +533,7 @@ void AOClient::cmdCharCurse(int argc, QStringList argv)
 
     l_target->sendServerMessage("You have been charcursed!");
     sendServerMessage("Charcursed player.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHARCURSE", "Charcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHARCURSE", "Charcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdUnCharCurse(int argc, QStringList argv)
@@ -565,7 +565,7 @@ void AOClient::cmdUnCharCurse(int argc, QStringList argv)
     server->updateCharsTaken(server->getAreaById(m_current_area));
     sendServerMessage("Uncharcursed player.");
     l_target->sendServerMessage("You were uncharcursed.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNCHARCURSE", "Uncharcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid);
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNCHARCURSE", "Uncharcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
 void AOClient::cmdCharSelect(int argc, QStringList argv)

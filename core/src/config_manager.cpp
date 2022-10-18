@@ -23,6 +23,7 @@ QSettings *ConfigManager::m_settings = new QSettings("config/config.ini", QSetti
 QSettings *ConfigManager::m_discord = new QSettings("config/discord.ini", QSettings::IniFormat);
 ConfigManager::CommandSettings *ConfigManager::m_commands = new CommandSettings();
 QSettings *ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings::IniFormat);
+QSettings *ConfigManager::m_hubs = new QSettings("config/hubs.ini", QSettings::IniFormat);
 QSettings *ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
 QElapsedTimer *ConfigManager::m_uptimeTimer = new QElapsedTimer;
 MusicList *ConfigManager::m_musicList = new MusicList;
@@ -166,6 +167,11 @@ QSettings *ConfigManager::areaData()
     return m_areas;
 }
 
+QSettings *ConfigManager::hubsData()
+{
+    return m_hubs;
+}
+
 QStringList ConfigManager::sanitizedAreaNames()
 {
     QStringList l_area_names = m_areas->childGroups(); // invisibly does a lexicographical sort, because Qt is great like that
@@ -173,6 +179,7 @@ QStringList ConfigManager::sanitizedAreaNames()
     QStringList l_sanitized_area_names;
     for (const QString &areaName : qAsConst(l_area_names)) {
         QStringList l_nameSplit = areaName.split(":");
+        l_nameSplit.removeFirst();
         l_nameSplit.removeFirst();
         QString l_area_name_sanitized = l_nameSplit.join(":");
         l_sanitized_area_names.append(l_area_name_sanitized);
@@ -183,6 +190,25 @@ QStringList ConfigManager::sanitizedAreaNames()
 QStringList ConfigManager::rawAreaNames()
 {
     return m_areas->childGroups();
+}
+
+QStringList ConfigManager::sanitizedHubNames()
+{
+    QStringList l_hub_names = m_hubs->childGroups();
+    std::sort(l_hub_names.begin(), l_hub_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); });
+    QStringList l_sanitized_hub_names;
+    for (const QString &areaName : qAsConst(l_hub_names)) {
+        QStringList l_nameSplit = areaName.split(":");
+        l_nameSplit.removeFirst();
+        QString l_hub_name_sanitized = l_nameSplit.join(":");
+        l_sanitized_hub_names.append(l_hub_name_sanitized);
+    }
+    return l_sanitized_hub_names;
+}
+
+QStringList ConfigManager::rawHubNames()
+{
+    return m_hubs->childGroups();
 }
 
 QStringList ConfigManager::iprangeBans()

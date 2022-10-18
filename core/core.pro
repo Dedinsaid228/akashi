@@ -36,6 +36,8 @@ SOURCES += \
     src/acl_roles_handler.cpp \
     src/aoclient.cpp \
     src/automod.cpp \
+    src/commands/hub.cpp \
+    src/hub_data.cpp \
     src/network/aopacket.cpp \
     src/network/network_socket.cpp \
     src/area_data.cpp \
@@ -86,6 +88,7 @@ HEADERS += include/aoclient.h \
     include/acl_roles_handler.h \
     include/akashidefs.h \
     include/akashiutils.h \
+    include/hub_data.h \
     include/network/aopacket.h \
     include/network/network_socket.h \
     include/area_data.h \
