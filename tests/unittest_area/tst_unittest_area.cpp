@@ -66,7 +66,7 @@ class Area : public QObject
 
 void Area::init()
 {
-    m_area = new AreaData("Test Area", 0, nullptr);
+    m_area = new AreaData("0:0:Test Area", 0, nullptr);
 }
 
 void Area::cleanup()
