@@ -309,7 +309,7 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "The commands presented here require [GM] permission.\n"
                           "/hub (hub id) - view the list of hubs or go to another hub.\n"
                           "/gm - become a GM of hub.\n"
-                          "/gm - unbecome a GM of hub.\n"
+                          "/ungm - unbecome a GM of hub.\n"
                           "/hub_hideplayercount - show/hide the number of players in the hub and its areas.\n"
                           "/hub_rename [new name] - rename hub.\n"
                           "/hub_listening - receive messages from all areas in the hub.\n"
