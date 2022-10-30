@@ -182,7 +182,8 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"hub_spectate", {{ACLRole::GM}, 0, &AOClient::cmdHubSpectate}},
     {"hub_lock", {{ACLRole::GM}, 0, &AOClient::cmdHubLock}},
     {"hub_invite", {{ACLRole::GM}, 0, &AOClient::cmdHubInvite}},
-    {"hub_uninvite", {{ACLRole::GM}, 0, &AOClient::cmdHubUnInvite}}};
+    {"hub_uninvite", {{ACLRole::GM}, 0, &AOClient::cmdHubUnInvite}},
+    {"getareahubs", {{ACLRole::NONE}, 0, &AOClient::cmdGetAreaHubs}}};
 
 void AOClient::clientDisconnected()
 {

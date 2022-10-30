@@ -83,7 +83,8 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
         return l_invalid;
     AreaData *area = client.getServer()->getAreaById(client.m_current_area);
     HubData *hub = client.getServer()->getHubById(client.m_hub);
-    if ((area->lockStatus() == AreaData::LockStatus::SPECTATABLE || hub->hubLockStatus() == HubData::HubLockStatus::SPECTATABLE) && (!area->invited().contains(client.m_id) || !hub->hubInvited().contains(client.m_id)) && !client.checkPermission(ACLRole::BYPASS_LOCKS))
+
+    if (((area->lockStatus() == AreaData::LockStatus::SPECTATABLE && !area->invited().contains(client.m_id)) || (hub->hubLockStatus() == HubData::HubLockStatus::SPECTATABLE && !hub->hubInvited().contains(client.m_id))) && !client.checkPermission(ACLRole::BYPASS_LOCKS))
         // Non-invited players cannot speak in spectatable areas
         return l_invalid;
 

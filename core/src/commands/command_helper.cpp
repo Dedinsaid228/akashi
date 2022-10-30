@@ -35,7 +35,7 @@ void AOClient::cmdDefault(int argc, QStringList argv)
     return;
 }
 
-QStringList AOClient::buildAreaList(int area_idx)
+QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
 {
     QStringList entries;
     QString area_name = server->getAreaName(area_idx);
@@ -44,7 +44,7 @@ QStringList AOClient::buildAreaList(int area_idx)
     if (area->playerCount() == 0)
         return entries;
 
-    if (area->getHub() != m_hub)
+    if (area->getHub() != m_hub && ignore_hubs)
         return entries;
 
     entries.append("=== " + area_name + " ===");
@@ -61,10 +61,15 @@ QStringList AOClient::buildAreaList(int area_idx)
         break;
     }
 
-    if (server->getHubById(m_hub)->getHidePlayerCount()) {
-        entries.append("[" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
+    if (server->getHubById(area->getHub())->getHidePlayerCount()) {
+        if (!ignore_hubs)
+            entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
+        entries.append("[PLAYER COUNT HIDED][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
         return entries;
     }
+
+    if (!ignore_hubs)
+        entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
 
     entries.append("[" + QString::number(area->playerCount()) + " users][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
 
@@ -432,6 +437,9 @@ void AOClient::endVote()
             l_results += "\n[" + QString::number(l_client->m_id) + "] " + getSenderName(l_client->m_id) + " = " + QString::number(l_client->m_vote_points);
         }
     }
+
+    if (l_winner_points == 0)
+        l_winner = "Draw, maybe?";
 
     sendServerMessageArea(l_message + l_winner + l_results);
 }

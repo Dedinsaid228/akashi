@@ -275,7 +275,7 @@ class AOClient : public QObject
 
     QList<int> m_area_list;
 
-    bool m_hub_bugged = false;
+    bool m_hub_listen = false;
 
     /**
      * @brief Represents the client's client software, and its version.
@@ -1008,6 +1008,8 @@ class AOClient : public QObject
      * @iscommand
      */
     void cmdGetAreas(int argc, QStringList argv);
+
+    void cmdGetAreaHubs(int argc, QStringList argv);
 
     /**
      * @brief Lists all clients in the area the caller is in.
@@ -2243,7 +2245,7 @@ class AOClient : public QObject
      * @return A QStringList of details about the given area, with every entry in the string list amounting to
      * roughly a separate line.
      */
-    QStringList buildAreaList(int area_idx);
+    QStringList buildAreaList(int area_idx, bool ignore_hubs = true);
 
     /**
      * @brief A convenience function for rolling dice.

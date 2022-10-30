@@ -23,7 +23,8 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
 {
     QString l_name = client.getSenderName(client.m_id);
     QString l_areaName = area->name();
-    QString l_modcallNotice = "!!!MODCALL!!!\nArea: " + l_areaName + "\nCaller: " + l_name + "\n";
+    QString l_hubName = client.getServer()->getHubName(client.m_hub);
+    QString l_modcallNotice = "!!!MODCALL!!!\nArea: " + l_areaName + "\nHub:" + l_hubName + "\nCaller: " + l_name + "\n";
 
     if (!client.m_usemodcall) {
         client.sendServerMessage("You cannot use Mod Call anymore. Be patient!");
@@ -45,7 +46,7 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
     emit client.logModcall((client.m_current_char + " " + client.m_showname), client.m_ipid, client.m_ooc_name, l_areaName, QString::number(client.m_id), client.m_hwid, QString::number(client.m_hub));
 
     if (ConfigManager::discordModcallWebhookEnabled())
-        emit client.getServer()->modcallWebhookRequest(l_name, l_areaName, m_content.value(0), client.getServer()->getAreaBuffer(l_areaName));
+        emit client.getServer()->modcallWebhookRequest(l_name, l_hubName, l_areaName, m_content.value(0), client.getServer()->getAreaBuffer(l_areaName));
 
     if (client.m_wuso)
         client.m_usemodcall = false;

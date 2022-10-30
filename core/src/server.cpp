@@ -462,7 +462,7 @@ void Server::reloadSettings()
 void Server::hubListen(QString message, int area_index, QString sender_name)
 {
     for (AOClient *client : qAsConst(m_clients)) {
-        if (!client->m_blinded && client->m_hub_bugged && client->m_hub == getAreaById(area_index)->getHub())
+        if (!client->m_blinded && client->m_hub_listen && client->m_hub == getAreaById(area_index)->getHub())
             client->sendServerMessage(sender_name + " in " + getAreaName(area_index) + ": " + message);
     }
 }

@@ -41,6 +41,11 @@ void AOClient::cmdHub(int argc, QStringList argv)
             return;
         }
 
+        if (server->getHubById(m_hub)->hubOwners().contains(m_id)) {
+            sendServerMessage("You cannot move to another hub while you are a GM.");
+            return;
+        }
+
         server->getHubById(m_hub)->clientLeftHub();
         m_hub = l_new_hub;
         getAreaList();
@@ -50,7 +55,7 @@ void AOClient::cmdHub(int argc, QStringList argv)
         if (!l_sneaked)
             m_sneaked = true;
 
-        changeArea(m_area_list[0]);
+        changeArea(m_area_list[0], true);
 
         if (!l_sneaked)
             m_sneaked = false;
@@ -80,6 +85,7 @@ void AOClient::cmdGm(int argc, QStringList argv)
     }
     else if (l_hub->hubOwners().isEmpty()) {
         l_hub->addHubOwner(m_id);
+        l_hub->hubInvite(m_id);
         sendServerMessage("You is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
@@ -102,6 +108,7 @@ void AOClient::cmdGm(int argc, QStringList argv)
             return;
         }
         l_hub->addHubOwner(l_owner_candidate->m_id);
+        l_hub->hubInvite(l_owner_candidate->m_id);
         l_owner_candidate->sendServerMessage("You is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(l_owner_candidate->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
@@ -120,8 +127,15 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
     }
     else if (argc == 0) {
         l_uid = m_id;
+
+        if (!l_hub->hubOwners().contains(l_uid)) {
+            sendServerMessage("You are not the GM of this hub!");
+            return;
+        }
+
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
         sendServerMessage("You are no longer GM in this hub.");
+        m_hub_listen = false;
     }
     else {
         bool l_conv_ok = false;
@@ -146,9 +160,11 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
 
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
         target->sendServerMessage("You have been unGMed.");
+        target->m_hub_listen = false;
     }
 
     l_hub->removeHubOwner(l_uid);
+    sendEvidenceList(server->getAreaById(m_current_area));
 }
 
 void AOClient::cmdHubProtected(int argc, QStringList argv)
@@ -174,6 +190,10 @@ void AOClient::cmdHidePlayerCount(int argc, QStringList argv)
     HubData *l_hub = server->getHubById(m_hub);
 
     l_hub->toggleHidePlayerCount();
+
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients)
+        l_client->fullArup();
 
     QString l_state = l_hub->getHidePlayerCount() ? "hided." : "not hided.";
 
@@ -210,9 +230,9 @@ void AOClient::cmdHubListening(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    m_hub_bugged = !m_hub_bugged;
+    m_hub_listen = !m_hub_listen;
 
-    QString l_state = m_hub_bugged ? "listening" : "not listening";
+    QString l_state = m_hub_listen ? "listening" : "not listening";
 
     sendServerMessage("You are " + l_state + " to this hub.");
 }

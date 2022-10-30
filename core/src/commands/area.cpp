@@ -93,6 +93,11 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
         l_uid = m_id;
         QString l_sender_name = getSenderName(m_id);
 
+        if (!l_area->owners().contains(l_uid)) {
+            sendServerMessage("You are not the CM of this area!");
+            return;
+        }
+
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " no longer CM in this area.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
         sendServerMessage("You are no longer CM in this area.");
@@ -207,6 +212,11 @@ void AOClient::cmdLock(int argc, QStringList argv)
         return;
     }
 
+    if (m_current_area == m_area_list[0]) {
+        sendServerMessage("You cannot lock area 0!");
+        return;
+    }
+
     sendServerMessageArea("This area is now locked.");
     l_area->lock();
 
@@ -233,6 +243,11 @@ void AOClient::cmdSpectatable(int argc, QStringList argv)
         return;
     }
 
+    if (m_current_area == m_area_list[0]) {
+        sendServerMessage("You cannot mute area 0!");
+        return;
+    }
+
     sendServerMessageArea("This area is now spectatable.");
     l_area->spectatable();
 
@@ -256,6 +271,11 @@ void AOClient::cmdAreaMute(int argc, QStringList argv)
 
     if (l_area->lockStatus() == AreaData::LockStatus::SPECTATABLE) {
         sendServerMessage("This area is already in spectate mode.");
+        return;
+    }
+
+    if (m_current_area == m_area_list[0]) {
+        sendServerMessage("You cannot mute area 0!");
         return;
     }
 
@@ -290,12 +310,32 @@ void AOClient::cmdGetAreas(int argc, QStringList argv)
 
     QStringList l_entries;
 
-    l_entries.append("== Area List ==");
+    l_entries.append("== Area List ==\n==Hub: [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + "==");
 
-    l_entries.append("\n== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
+    l_entries.append("== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
     for (int i = 0; i < server->getAreaCount(); i++) {
         if (server->getAreaById(i)->playerCount() > 0) {
             QStringList l_cur_area_lines = buildAreaList(i);
+            l_entries.append(l_cur_area_lines);
+        }
+    }
+
+    sendServerMessage(l_entries.join("\n"));
+}
+
+void AOClient::cmdGetAreaHubs(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+
+    QStringList l_entries;
+
+    l_entries.append("== Area List ==");
+
+    l_entries.append("== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
+    for (int i = 0; i < server->getAreaCount(); i++) {
+        if (server->getAreaById(i)->playerCount() > 0) {
+            QStringList l_cur_area_lines = buildAreaList(i, false);
             l_entries.append(l_cur_area_lines);
         }
     }
@@ -734,10 +774,13 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
         if (area == server->getAreaName(m_current_area)) {
             emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RENAMEAREA", l_area_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
             server->renameArea(l_area_name, i);
-            getAreaList();
-            server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
 
             const QVector<AOClient *> l_clients = server->getClients();
+            for (AOClient *l_client : l_clients)
+                l_client->getAreaList();
+
+            server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+
             for (AOClient *l_client : l_clients)
                 l_client->fullArup();
 
@@ -766,10 +809,13 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
     }
 
     server->addArea(l_area_name, server->getAreaCount(), QString::number(m_hub));
-    getAreaList();
-    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
 
     const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients)
+        l_client->getAreaList();
+
+    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
@@ -789,19 +835,24 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
         return;
     }
 
-    if (m_area_list[l_area] == 0) {
+    if (m_area_list[l_area] == m_area_list[0]) {
         sendServerMessage("You cannot delete area 0!");
         return;
     }
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
-        if (l_client->m_current_area == l_area)
+        if (l_client->m_hub == m_hub && l_client->m_current_area == m_area_list[l_area])
             l_client->changeArea(m_area_list[0], true);
+        else if (l_client->m_current_area > m_area_list[l_area])
+            l_client->m_current_area--;
     }
 
     server->removeArea(m_area_list[l_area]);
-    getAreaList();
+
+    for (AOClient *l_client : l_clients)
+        l_client->getAreaList();
+
     server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
 
     for (AOClient *l_client : l_clients)
@@ -927,7 +978,7 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
         return;
     }
 
-    if (m_area_list[l_area1] == 0 || m_area_list[l_area2] == 0) {
+    if (m_area_list[l_area1] == m_area_list[0] || m_area_list[l_area2] == m_area_list[0]) {
         sendServerMessage("You cannot swap area 0!");
         return;
     }
@@ -939,7 +990,10 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
     }
 
     server->swapAreas(m_area_list[l_area1], m_area_list[l_area2]);
-    getAreaList();
+
+    for (AOClient *l_client : l_clients)
+        l_client->getAreaList();
+
     server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
 
     for (AOClient *l_client : l_clients)

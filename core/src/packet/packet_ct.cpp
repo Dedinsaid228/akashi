@@ -32,8 +32,8 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
-    if (((area->oocType() == AreaData::OocType::INVITED && !area->invited().contains(client.m_id)) || (area->oocType() == AreaData::OocType::CM && !client.checkPermission(ACLRole::CM))) && !m_content[1].startsWith("/")) {
-        client.sendServerMessageArea("Only invited players or CMs can speak in this area.");
+    if (((area->oocType() == AreaData::OocType::INVITED && !area->invited().contains(client.m_id) && !client.checkPermission(ACLRole::GM)) || (area->oocType() == AreaData::OocType::CM && !client.checkPermission(ACLRole::CM))) && !m_content[1].startsWith("/")) {
+        client.sendServerMessage("Only invited players or CMs can speak in this area.");
         return;
     }
 

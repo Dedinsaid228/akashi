@@ -448,7 +448,7 @@ class Server : public QObject
      * @param f_reason The reason the client specified for the modcall.
      * @param f_buffer The area's log buffer.
      */
-    void modcallWebhookRequest(const QString &f_name, const QString &f_area, const QString &f_reason, const QQueue<QString> &f_buffer);
+    void modcallWebhookRequest(const QString &f_name, const QString &f_hub, const QString &f_area, const QString &f_reason, const QQueue<QString> &f_buffer);
 
     /**
      * @brief Sends a ban webhook request, emitted by AOClient::cmdBan

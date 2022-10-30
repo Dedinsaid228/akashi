@@ -33,10 +33,10 @@ Discord::Discord(QObject *parent) :
             this, &Discord::onUptimeWebhookRequested);
 }
 
-void Discord::onModcallWebhookRequested(const QString &f_name, const QString &f_area, const QString &f_reason, const QQueue<QString> &f_buffer)
+void Discord::onModcallWebhookRequested(const QString &f_name, const QString &f_hub, const QString &f_area, const QString &f_reason, const QQueue<QString> &f_buffer)
 {
     m_request.setUrl(QUrl(ConfigManager::discordModcallWebhookUrl()));
-    QJsonDocument l_json = constructModcallJson(f_name, f_area, f_reason);
+    QJsonDocument l_json = constructModcallJson(f_name, f_hub, f_area, f_reason);
 
     postJsonWebhook(l_json);
 
@@ -68,13 +68,13 @@ void Discord::onUptimeWebhookRequested()
     postJsonWebhook(l_json);
 }
 
-QJsonDocument Discord::constructModcallJson(const QString &f_name, const QString &f_area, const QString &f_reason) const
+QJsonDocument Discord::constructModcallJson(const QString &f_name, const QString &f_hub, const QString &f_area, const QString &f_reason) const
 {
     QJsonObject l_json;
     QJsonArray l_array;
     QJsonObject l_object{
         {"color", ConfigManager::discordWebhookColor()},
-        {"title", f_name + " filed a modcall in " + f_area},
+        {"title", f_name + " filed a modcall in " + f_area + " [Hub: " + f_hub + "]"},
         {"description", f_reason}};
 
     l_array.append(l_object);
