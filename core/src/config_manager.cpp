@@ -189,7 +189,9 @@ QStringList ConfigManager::sanitizedAreaNames()
 
 QStringList ConfigManager::rawAreaNames()
 {
-    return m_areas->childGroups();
+    QStringList l_area_names = m_areas->childGroups();
+    std::sort(l_area_names.begin(), l_area_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); }); // without sorting, the client gets the wrong list of areas if their number is greater than 10
+    return l_area_names;
 }
 
 QStringList ConfigManager::sanitizedHubNames()
@@ -197,8 +199,8 @@ QStringList ConfigManager::sanitizedHubNames()
     QStringList l_hub_names = m_hubs->childGroups();
     std::sort(l_hub_names.begin(), l_hub_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); });
     QStringList l_sanitized_hub_names;
-    for (const QString &areaName : qAsConst(l_hub_names)) {
-        QStringList l_nameSplit = areaName.split(":");
+    for (const QString &hubName : qAsConst(l_hub_names)) {
+        QStringList l_nameSplit = hubName.split(":");
         l_nameSplit.removeFirst();
         QString l_hub_name_sanitized = l_nameSplit.join(":");
         l_sanitized_hub_names.append(l_hub_name_sanitized);
@@ -208,7 +210,9 @@ QStringList ConfigManager::sanitizedHubNames()
 
 QStringList ConfigManager::rawHubNames()
 {
-    return m_hubs->childGroups();
+    QStringList l_hub_names = m_hubs->childGroups();
+    std::sort(l_hub_names.begin(), l_hub_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); }); // Without sorting, the client gets the wrong list of areas.
+    return l_hub_names;
 }
 
 QStringList ConfigManager::iprangeBans()
