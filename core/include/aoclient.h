@@ -425,7 +425,7 @@ class AOClient : public QObject
      *
      * @see AOClient::ARUPType
      */
-    void arup(ARUPType type, bool broadcast);
+    void arup(ARUPType type, bool broadcast, int hub);
 
     /**
      * @brief Sends all four types of ARUP to the client.
@@ -737,7 +737,7 @@ class AOClient : public QObject
     /**
      * @brief A slot for when the client disconnects from the server.
      */
-    void clientDisconnected();
+    void clientDisconnected(int f_hub);
 
     void clientConnected();
 
@@ -2140,6 +2140,10 @@ class AOClient : public QObject
      */
     void cmdPlayOnce(int argc, QStringList argv);
 
+    void cmdPlayHub(int argc, QStringList argv);
+
+    void cmdPlayHubOnce(int argc, QStringList argv);
+
     /**
      * @brief DJ-blocks a client.
      *
@@ -2324,7 +2328,7 @@ class AOClient : public QObject
      *
      * @see #cmdPlayOnce(int argc, QStringList argv)
      */
-    void playMusic(QStringList f_args, bool f_once = false);
+    void playMusic(QStringList f_args, bool f_hubbroadcast = false, bool f_once = false);
 
     QString getEviMod(int f_area);
 
@@ -2379,6 +2383,8 @@ class AOClient : public QObject
     void cmdHubInvite(int argc, QStringList argv);
 
     void cmdHubUnInvite(int argc, QStringList argv);
+
+    void cmdGHub(int argc, QStringList argv);
     ///@}
 
     /**

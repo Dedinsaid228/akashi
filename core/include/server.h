@@ -278,7 +278,7 @@ class Server : public QObject
      */
     QStringList getAreaNames();
 
-    QStringList getClientAreaNames(int f_id);
+    QStringList getClientAreaNames(int f_hub);
 
     /**
      * @brief Returns the list of areas in the server.
@@ -287,7 +287,7 @@ class Server : public QObject
      */
     QVector<AreaData *> getAreas();
 
-    QVector<AreaData *> getClientAreas(int f_id);
+    QVector<AreaData *> getClientAreas(int f_hub);
 
     /**
      * @brief Returns the number of areas in the server.

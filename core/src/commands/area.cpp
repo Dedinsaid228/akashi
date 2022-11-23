@@ -46,7 +46,7 @@ void AOClient::cmdCM(int argc, QStringList argv)
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is now CM in this area.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW AREA OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-        arup(ARUPType::CM, true);
+        arup(ARUPType::CM, true, m_hub);
         sendEvidenceList(server->getAreaById(m_current_area));
     }
     else if (!l_area->owners().contains(m_id)) { // there is already a CM, and it isn't us
@@ -73,7 +73,7 @@ void AOClient::cmdCM(int argc, QStringList argv)
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is now CM in this area.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW AREA OWNER", "Owner UID: " + QString::number(l_owner_candidate->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-        arup(ARUPType::CM, true);
+        arup(ARUPType::CM, true, m_hub);
         sendEvidenceList(server->getAreaById(m_current_area));
     }
     else
@@ -131,10 +131,10 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
     }
 
     if (l_area->removeOwner(l_uid)) {
-        arup(ARUPType::LOCKED, true);
+        arup(ARUPType::LOCKED, true, m_hub);
     }
 
-    arup(ARUPType::CM, true);
+    arup(ARUPType::CM, true, m_hub);
     sendEvidenceList(server->getAreaById(m_current_area));
 }
 
@@ -228,7 +228,7 @@ void AOClient::cmdLock(int argc, QStringList argv)
     }
 
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREALOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-    arup(ARUPType::LOCKED, true);
+    arup(ARUPType::LOCKED, true, m_hub);
 }
 
 void AOClient::cmdSpectatable(int argc, QStringList argv)
@@ -259,7 +259,7 @@ void AOClient::cmdSpectatable(int argc, QStringList argv)
     }
 
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREASPECTATABLE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-    arup(ARUPType::LOCKED, true);
+    arup(ARUPType::LOCKED, true, m_hub);
 }
 
 void AOClient::cmdAreaMute(int argc, QStringList argv)
@@ -282,7 +282,7 @@ void AOClient::cmdAreaMute(int argc, QStringList argv)
     sendServerMessageArea("This area is now muted.");
     l_area->spectatable();
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAMUTE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-    arup(ARUPType::LOCKED, true);
+    arup(ARUPType::LOCKED, true, m_hub);
 }
 
 void AOClient::cmdUnLock(int argc, QStringList argv)
@@ -300,7 +300,7 @@ void AOClient::cmdUnLock(int argc, QStringList argv)
     sendServerMessageArea("This area is now unlocked.");
     l_area->unlock();
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAUNLOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-    arup(ARUPType::LOCKED, true);
+    arup(ARUPType::LOCKED, true, m_hub);
 }
 
 void AOClient::cmdGetAreas(int argc, QStringList argv)
@@ -397,7 +397,7 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
         l_area->uninvite(l_client_to_kick->m_id);
         l_area->removeOwner(l_client_to_kick->m_id);
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-        arup(ARUPType::CM, true);
+        arup(ARUPType::CM, true, m_hub);
         sendServerMessage("Client " + argv[0] + " kicked from area.");
         l_client_to_kick->sendServerMessage("You kicked from area.");
     }
@@ -411,7 +411,7 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
                 l_area->removeOwner(l_client->m_id);
                 l_client->sendServerMessage("You kicked from area.");
             }
-            arup(ARUPType::CM, true);
+            arup(ARUPType::CM, true, m_hub);
             sendServerMessage("Clients kicked from area.");
         }
     }
@@ -442,7 +442,7 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
     l_area->uninvite(l_client_to_kick->m_id);
     l_area->removeOwner(l_client_to_kick->m_id);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODAREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-    arup(ARUPType::CM, true);
+    arup(ARUPType::CM, true, m_hub);
     sendServerMessage("Client " + argv[0] + " kicked from area.");
     l_client_to_kick->sendServerMessage("You kicked from area by moderator.");
 }
@@ -528,7 +528,7 @@ void AOClient::cmdStatus(int argc, QStringList argv)
     }
 
     if (l_area->changeStatus(l_arg)) {
-        arup(ARUPType::STATUS, true);
+        arup(ARUPType::STATUS, true, m_hub);
         server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), "[" + QString::number(m_id) + "] " + l_sender_name + " changed status to " + l_arg.toUpper(), "1"}), m_current_area);
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SETSTATUS", l_arg.toUpper(), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
@@ -779,7 +779,7 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
             for (AOClient *l_client : l_clients)
                 l_client->getAreaList();
 
-            server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+            server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_hub)));
 
             for (AOClient *l_client : l_clients)
                 l_client->fullArup();
@@ -814,7 +814,7 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_hub)));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
@@ -853,7 +853,7 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_hub)));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
@@ -888,7 +888,9 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 
         if (new_areas_ini.open(QIODevice::WriteOnly | QIODevice::Append)) {
             QTextStream file_stream(&new_areas_ini);
+            #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             file_stream.setCodec("UTF-8");
+            #endif
             for (int i = 0; i < server->getAreaCount(); i++) {
                 AreaData *l_area = server->getAreaById(i);
                 QStringList l_evidence_list;
@@ -930,7 +932,9 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 
         if (new_hubs_ini.open(QIODevice::WriteOnly | QIODevice::Append)) {
             QTextStream hub_file_stream(&new_hubs_ini);
+            #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             hub_file_stream.setCodec("UTF-8");
+            #endif
             for (int i = 0; i < server->getHubsCount(); i++) {
                 HubData *l_hub = server->getHubById(i);
                 hub_file_stream << "[" + QString::number(i) + ":" + server->getHubName(i) + "]" +
@@ -994,7 +998,7 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_id)));
+    server->broadcast(m_hub, PacketFactory::createPacket("FA", server->getClientAreaNames(m_hub)));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();

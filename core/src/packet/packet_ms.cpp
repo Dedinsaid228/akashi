@@ -172,7 +172,7 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
     }
 
     if (client.m_is_disemvoweled) {
-        QString l_disemvoweled_message = l_incoming_msg.remove(QRegExp("[AEIOUaeioЁУЕЫАОЭЯёуеыаоэя]"));
+        QString l_disemvoweled_message = l_incoming_msg.remove(QRegularExpression("[AEIOUaeioЁУЕЫАОЭЯёуеыаоэя]"));
         l_incoming_msg = l_disemvoweled_message;
     }
 

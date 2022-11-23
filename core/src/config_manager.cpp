@@ -52,7 +52,9 @@ bool ConfigManager::verifyServerConfig()
 
     // Verify areas
     QSettings l_areas_ini("config/areas.ini", QSettings::IniFormat);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     l_areas_ini.setIniCodec("UTF-8");
+#endif
     if (l_areas_ini.childGroups().length() < 1) {
         qCritical() << "areas.ini is invalid!";
         return false;

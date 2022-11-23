@@ -192,7 +192,9 @@ void ACLRolesHandler::clearRoles()
 bool ACLRolesHandler::loadFile(QString f_file_name)
 {
     QSettings l_settings(f_file_name, QSettings::IniFormat);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     l_settings.setIniCodec("UTF-8");
+#endif
     if (!checkPermissionsIni(&l_settings)) {
         return false;
     }
@@ -233,7 +235,9 @@ bool ACLRolesHandler::loadFile(QString f_file_name)
 bool ACLRolesHandler::saveFile(QString f_file_name)
 {
     QSettings l_settings(f_file_name, QSettings::IniFormat);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     l_settings.setIniCodec("UTF-8");
+#endif
     if (!checkPermissionsIni(&l_settings)) {
         return false;
     }

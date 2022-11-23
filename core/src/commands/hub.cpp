@@ -1,4 +1,5 @@
 #include "include/aoclient.h"
+#include "include/config_manager.h"
 #include "include/hub_data.h"
 #include "include/packet/packet_factory.h"
 #include "include/server.h"
@@ -49,7 +50,7 @@ void AOClient::cmdHub(int argc, QStringList argv)
         server->getHubById(m_hub)->clientLeftHub();
         m_hub = l_new_hub;
         getAreaList();
-        sendPacket("FA", getServer()->getClientAreaNames(m_id));
+        sendPacket("FA", getServer()->getClientAreaNames(m_hub));
         server->getHubById(m_hub)->clientJoinedHub();
 
         if (!l_sneaked)
@@ -364,4 +365,35 @@ void AOClient::cmdHubUnInvite(int argc, QStringList argv)
     sendServerMessage("You uninvited ID " + argv[0]);
     target_client->sendServerMessage("You were uninvited from hub " + server->getHubName(m_hub));
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBUNIVNITE", "Uninvited UID: " + QString::number(target_client->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+}
+
+void AOClient::cmdGHub(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    QString l_sender_name = m_ooc_name;
+    QString l_sender_area = server->getAreaName(m_current_area);
+    QString l_sender_message = argv.join(" ");
+    bool l_sender_auth = m_authenticated;
+    bool l_sender_sneak = m_sneak_mod;
+    QString l_areaname = "[G][HUB MESSAGE][" + l_sender_area + "]";
+
+    if (l_sender_message.size() > ConfigManager::maxCharacters()) {
+        sendServerMessage("Your message is too long!");
+        return;
+    }
+
+    autoMod();
+
+    if (l_sender_auth && !l_sender_sneak)
+        l_areaname += "[M]";
+
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
+        if (l_client->m_global_enabled && l_client->m_hub == m_hub)
+            l_client->sendPacket("CT", {l_areaname + l_sender_name, l_sender_message});
+    }
+
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBGLOBALCHAT", l_sender_message, l_sender_area, QString::number(m_id), m_hwid, QString::number(m_hub));
+    return;
 }

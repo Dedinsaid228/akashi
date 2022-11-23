@@ -292,7 +292,11 @@ void Server::clientConnected()
 
     m_clients.append(client);
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     connect(l_socket, &NetworkSocket::clientDisconnected, this, [=] {
+#else
+    connect(l_socket, &NetworkSocket::clientDisconnected, this, [=, this] {
+#endif
         if (client->hasJoined()) {
             decreasePlayerCount();
         }
@@ -375,7 +379,11 @@ void Server::ws_clientConnected()
     }
 
     m_clients.append(client);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     connect(l_socket, &NetworkSocket::clientDisconnected, this, [=] {
+#else
+    connect(l_socket, &NetworkSocket::clientDisconnected, this, [=, this] {
+#endif
         if (client->hasJoined()) {
             decreasePlayerCount();
         }
@@ -596,7 +604,12 @@ int Server::getCharID(QString char_name)
 {
     for (const QString &character : qAsConst(m_characters)) {
         if (character.toLower() == char_name.toLower()) {
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             return m_characters.indexOf(QRegExp(character, Qt::CaseInsensitive, QRegExp::FixedString));
+#else
+            QString escaped_character = QRegularExpression::escape(character);
+            return m_characters.indexOf(QRegularExpression(escaped_character, QRegularExpression::CaseInsensitiveOption));
+#endif
         }
     }
 
@@ -608,13 +621,15 @@ QVector<AreaData *> Server::getAreas()
     return m_areas;
 }
 
-QVector<AreaData *> Server::getClientAreas(int f_id)
+QVector<AreaData *> Server::getClientAreas(int f_hub)
 {
-    AOClient *l_client = getClientByID(f_id);
     QVector<AreaData *> l_areas;
 
-    for (int i = 0; i < l_client->m_area_list.size(); i++)
-        l_areas.append(m_areas[l_client->m_area_list[i]]);
+    for (int i = 0; i < m_areas.size(); i++) {
+        AreaData *l_area = getAreaById(i);
+        if (l_area->getHub() == f_hub)
+            l_areas.append(l_area);
+    }
 
     return l_areas;
 }
@@ -650,13 +665,15 @@ QStringList Server::getAreaNames()
     return m_area_names;
 }
 
-QStringList Server::getClientAreaNames(int f_id)
+QStringList Server::getClientAreaNames(int f_hub)
 {
-    AOClient *l_client = getClientByID(f_id);
     QStringList l_area_names;
 
-    for (int i = 0; i < l_client->m_area_list.size(); i++)
-        l_area_names.append(m_area_names[l_client->m_area_list[i]]);
+    for (int i = 0; i < m_areas.size(); i++) {
+        AreaData *l_area = getAreaById(i);
+        if (l_area->getHub() == f_hub)
+            l_area_names.append(getAreaName(i));
+    }
 
     return l_area_names;
 }

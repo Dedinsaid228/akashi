@@ -37,7 +37,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
-    client.m_ooc_name = client.dezalgo(m_content[0]).replace(QRegExp("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&"), ""); // no fucky wucky shit here
+    client.m_ooc_name = client.dezalgo(m_content[0]).replace(QRegularExpression("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&"), ""); // no fucky wucky shit here
     if (client.m_ooc_name.isEmpty() || client.m_ooc_name == ConfigManager::serverName())                      // impersonation & empty name protection
         return;
 

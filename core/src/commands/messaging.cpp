@@ -230,11 +230,12 @@ void AOClient::cmdM(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    int l_sender_area = m_current_area;
+    QString l_sender_area = server->getAreaName(m_current_area);
+    QString l_sender_hub = server->getHubName(m_hub);
     QString l_sender_name = m_ooc_name;
     QString l_sender_message = argv.join(" ");
 
-    server->broadcast(PacketFactory::createPacket("CT", {"$M[" + QString::number(l_sender_area) + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
+    server->broadcast(PacketFactory::createPacket("CT", {"$M[" + l_sender_area + "][" + l_sender_hub + "]" + l_sender_name, l_sender_message}), Server::TARGET_TYPE::MODCHAT);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODCHAT", l_sender_message, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
     return;
 }

@@ -205,23 +205,26 @@ void AOClient::cmdHelp(int argc, QStringList argv)
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
                           "/currentmusic - show the current music playing.\n"
-                          "/play [http://direct.link/to/music.mp3] - play a track.\n"
-                          "/play_once [http://direct.link/to/music.mp3] - play a track once.\n"
+                          "/play [musicname or URL] - play a music.\n"
+                          "/play_once [musicname or URL] - play a music once.\n"
                           "/togglemusic - enable/disable change music in area. [CM]\n"
                           "/addsong [URL] - adds a song to the custom musiclist. [CM]\n"
                           "/addcategory [category name] - adds a category to the custom musiclist. [CM]\n"
                           "/removeentry [URL or category name] - removes an entry from the custom musiclist. [CM]\n"
                           "/toggleroot - changes the behaviour of prepending the server root musiclist to the custom lists of the area. [CM]\n"
-                          "/clearcustom - removes all custom songs from the area. [CM]");
+                          "/clearcustom - removes all custom songs from the area. [CM]\n"
+                          "/play_hub [musicname or URL] - play a music in all areas of the hub.\n"
+                          "/play_once_hub [musicname or URL] - play a music in all areas of the hub once.");
     else if (argv[0] == "messaging")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets.\n"
                           "/afk - sets your player as AFK in player listings.\n"
-                          "/g [message] - sends a global message.\n"
+                          "/g [message] - sends a global message to all players.\n"
                           "/toggleglobal - toggles whether will ignore global messages or not.\n"
                           "/pm [id] [message] - send a private message to another online user.\n"
                           "/mutepm - toggles whether will recieve private messages or not.\n"
                           "/need [message] - sends a global message expressing that the area needs something, such as players for something.\n"
-                          "/toggleadverts - toggles whether the caller will receive /need advertisements.");
+                          "/toggleadverts - toggles whether the caller will receive /need advertisements.\n"
+                          "/g_hub [message] - sends a message in all areas of hub.");
     else if (argv[0] == "char")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
@@ -878,7 +881,7 @@ void AOClient::cmdClearCM(int argc, QStringList argv)
     foreach (int l_client_id, l_area->owners()) {
         l_area->removeOwner(l_client_id);
     }
-    arup(ARUPType::CM, true);
+    arup(ARUPType::CM, true, m_hub);
     sendServerMessage("Removed all CMs from this area.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CLEARCM", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }

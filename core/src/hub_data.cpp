@@ -8,7 +8,9 @@ HubData::HubData(QString p_name, int p_index) :
     name_split.removeFirst();
     m_hub_name = name_split.join(";");
     QSettings *hubs_ini = ConfigManager::hubsData();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     hubs_ini->setIniCodec("UTF-8");
+#endif
     hubs_ini->beginGroup(p_name);
     m_hub_protected = hubs_ini->value("protected_hub", "false").toBool();
     m_hub_player_count_hide = hubs_ini->value("hide_playercount", "false").toBool();

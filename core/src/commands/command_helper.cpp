@@ -268,7 +268,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
-void AOClient::playMusic(QStringList f_args, bool f_once)
+void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once)
 {
     if (m_is_dj_blocked) {
         sendServerMessage("You are blocked from changing the music.");
@@ -295,8 +295,8 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
         return;
     }
 
-    if (!l_song.startsWith("http")) {
-        sendServerMessage("Unknown http source. Maybe you forgot to copy the link along with http:// or https://");
+    if (!l_song.startsWith("http") && !server->getMusicList().contains(l_song) && l_song != "~stop.mp3") {
+        sendServerMessage("Unknown musicfile! You may have made a mistake in the filename or in the link.");
         return;
     }
 
@@ -309,8 +309,21 @@ void AOClient::playMusic(QStringList f_args, bool f_once)
         l_play_once = "1";
 
     AOPacket *music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
-    server->broadcast(music_change, m_current_area);
-    l_area->changeMusic(l_sender_name, l_song);
+
+    if (f_hubbroadcast) {
+        server->broadcast(m_hub, music_change);
+
+        for (int i = 0; i < server->getAreaCount(); i++) {
+            AreaData *area = server-> getAreaById(i);
+            if (area->getHub() == m_hub)
+                area->changeMusic(l_sender_name, l_song);
+        }
+    }
+    else {
+        server->broadcast(music_change, m_current_area);
+        l_area->changeMusic(l_sender_name, l_song);
+    }
+
     emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 

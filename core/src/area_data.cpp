@@ -46,7 +46,9 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     name_split.removeFirst();
     m_name = name_split.join(":");
     QSettings *areas_ini = ConfigManager::areaData();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     areas_ini->setIniCodec("UTF-8");
+#endif
     areas_ini->beginGroup(p_name);
     m_background = areas_ini->value("background", "gs4").toString();
     m_isProtected = areas_ini->value("protected_area", "false").toBool();

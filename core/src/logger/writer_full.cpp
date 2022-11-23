@@ -32,7 +32,9 @@ void WriterFull::flush(const QString f_entry)
 
     if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
         QTextStream file_stream(&l_logfile);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         file_stream.setCodec("UTF-8");
+#endif
         file_stream << f_entry;
     }
     l_logfile.close();
@@ -44,7 +46,9 @@ void WriterFull::flush(const QString f_entry, const QString f_area_name)
 
     if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
         QTextStream file_stream(&l_logfile);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         file_stream.setCodec("UTF-8");
+#endif
         file_stream << f_entry;
     }
     l_logfile.close();

@@ -25,7 +25,7 @@ jobs:
         clang-format-version: '14'
         check-path: '.'
         
-  build-linux:
+  build-linux-qt5:
     needs: formatting-check
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -58,56 +58,10 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: akashi-linux
+          name: kakashi-linux-qt5.12.8
           path: bin/
-  
-  coverage:
-    needs: build-linux
-    runs-on: ubuntu-latest
 
-    steps:
-       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      
-      # Runs a single command using the runners shell
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install qt5-default libqt5websockets5-dev g++ make
-      # Runs a set of commands using the runners shell
-      - name: qmake and build
-        run: |
-          cd $GITHUB_WORKSPACE
-          qmake CONFIG+=coverage
-          make
-          
-      - name: Run tests
-        run: |
-            cd ${{github.workspace}}/bin_tests/
-            for test in ./unittest_*; do
-              LD_LIBRARY_PATH=../bin:$LD_LIBRARY_PATH ./$test
-            done;
-
-      - name: Copy coverage files
-        run: |
-          cd ${{github.workspace}}/core
-          gcov *.o
-          cd ..
-          mkdir coverage
-          cp core/*.gcov coverage/
-
-      - name: Codecov
-        uses: codecov/codecov-action@v3.1.0
-        with:
-          files: coverage/*
-
-      - name: Upload coverage files
-        uses: actions/upload-artifact@v2
-        with:
-          name: coverage statistics
-          path: coverage/
-
-  build-windows:
+  build-windows-qt5:
     needs: formatting-check
     runs-on: windows-latest
     
@@ -153,5 +107,83 @@ jobs:
       - name: Upload zip
         uses: actions/upload-artifact@v2
         with:
-          name: akashi-windows
+          name: kakashi-windows-qt5
+          path: bin\
+
+  build-linux-qt6:
+    needs: formatting-check
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install qt6-base-dev libqt6websockets6-dev g++ make
+          
+      - name: qmake and build
+        run: |
+          cd $GITHUB_WORKSPACE
+          qmake6
+          make
+          mv bin/config_sample bin/config
+
+      - name: Run tests
+        run: |
+            cd ${{github.workspace}}/bin_tests/
+            for test in ./unittest_*; do
+              LD_LIBRARY_PATH=../bin:$LD_LIBRARY_PATH ./$test
+            done;
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: kakashi-linux-qt6.2.4
+          path: bin/
+
+  build-windows-qt6:
+    needs: formatting-check
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1  # not v2!
+        with:
+          path: ../Qt
+          key: ${{ runner.os }}-QtCache
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        version: '6.2.4'
+        arch: 'win64_msvc2019_64'
+        with:
+          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+
+      - name: Build
+        run: |
+          cd $Env:GITHUB_WORKSPACE
+          qmake "CONFIG += qtquickcompiler" kakashi.pro
+          nmake
+          windeployqt bin\akashi.exe --release --no-opengl-sw
+          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
+          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
+          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
+          mv bin\config_sample bin\config
+          
+      - name: Deploy OpenSSL
+        run: |
+          curl https://sshapeshifter.ru/openssl-1.1.1j-x64.zip --output openssl-1.1.1j.zip
+          tar -xf openssl-1.1.1j.zip
+          copy .\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll
+          copy .\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v2
+        with:
+          name: kakashi-windows-qt6
           path: bin\

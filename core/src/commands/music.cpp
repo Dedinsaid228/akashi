@@ -36,7 +36,7 @@ void AOClient::cmdPlayOnce(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    playMusic(argv, true);
+    playMusic(argv, false, true);
 }
 
 void AOClient::cmdCurrentMusic(int argc, QStringList argv)
@@ -187,4 +187,18 @@ void AOClient::cmdClearCustom(int argc, QStringList argv)
     Q_UNUSED(argv);
     m_music_manager->clearCustomList(m_current_area);
     sendServerMessage("Custom songs have been cleared.");
+}
+
+void AOClient::cmdPlayHub(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, true);
+}
+
+void AOClient::cmdPlayHubOnce(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, true, true);
 }

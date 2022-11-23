@@ -183,9 +183,12 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"hub_lock", {{ACLRole::GM}, 0, &AOClient::cmdHubLock}},
     {"hub_invite", {{ACLRole::GM}, 0, &AOClient::cmdHubInvite}},
     {"hub_uninvite", {{ACLRole::GM}, 0, &AOClient::cmdHubUnInvite}},
-    {"getareahubs", {{ACLRole::NONE}, 0, &AOClient::cmdGetAreaHubs}}};
+    {"getareahubs", {{ACLRole::NONE}, 0, &AOClient::cmdGetAreaHubs}},
+    {"play_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHub}},
+    {"play_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnce}},
+    {"g_hub", {{ACLRole::NONE}, 1, &AOClient::cmdGHub}}};
 
-void AOClient::clientDisconnected()
+void AOClient::clientDisconnected(int f_hub)
 {
 #ifdef NET_DEBUG
     qDebug() << m_remote_ip.toString() << "disconnected";
@@ -194,7 +197,7 @@ void AOClient::clientDisconnected()
     if (m_joined) {
         server->getAreaById(m_current_area)->clientLeftArea(server->getCharID(m_current_char), m_id);
         server->getHubById(m_hub)->clientLeftHub();
-        arup(ARUPType::PLAYER_COUNT, true);
+        arup(ARUPType::PLAYER_COUNT, true, f_hub);
 
         QString l_sender_name = getSenderName(m_id);
 
@@ -216,9 +219,9 @@ void AOClient::clientDisconnected()
     }
 
     if (l_updateLocks)
-        arup(ARUPType::LOCKED, true);
+        arup(ARUPType::LOCKED, true, f_hub);
 
-    arup(ARUPType::CM, true);
+    arup(ARUPType::CM, true, f_hub);
     emit clientSuccessfullyDisconnected(m_id);
 }
 
@@ -325,7 +328,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
 
     server->getAreaById(new_area)->clientJoinedArea(m_char_id, m_id);
     m_current_area = new_area;
-    arup(ARUPType::PLAYER_COUNT, true);
+    arup(ARUPType::PLAYER_COUNT, true, m_hub);
     sendEvidenceList(server->getAreaById(new_area));
     sendPacket("HP", {"1", QString::number(server->getAreaById(new_area)->defHP())});
     sendPacket("HP", {"2", QString::number(server->getAreaById(new_area)->proHP())});
@@ -451,14 +454,14 @@ void AOClient::handleCommand(QString command, int argc, QStringList argv)
     (this->*(l_command.action))(argc, argv);
 }
 
-void AOClient::arup(ARUPType type, bool broadcast)
+void AOClient::arup(ARUPType type, bool broadcast, int hub)
 {
     QStringList l_arup_data;
     l_arup_data.append(QString::number(type));
 
-    const QVector<AreaData *> l_areas = server->getClientAreas(m_id);
+    const QVector<AreaData *> l_areas = server->getClientAreas(hub);
+    HubData *l_hub = server->getHubById(hub);
     for (AreaData *l_area : l_areas) {
-        HubData *l_hub = server->getHubById(l_area->getHub());
         switch (type) {
         case ARUPType::PLAYER_COUNT:
         {
@@ -526,10 +529,10 @@ void AOClient::arup(ARUPType type, bool broadcast)
 
 void AOClient::fullArup()
 {
-    arup(ARUPType::PLAYER_COUNT, false);
-    arup(ARUPType::STATUS, false);
-    arup(ARUPType::CM, false);
-    arup(ARUPType::LOCKED, false);
+    arup(ARUPType::PLAYER_COUNT, false, m_hub);
+    arup(ARUPType::STATUS, false, m_hub);
+    arup(ARUPType::CM, false, m_hub);
+    arup(ARUPType::LOCKED, false, m_hub);
 }
 
 void AOClient::sendPacket(AOPacket *packet)
@@ -651,6 +654,6 @@ AOClient::AOClient(Server *p_server, NetworkSocket *socket, QObject *parent, int
 
 AOClient::~AOClient()
 {
-    clientDisconnected();
+    clientDisconnected(m_hub);
     m_socket->deleteLater();
 }

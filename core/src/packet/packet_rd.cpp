@@ -37,7 +37,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.getAreaList();
     client.sendPacket("HP", {"1", QString::number(area->defHP())});
     client.sendPacket("HP", {"2", QString::number(area->proHP())});
-    client.sendPacket("FA", client.getServer()->getClientAreaNames(client.m_id));
+    client.sendPacket("FA", client.getServer()->getClientAreaNames(0));
     // Here lies OPPASS, the genius of FanatSors who send the modpass to everyone in plain text.
     client.sendPacket("DONE");
     client.sendPacket("BN", {area->background(), client.m_pos});
@@ -48,16 +48,18 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     QString version_message = "This server uses kakashi " + QCoreApplication::applicationVersion() + ". ";
 
     if (QCoreApplication::applicationVersion() == "unstable")
-        version_message += "See: https://github.com/Ddedinya/kakashi";
+        version_message += "Github: https://github.com/Ddedinya/kakashi \n";
     else if (client.getServer()->m_latest_version.isEmpty())
-        version_message += "Unable to get the latest version.";
+        version_message += "Unable to get the latest version. \n";
     else if (QCoreApplication::applicationVersion() == client.getServer()->m_latest_version)
         version_message += "It's latest version. \n";
     else
         version_message += "New version available! \n";
 
     if (!client.getServer()->m_latest_version.isEmpty() && QCoreApplication::applicationVersion() != "unstable")
-        version_message += "See: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version;
+        version_message += "See: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
+
+    version_message += "Built on Qt " + QLatin1String(QT_VERSION_STR) + ". Build date: " + QLatin1String(__DATE__);
 
     client.sendServerMessage(version_message);
 
@@ -86,7 +88,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.getServer()->increasePlayerCount();
     client.getServer()->getHubById(client.m_hub)->clientJoinedHub();
     area->clientJoinedArea(-1, client.m_id);
-    client.arup(client.ARUPType::PLAYER_COUNT, true); // Tell everyone there is a new player
+    client.arup(client.ARUPType::PLAYER_COUNT, true, 0); // Tell everyone there is a new player
 
     if (client.m_web_client && ConfigManager::webUsersSpectableOnly())
         client.m_wuso = true;
