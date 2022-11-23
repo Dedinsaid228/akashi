@@ -162,6 +162,7 @@ jobs:
         with:
           version: '6.2.4'
           arch: 'win64_msvc2019_64'
+          modules: 'addons.qtwebsockets'
           cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Build
@@ -170,9 +171,9 @@ jobs:
           qmake "CONFIG += qtquickcompiler" kakashi.pro
           nmake
           windeployqt bin\akashi.exe --release --no-opengl-sw
-          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
-          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
-          copy ..\Qt\6.2.4\msvc2019_64\plugins\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
+          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
+          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
+          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
           mv bin\config_sample bin\config
           
       - name: Deploy OpenSSL
