@@ -168,7 +168,7 @@ jobs:
       - name: Build
         run: |
           cd $Env:GITHUB_WORKSPACE
-          qmake "CONFIG += qtquickcompiler" kakashi.pro
+          qmake6 "CONFIG += qtquickcompiler" kakashi.pro
           nmake
           windeployqt bin\akashi.exe --release --no-opengl-sw
           copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
