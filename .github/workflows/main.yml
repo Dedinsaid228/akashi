@@ -142,49 +142,49 @@ jobs:
           name: kakashi-linux-qt6.2.4
           path: bin/
 
-  build-windows-qt6:
-    needs: formatting-check
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Cache Qt
-        id: cache-qt
-        uses: actions/cache@v1  # not v2!
-        with:
-          path: ../Qt
-          key: ${{ runner.os }}-QtCache
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v2
-        with:
-          version: '6.2.4'
-          arch: 'win64_msvc2019_64'
-          modules: 'addons.qtwebsockets'
-          cached: ${{ steps.cache-qt.outputs.cache-hit }}
-
-      - name: Build
-        run: |
-          cd $Env:GITHUB_WORKSPACE
-          $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\bin\qmake6 "CONFIG += qtquickcompiler" kakashi.pro
-          nmake
-          windeployqt bin\akashi.exe --release --no-opengl-sw
-          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
-          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
-          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
-          mv bin\config_sample bin\config
-          
-      - name: Deploy OpenSSL
-        run: |
-          curl https://sshapeshifter.ru/openssl-1.1.1j-x64.zip --output openssl-1.1.1j.zip
-          tar -xf openssl-1.1.1j.zip
-          copy .\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll
-          copy .\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
-
-      - name: Upload zip
-        uses: actions/upload-artifact@v2
-        with:
-          name: kakashi-windows-qt6
-          path: bin\
+#  build-windows-qt6:
+#    needs: formatting-check
+#    runs-on: windows-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: ilammy/msvc-dev-cmd@v1
+#
+#      - name: Cache Qt
+#        id: cache-qt
+#        uses: actions/cache@v1  # not v2!
+#        with:
+#          path: ../Qt
+#          key: ${{ runner.os }}-QtCache
+#
+#      - name: Install Qt
+#        uses: jurplel/install-qt-action@v2
+#        with:
+#          version: '6.2.4'
+#          arch: 'win64_msvc2019_64'
+#          modules: 'addons.qtwebsockets'
+#          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+#
+#      - name: Build
+#        run: |
+#          cd $Env:GITHUB_WORKSPACE
+#          $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\bin\qmake6 "CONFIG += qtquickcompiler" kakashi.pro
+#          nmake
+#          windeployqt bin\akashi.exe --release --no-opengl-sw
+#          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
+#          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
+#          copy $RUNNER_WORKSPACE\Qt\6.2.4\msvc2019_64\plugins\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
+#          mv bin\config_sample bin\config
+#
+#      - name: Deploy OpenSSL
+#        run: |
+#          curl https://sshapeshifter.ru/openssl-1.1.1j-x64.zip --output openssl-1.1.1j.zip
+#          tar -xf openssl-1.1.1j.zip
+#          copy .\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll
+#          copy .\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
+#
+#      - name: Upload zip
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: kakashi-windows-qt6
+#          path: bin\
