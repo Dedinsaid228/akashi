@@ -21,8 +21,6 @@
 #include "include/config_manager.h"
 #include "include/server.h"
 
-//
-
 void AOClient::addStatement(QStringList packet)
 {
     if (checkTestimonySymbols(packet[4])) {

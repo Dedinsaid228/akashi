@@ -314,7 +314,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once)
         server->broadcast(m_hub, music_change);
 
         for (int i = 0; i < server->getAreaCount(); i++) {
-            AreaData *area = server-> getAreaById(i);
+            AreaData *area = server->getAreaById(i);
             if (area->getHub() == m_hub)
                 area->changeMusic(l_sender_name, l_song);
         }

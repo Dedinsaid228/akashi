@@ -888,9 +888,9 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 
         if (new_areas_ini.open(QIODevice::WriteOnly | QIODevice::Append)) {
             QTextStream file_stream(&new_areas_ini);
-            #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             file_stream.setCodec("UTF-8");
-            #endif
+#endif
             for (int i = 0; i < server->getAreaCount(); i++) {
                 AreaData *l_area = server->getAreaById(i);
                 QStringList l_evidence_list;
@@ -932,9 +932,9 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 
         if (new_hubs_ini.open(QIODevice::WriteOnly | QIODevice::Append)) {
             QTextStream hub_file_stream(&new_hubs_ini);
-            #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             hub_file_stream.setCodec("UTF-8");
-            #endif
+#endif
             for (int i = 0; i < server->getHubsCount(); i++) {
                 HubData *l_hub = server->getHubById(i);
                 hub_file_stream << "[" + QString::number(i) + ":" + server->getHubName(i) + "]" +
