@@ -8,22 +8,30 @@ For a better understanding the work of this program it is recommended to read th
 # Build instructions
 
 Required Qt => 5.10 and Qt Websockets
-Требуются Qt => 5.10 и Qt Websockets
 
 ```
-   #Installing dependencies
-   #Установка зависимостей
+   #Installing dependencies (Qt5)
+   #Установка зависимостей (Qt5)
    #Ubuntu 20.04:
    sudo apt-get install qt5-default gcc g++ libqt5websockets5-dev
 
-   #Ubuntu 22.04:
-   sudo qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gcc g++ libqt5websockets5-dev
+   #Ubuntu 22.04/Debian 11:
+   sudo apt-get install qtbase5-dev qtchooser qt5-qmake qtbase5-dev-tools gcc g++ libqt5websockets5-dev
+
+   #Installing dependencies (Qt6)
+   #Установка зависимостей (Qt6)
+
+   #Ubuntu 22.04/Debian 11:
+   #If you are using Debian to build, you will need Debian Backports
+   #Если для компиляции используется Debian, то вам потребуется Debian Backports
+   sudoapt-get install qt6-base-dev gcc g++ libqt6websockets6-dev
 
    #Building
    #Компиляция
    git clone https://github.com/Ddedinya/kakashi
    cd kakashi
-   qmake
+   qmake (qt5)
+   qmake6 (qt6)
    make
 ```
 
