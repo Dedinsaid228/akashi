@@ -2144,6 +2144,14 @@ class AOClient : public QObject
 
     void cmdPlayHubOnce(int argc, QStringList argv);
 
+    void cmdPlayGgl(int argc, QStringList argv);
+
+    void cmdPlayOnceGgl(int argc, QStringList argv);
+
+    void cmdPlayHubGgl(int argc, QStringList argv);
+
+    void cmdPlayHubOnceGgl(int argc, QStringList argv);
+
     /**
      * @brief DJ-blocks a client.
      *
@@ -2328,7 +2336,7 @@ class AOClient : public QObject
      *
      * @see #cmdPlayOnce(int argc, QStringList argv)
      */
-    void playMusic(QStringList f_args, bool f_hubbroadcast = false, bool f_once = false);
+    void playMusic(QStringList f_args, bool f_hubbroadcast = false, bool f_once = false, bool f_gdrive = false);
 
     QString getEviMod(int f_area);
 

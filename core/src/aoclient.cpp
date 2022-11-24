@@ -186,7 +186,11 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"getareahubs", {{ACLRole::NONE}, 0, &AOClient::cmdGetAreaHubs}},
     {"play_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHub}},
     {"play_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnce}},
-    {"g_hub", {{ACLRole::NONE}, 1, &AOClient::cmdGHub}}};
+    {"g_hub", {{ACLRole::NONE}, 1, &AOClient::cmdGHub}},
+    {"playggl", {{ACLRole::NONE}, 1, &AOClient::cmdPlayGgl}},
+    {"playggl_once", {{ACLRole::NONE}, 1, &AOClient::cmdPlayOnceGgl}},
+    {"playggl_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubGgl}},
+    {"playggl_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnceGgl}}};
 
 void AOClient::clientDisconnected(int f_hub)
 {

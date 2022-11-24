@@ -268,7 +268,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
 
-void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once)
+void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, bool f_gdrive)
 {
     if (m_is_dj_blocked) {
         sendServerMessage("You are blocked from changing the music.");
@@ -288,7 +288,12 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once)
         return;
     }
 
-    QString l_song = f_args.join(" ");
+    QString l_song;
+
+    if (f_gdrive)
+        l_song = "https://drive.google.com/uc?export=download&id=" + f_args.join(" "); // Thanks RedFox
+    else
+        l_song = f_args.join(" ");
 
     if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be//")) {
         sendServerMessage("You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.");

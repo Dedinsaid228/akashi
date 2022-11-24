@@ -202,3 +202,31 @@ void AOClient::cmdPlayHubOnce(int argc, QStringList argv)
 
     playMusic(argv, true, true);
 }
+
+void AOClient::cmdPlayGgl(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, false, false, true);
+}
+
+void AOClient::cmdPlayOnceGgl(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, false, true, true);
+}
+
+void AOClient::cmdPlayHubGgl(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, true, false, true);
+}
+
+void AOClient::cmdPlayHubOnceGgl(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+
+    playMusic(argv, true, true, true);
+}

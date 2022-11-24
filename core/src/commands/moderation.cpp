@@ -203,7 +203,7 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/sneak - hide your area moving messages from the OOC.");
     else if (argv[0] == "music")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
-                          "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
+                          "The prefix after the command description means permission to use that command.\n"
                           "/currentmusic - show the current music playing.\n"
                           "/play [musicname or URL] - play a music.\n"
                           "/play_once [musicname or URL] - play a music once.\n"
@@ -213,8 +213,13 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/removeentry [URL or category name] - removes an entry from the custom musiclist. [CM]\n"
                           "/toggleroot - changes the behaviour of prepending the server root musiclist to the custom lists of the area. [CM]\n"
                           "/clearcustom - removes all custom songs from the area. [CM]\n"
-                          "/play_hub [musicname or URL] - play a music in all areas of the hub.\n"
-                          "/play_once_hub [musicname or URL] - play a music in all areas of the hub once.");
+                          "/play_hub [musicname or URL] - play a music in all areas of the hub. [GM]\n"
+                          "/play_once_hub [musicname or URL] - play a music in all areas of the hub once. [GM]\n"
+                          "/playggl [file id] - play a music from Google Drive.***\n"
+                          "/playggl_once [file id] - play a music from Google Drive once.***\n"
+                          "/playggl_hub [file id] - play a music from Google Drive in all areas of the hub. [GM]***\n"
+                          "/playggl_once_hub [file id] - play a music from Google Drive in all areas of the hub once. [GM]***\n"
+                          "*** - To get the file id, share the file with everyone and copy the link. File id is in the middle of the link - https://drive.google.com/file/d/[FILE ID]/view?usp=sharing");
     else if (argv[0] == "messaging")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets.\n"
                           "/afk - sets your player as AFK in player listings.\n"
