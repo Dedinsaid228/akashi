@@ -465,6 +465,11 @@ void Server::reloadSettings()
     m_ipban_list = ConfigManager::iprangeBans();
     acl_roles_handler->loadFile("config/acl_roles.ini");
     command_extension_collection->loadFile("config/command_extensions.ini");
+    m_characters = ConfigManager::charlist();
+    m_backgrounds = ConfigManager::backgrounds();
+    music_manager->reloadRequest();
+    ConfigManager::musiclist();
+    m_music_list = music_manager->rootMusiclist();
 }
 
 void Server::hubListen(QString message, int area_index, QString sender_name)

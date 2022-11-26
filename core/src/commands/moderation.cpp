@@ -20,6 +20,7 @@
 #include "include/area_data.h"
 #include "include/config_manager.h"
 #include "include/db_manager.h"
+#include "include/packet/packet_factory.h"
 #include "include/server.h"
 
 // This file is for commands under the moderation category in aoclient.h
@@ -718,8 +719,21 @@ void AOClient::cmdReload(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients)
+        l_client->m_befrel_char_id = server->getCharID(l_client->m_current_char);
+
     // Todo: Make this a signal when splitting AOClient and Server.
     server->reloadSettings();
+    server->broadcast(PacketFactory::createPacket("SC", server->getCharacters()));
+    server->broadcast(PacketFactory::createPacket("FM", server->getMusicList()));
+
+    for (AOClient *l_client : l_clients)
+        server->getAreaById(l_client->m_current_area)->changeCharacter(l_client->m_befrel_char_id, server->getCharID(l_client->m_current_char));
+
+    for (int i = 0; i < server->getAreaCount(); i++)
+        server->updateCharsTaken(server->getAreaById(i));
+
     sendServerMessage("Reloaded configurations");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RELOAD", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }

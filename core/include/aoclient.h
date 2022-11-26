@@ -177,6 +177,8 @@ class AOClient : public QObject
      */
     QString m_current_char;
 
+    int m_befrel_char_id;
+
     /**
      * @brief The internal name of the character the client is iniswapped to.
      *
