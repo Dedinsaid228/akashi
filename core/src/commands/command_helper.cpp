@@ -265,7 +265,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     else
         server->broadcast(l_packet, m_current_area);
 
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NOTICE", f_notice, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, bool f_gdrive)
@@ -296,7 +296,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         l_song = f_args.join(" ");
 
     if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be//")) {
-        sendServerMessage("You cannot use YouTube links. You may use direct links to MP3, Ogg, or M3U streams.");
+        sendServerMessage("You cannot use YouTube links.");
         return;
     }
 
@@ -329,7 +329,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         l_area->changeMusic(l_sender_name, l_song);
     }
 
-    emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logMusic((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_song, QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 QString AOClient::getSenderName(int f_uid)

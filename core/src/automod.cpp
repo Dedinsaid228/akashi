@@ -14,7 +14,15 @@ void AOClient::autoMod(bool ic_chat)
         server->getDatabaseManager()->updateWarn(m_ipid, l_date);
     }
 
-    if (l_currentdate - m_lastmessagetime < ConfigManager::autoModTrigger()) {
+    qDebug() << l_currentdate;
+    qDebug() << m_lastmessagetime;
+
+    if ((l_currentdate - m_lastmessagetime) < ConfigManager::autoModTrigger()) {
+
+        if ((l_currentdate - m_lastmessagetime) < 0) {
+            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            return;
+        }
 
         if (l_warn == 0) {
             DBManager::automodwarns l_warn;
@@ -23,7 +31,8 @@ void AOClient::autoMod(bool ic_chat)
             l_warn.warns = 2;
 
             server->getDatabaseManager()->addWarn(l_warn);
-            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(5) + " more warn, then you will be punished.");
+            sendServerMessage("You got a warn from an automod! If you get 5 warns, you will be punished.");
+            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
             return;
         }
 
@@ -32,7 +41,8 @@ void AOClient::autoMod(bool ic_chat)
 
             server->getDatabaseManager()->updateWarn(m_ipid, l_warn + 1);
             server->getDatabaseManager()->updateWarn(m_ipid, date);
-            sendServerMessage("You got a warn from an automoderator! If you get " + QString::number(6 - l_warn) + " more warn, then you will be punished.");
+            sendServerMessage("You got a warn from an automod! If you get " + QString::number(6 - l_warn) + " warns, you will be punished.");
+            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
             return;
         }
 
@@ -86,11 +96,11 @@ void AOClient::autoKick()
 {
     const QList<AOClient *> l_targets = server->getClientsByIpid(m_ipid);
     for (AOClient *l_client : l_targets) {
-        l_client->sendPacket("KK", {"You were kicked by a automoderator."});
+        l_client->sendPacket("KK", {"You were kicked by a automod."});
         l_client->m_socket->close();
     }
 
-    emit logKick("Automoderator", m_ipid, "You were kicked by a automoderator.", "", "");
+    emit logKick("Automoderator", m_ipid, "You were kicked by a automod.", "", "");
     long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
     QString l_action = "KICK";
     int l_haznum = 3;
@@ -113,14 +123,14 @@ void AOClient::autoBan()
         l_duration_seconds = parseTime(l_duration_ban);
 
     if (l_duration_seconds == -1) {
-        qDebug() << "ERROR: Invalid ban time format for automoderator! Format example: 1h30m";
+        qDebug() << "ERROR: Invalid ban time format for automod! Format example: 1h30m";
         return;
     }
 
     l_ban.duration = l_duration_seconds;
     l_ban.ipid = m_ipid;
-    l_ban.reason = "You were banned by a automoderator.";
-    l_ban.moderator = "Automoderator";
+    l_ban.reason = "You were banned by a automod.";
+    l_ban.moderator = "Automod";
     l_ban.time = QDateTime::currentDateTime().toSecsSinceEpoch();
     bool ban_logged = false;
 

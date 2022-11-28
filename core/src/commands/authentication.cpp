@@ -51,8 +51,8 @@ void AOClient::cmdLogin(int argc, QStringList argv)
             sendServerMessage("Incorrect password.");
         }
 
-        emit logLogin((m_current_char + " " + m_showname), m_ooc_name, "Moderator", m_ipid, server->getAreaName(m_current_area), m_authenticated, QString::number(m_id), m_hwid, QString::number(m_hub));
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "login", "Moderator", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logLogin((m_current_char + " " + m_showname), m_ooc_name, "Moderator", m_ipid, server->getAreaName(m_current_area), m_authenticated, QString::number(m_id), m_hwid, server->getHubName(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "login", "Moderator", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         break;
     }
     case DataTypes::AuthType::ADVANCED:
@@ -82,8 +82,8 @@ void AOClient::cmdLogin(int argc, QStringList argv)
             sendServerMessage("Incorrect password.");
         }
 
-        emit logLogin((m_current_char + " " + m_showname), m_ooc_name, l_username, m_ipid, server->getAreaName(m_current_area), m_authenticated, QString::number(m_id), m_hwid, QString::number(m_hub));
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "login", l_username, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logLogin((m_current_char + " " + m_showname), m_ooc_name, l_username, m_ipid, server->getAreaName(m_current_area), m_authenticated, QString::number(m_id), m_hwid, server->getHubName(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "login", l_username, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         break;
     }
     default:
@@ -124,7 +124,7 @@ void AOClient::cmdSetRootPass(int argc, QStringList argv)
     QByteArray l_salt = CryptoHelper::randbytes(16);
 
     server->getDatabaseManager()->createUser("root", l_salt, argv[0], ACLRolesHandler::SUPER_ID);
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "rootpass", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "rootpass", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdAddUser(int argc, QStringList argv)
@@ -140,7 +140,7 @@ void AOClient::cmdAddUser(int argc, QStringList argv)
 
     if (server->getDatabaseManager()->createUser(argv[0], l_salt, argv[1], ACLRolesHandler::NONE_ID)) {
         sendServerMessage("Created user " + argv[0] + ".\nUse /addperm to modify their permissions.");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "rootpass", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "rootpass", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else
         sendServerMessage("Unable to create user " + argv[0] + ".\nDoes a user with that name already exist?");
@@ -152,7 +152,7 @@ void AOClient::cmdRemoveUser(int argc, QStringList argv)
 
     if (server->getDatabaseManager()->deleteUser(argv[0])) {
         sendServerMessage("Successfully removed user " + argv[0] + ".");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVEUSER", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVEUSER", argv[0], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else
         sendServerMessage("Unable to remove user " + argv[0] + ".\nDoes it exist?");
@@ -256,7 +256,7 @@ void AOClient::cmdLogout(int argc, QStringList argv)
     m_acl_role_id = "";
     m_moderator_name = "";
     sendPacket("AUTH", {"-1"}); // Client: "You were logged out."
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "LOGOUT", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "LOGOUT", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdChangePassword(int argc, QStringList argv)
@@ -288,7 +288,7 @@ void AOClient::cmdChangePassword(int argc, QStringList argv)
 
     if (server->getDatabaseManager()->updatePassword(l_username, l_password)) {
         sendServerMessage("Successfully changed password.");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHANGEPASSWORD", "User: " + l_username + ". Password: " + l_password, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHANGEPASSWORD", "User: " + l_username + ". Password: " + l_password, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else {
         sendServerMessage("There was an error changing the password.");

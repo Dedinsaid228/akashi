@@ -36,7 +36,7 @@ void AOClient::cmdDoc(int argc, QStringList argv)
     else {
         l_area->changeDoc(argv.join(" "));
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " changed the document.");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHANGEDOC", argv.join(" "), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHANGEDOC", argv.join(" "), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 }
 
@@ -50,7 +50,7 @@ void AOClient::cmdClearDoc(int argc, QStringList argv)
 
     l_area->changeDoc("No document.");
     sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " cleared the document.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CLEARDOC", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CLEARDOC", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdEvidenceMod(int argc, QStringList argv)
@@ -127,7 +127,7 @@ void AOClient::cmdTestify(int argc, QStringList argv)
         clearTestimony();
         l_area->setTestimonyRecording(AreaData::TestimonyRecording::RECORDING);
         sendServerMessage("Started testimony recording.");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STARTTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STARTTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 }
 
@@ -142,7 +142,7 @@ void AOClient::cmdExamine(int argc, QStringList argv)
         l_area->restartTestimony();
         server->broadcast(PacketFactory::createPacket("RT", {"testimony2"}), m_current_area);
         server->broadcast(PacketFactory::createPacket("MS", {l_area->testimony()[0]}), m_current_area);
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "PLAYBACKTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "PLAYBACKTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         return;
     }
 
@@ -200,7 +200,7 @@ void AOClient::cmdUpdateStatement(int argc, QStringList argv)
 
     server->getAreaById(m_current_area)->setTestimonyRecording(AreaData::TestimonyRecording::UPDATE);
     sendServerMessage("The next IC-Message will replace the last displayed replay message.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UPDATESTATEMENT", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UPDATESTATEMENT", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdPauseTestimony(int argc, QStringList argv)
@@ -213,7 +213,7 @@ void AOClient::cmdPauseTestimony(int argc, QStringList argv)
     l_area->setTestimonyRecording(AreaData::TestimonyRecording::STOPPED);
     server->broadcast(PacketFactory::createPacket("RT", {"testimony1", "1"}), m_current_area);
     sendServerMessage("Testimony has been stopped.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STOPTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STOPTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdAddStatement(int argc, QStringList argv)
@@ -224,7 +224,7 @@ void AOClient::cmdAddStatement(int argc, QStringList argv)
     if (server->getAreaById(m_current_area)->statement() < ConfigManager::maxStatements()) {
         server->getAreaById(m_current_area)->setTestimonyRecording(AreaData::TestimonyRecording::ADD);
         sendServerMessage("The next IC-Message will be inserted into the testimony.");
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "ADDSTATEMENT", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "ADDSTATEMENT", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else
         sendServerMessage("Unable to add anymore statements. Please remove any unused ones.");
@@ -269,7 +269,7 @@ void AOClient::cmdSaveTestimony(int argc, QStringList argv)
                 l_out << l_area->testimony().at(i).join("#") << "\n";
             }
             sendServerMessage("Testimony saved. To load it use /loadtestimony " + l_testimony_name);
-            emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SAVETESTIMONY", l_testimony_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+            emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SAVETESTIMONY", l_testimony_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
             m_testimony_saving = false;
         }
     }
@@ -326,5 +326,5 @@ void AOClient::cmdLoadTestimony(int argc, QStringList argv)
     }
 
     sendServerMessage("Testimony loaded successfully. Use /examine to start playback.");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "LOADTESTIMONY", l_testimony_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "LOADTESTIMONY", l_testimony_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }

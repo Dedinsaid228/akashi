@@ -208,7 +208,7 @@ void AOClient::clientDisconnected(int f_hub)
         if (!m_sneaked)
             sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " has disconnected.");
 
-        emit logDisconnect(m_current_char, m_ipid, m_ooc_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logDisconnect(m_current_char, m_ipid, m_ooc_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 
     if (m_current_char != "") {
@@ -267,8 +267,7 @@ void AOClient::handlePacket(AOPacket *packet)
 
     if (packet->getPacketInfo().header != "CH" && packet->getPacketInfo().header != "CT" && m_joined && m_is_afk) {
         QString l_sender_name = getSenderName(m_id);
-        sendServerMessage("You are no longer AFK. Welcome back!");
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " are no longer AFK.");
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is no longer AFK.");
         m_is_afk = false;
     }
 
@@ -314,7 +313,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
     QString l_sender_name = getSenderName(m_id);
 
     if (!m_sneaked)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " moved to " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " moved to area " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
 
     if (m_current_char != "") {
         server->getAreaById(m_current_area)->changeCharacter(server->getCharID(m_current_char), -1);
@@ -354,24 +353,30 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
         }
     }
 
-    sendServerMessage("You moved to area [" + QString::number(m_area_list.indexOf(m_current_area)) + "] " + server->getAreaName(m_current_area));
+    if (m_sneaked)
+        sendServerMessage("You moved to area [" + QString::number(m_area_list.indexOf(m_current_area)) + "] " + server->getAreaName(m_current_area));
 
     if (server->getAreaById(m_current_area)->sendAreaMessageOnJoin())
         sendServerMessage(server->getAreaById(m_current_area)->areaMessage());
 
     if (!m_sneaked)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " enters from " + "[" + QString::number(m_area_list.indexOf(l_old_area)) + "] " + server->getAreaName(l_old_area));
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " enters from area " + "[" + QString::number(m_area_list.indexOf(l_old_area)) + "] " + server->getAreaName(l_old_area));
 
     if (server->getAreaById(m_current_area)->lockStatus() == AreaData::LockStatus::SPECTATABLE)
-        sendServerMessage("Area " + server->getAreaName(m_current_area) + " is spectate-only; to chat IC you will need to be invited by the CM.");
+        sendServerMessage("Area " + server->getAreaName(m_current_area) + " is spectate-only. To chat IC you will need to be invited by the CM.");
 
-    emit logChangeArea((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), server->getAreaName(l_old_area) + " -> " + server->getAreaName(new_area), QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logChangeArea((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), server->getAreaName(l_old_area) + " -> " + server->getAreaName(new_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 bool AOClient::changeCharacter(int char_id)
 {
-    QString const l_old_char = m_current_char;
+    QString l_old_char;
     AreaData *l_area = server->getAreaById(m_current_area);
+
+    if (m_current_char.isEmpty())
+        l_old_char = "Spectator";
+    else
+        l_old_char = m_current_char;
 
     if (!m_joined)
         return false;
@@ -397,7 +402,7 @@ bool AOClient::changeCharacter(int char_id)
         m_pos = "";
         server->updateCharsTaken(l_area);
         sendPacket("PV", {QString::number(m_id), "CID", QString::number(char_id)});
-        emit logChangeChar((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_old_char + " -> " + m_current_char, QString::number(m_id), m_hwid, QString::number(m_hub));
+        emit logChangeChar((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), l_old_char + " -> " + m_current_char, QString::number(m_id), m_hwid, server->getHubName(m_hub));
         return true;
     }
 
@@ -407,7 +412,7 @@ bool AOClient::changeCharacter(int char_id)
 void AOClient::changePosition(QString new_pos)
 {
     if (new_pos == "hidden") {
-        sendServerMessage("This position cannot be used.");
+        sendServerMessage("You cannot be change position to this.");
         return;
     }
 
