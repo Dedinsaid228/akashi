@@ -125,7 +125,7 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
 
         QString l_sender_name = getSenderName(target->m_id);
 
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " no longer CM in this area.");
+        sendServerMessageArea("[" + QString::number(l_uid) + "] " + l_sender_name + " no longer CM in this area.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         target->sendServerMessage("You have been unCMed.");
     }
@@ -901,7 +901,7 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                     l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
                     l_evidence_count++;
                 }
-                file_stream << "[" + QString::number(i) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i) + "]" +
+                file_stream << "[" + QString::number(i) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
                                    "\nbackground=" + QVariant(l_area->background()).toString() +
                                    "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
                                    "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
@@ -937,7 +937,7 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 #endif
             for (int i = 0; i < server->getHubsCount(); i++) {
                 HubData *l_hub = server->getHubById(i);
-                hub_file_stream << "[" + QString::number(i) + ":" + server->getHubName(i) + "]" +
+                hub_file_stream << "[" + QString::number(i) + ":" + server->getHubName(i).toUtf8() + "]" +
                                        "\nprotected_hub=" + QVariant(l_hub->hubProtected()).toString() +
                                        "\nhide_playercount=" + QVariant(l_hub->getHidePlayerCount()).toString() +
                                        "\nlock_status=" + getHubLockStatus(i) + "\n\n";

@@ -45,7 +45,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.fullArup(); // Give client all the area data
     client.getServer()->check_version();
 
-    QString version_message = "This server uses kakashi " + QCoreApplication::applicationVersion() + ". ";
+    QString version_message = "This server works on kakashi " + QCoreApplication::applicationVersion() + ". ";
 
     if (QCoreApplication::applicationVersion() == "unstable")
         version_message += "Github: https://github.com/Ddedinya/kakashi \n";
@@ -57,7 +57,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
         version_message += "New version available! \n";
 
     if (!client.getServer()->m_latest_version.isEmpty() && QCoreApplication::applicationVersion() != "unstable")
-        version_message += "See: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
+        version_message += "Github: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
 
     version_message += "Built on Qt " + QLatin1String(QT_VERSION_STR) + ". Build date: " + QLatin1String(__DATE__);
 

@@ -463,14 +463,12 @@ void AOClient::cmdAfk(int argc, QStringList argv)
     if (m_is_afk == true) {
         m_is_afk = false;
 
-        sendServerMessage("You are no longer AFK. Welcome back!");
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " are no longer AFK.");
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is no longer AFK.");
         return;
     }
 
     m_is_afk = true;
 
-    sendServerMessage("You are now AFK. Have a good day!");
     sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " is now AFK.");
 }
 

@@ -184,7 +184,8 @@ void AOClient::cmdMods(int argc, QStringList argv)
 void AOClient::cmdHelp(int argc, QStringList argv)
 {
     if (argc == 0) {
-        sendServerMessage("/help area - commands relate to area management.\n"
+        sendServerMessage("(!) It is better to use the wiki: https://github.com/Ddedinya/kakashi/wiki"
+                          "/help area - commands relate to area management.\n"
                           "/help areaedit - commands to manage areas.\n"
                           "/help hubs - commands to manage hubs.\n"
                           "/help casing - commands relate to casing.\n"
@@ -199,21 +200,22 @@ void AOClient::cmdHelp(int argc, QStringList argv)
 
     if (argv[0] == "other")
         sendServerMessage("/about - gives a very brief description of kakashi.\n"
-                          "/mods - lists the currently logged-in moderators on the server.\n"
-                          "/motd - gets the server's Message Of The Day.\n"
-                          "/sneak - hide messages about your movements by areas.");
+                          "/mods - get a list about moderators on server.\n"
+                          "/motd - get a server MOTD. If user has [MOTD] permission he can edit MOTD with this command.\n"
+                          "/sneak - hide messages about your movements by areas.\n"
+                          "/kickphantoms - kick other your clients.");
     else if (argv[0] == "music")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"
-                          "/currentmusic - show the current music playing.\n"
+                          "/currentmusic - returns the currently playing music in the area, and who played it.\n"
                           "/play [musicname or URL] - play a music.\n"
                           "/play_once [musicname or URL] - play a music once.\n"
-                          "/togglemusic - enable/disable change music in area. [CM]\n"
-                          "/addsong [URL] - adds a song to the custom musiclist. [CM]\n"
-                          "/addcategory [category name] - adds a category to the custom musiclist. [CM]\n"
-                          "/removeentry [URL or category name] - removes an entry from the custom musiclist. [CM]\n"
-                          "/toggleroot - changes the behaviour of prepending the server root musiclist to the custom lists of the area. [CM]\n"
-                          "/clearcustom - removes all custom songs from the area. [CM]\n"
+                          "/togglemusic - toggles whether music is allowed to be played in the area. CM users can still play music normally. [CM]\n"
+                          "/addsong [URL] - adds a song to the area custom musiclist. [CM]\n"
+                          "/addcategory [category name] - adds a category to the area's custom musiclist. [CM]\n"
+                          "/removeentry [URL or category name] - removes an entry from the area's custom musiclist. [CM]\n"
+                          "/toggleroot - hide/show server musiclist in area. [CM]\n"
+                          "/clearcustom - remove all from the area's custom musiclist. [CM]\n"
                           "/play_hub [musicname or URL] - play a music in all areas of the hub. [GM]\n"
                           "/play_once_hub [musicname or URL] - play a music in all areas of the hub once. [GM]\n"
                           "/playggl [file id] - play a music from Google Drive.***\n"
@@ -223,10 +225,10 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "*** - To get the file id, share the file with everyone and copy the link. File id is in the middle of the link - https://drive.google.com/file/d/[FILE ID]/view?usp=sharing");
     else if (argv[0] == "messaging")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets.\n"
-                          "/afk - sets your player as AFK in player listings.\n"
+                          "/afk - show that you are AFK.\n"
                           "/g [message] - sends a global message to all players.\n"
                           "/toggleglobal - toggles whether will ignore global messages or not.\n"
-                          "/pm [id] [message] - send a private message to another online user.\n"
+                          "/pm [id] [message] - send a private message to another player.\n"
                           "/mutepm - toggles whether will recieve private messages or not.\n"
                           "/need [message] - sends a global message expressing that the area needs something, such as players for something.\n"
                           "/toggleadverts - toggles whether the caller will receive /need advertisements.\n"
@@ -242,58 +244,60 @@ void AOClient::cmdHelp(int argc, QStringList argv)
     else if (argv[0] == "roleplay")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
-                          "/8ball [text] - answers a question.\n/coinflip - flip a coin.\n"
+                          "/8ball [text] - answers a question.\n"
+                          "/coinflip - flip a coin.\n"
                           "/roll (value/X Y) - roll a die. The result is shown publicly. X is the number of dice, Y is the maximum value on the die.\n"
                           "/rollp (value/X Y) - roll a die privately. Same as /roll but the result is only shown to you and the CMs.\n"
                           "/subtheme [subtheme name] - changes the subtheme of all clients in the current area. [CM]\n"
                           "/notecard [message] - writes a note card in the current area.\n"
                           "/notecard_reveal - reveals all note cards in the current area. [CM]\n"
                           "/notecard_clear - сlears a note card.\n"
-                          "/vote (id) - without arguments - start/end voting (requires permission CM), with arguments - vote for the candidate.");
+                          "/vote (id) - without arguments - start/end voting (requires [CM] permission), with arguments - vote for the candidate.");
     else if (argv[0] == "testimony")
         sendServerMessage("[brackets] mean [required arguments]. Actual commands do not need these brackets. "
-                          "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area, "
-                          "and if there is a [MOD] prefix, then you need to be a moderator to use the command. "
-                          "Testimony are only recorded from players who have chosen the wit position.\n"
+                          "The prefix after the command description means permission to use that command.\n"
+                          "Testimony are only recorded from players who have chosen the [wit] position.\n"
                           "/add - adds a statement to an existing testimony. [CM]\n"
                           "/delete - deletes the currently displayed statement from the testimony recorder. [CM]\n"
                           "/examine - playback recorded testimony. [CM]\n"
                           "/loadtestimony [testimony name] - loads testimony for the testimony replay. [CM]\n"
-                          "/savetestimony [testimony name] - saves a testimony recording to the servers storage. [MOD]\n"
+                          "/savetestimony [testimony name] - saves a testimony recording to the servers storage. [SAVETEST]\n"
                           "/testify - enables the testimony recording. [CM]\n"
                           "/testimony - display the currently recorded testimony.\n"
                           "/pause - pauses testimony playback/recording. [CM]");
     else if (argv[0] == "casing")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
-                          "/cm (id) - add a case manager for the current area. Leave id blank to promote yourself if there are no CMs.\n"
-                          "/uncm - remove a case manager from the current area. Leave id blank to demote yourself. [CM]\n"
-                          "/evidence_mod [mod] - changes the evidence mod in an area.[CM]\n/currentevimod - find out current evidence mod. [CM]\n"
-                          "/evidence_swap [evidence id] [evidence id] - Swap the positions of two evidence items on the evidence list. [CM]");
+                          "/cm (id) - gain CM status in area. If players UID is mentioned he will get CM too. The number of CM is unlimited.\n"
+                          "/uncm - remove CM status from yourself. If user with [UNCM] permission access mentions player UID his CM status will be removed too. [CM]\n"
+                          "/evidence_mod [mod] - changes the evidence mod in an area.[CM]\n"
+                          "/currentevimod - get the current evidence mode. [CM]\n"
+                          "/evidence_swap [evidence id] [evidence id] - swap the positions of two evidence items on the evidence list. [CM]");
     else if (argv[0] == "area")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
-                          "/area [area id] - go to another area.\n/area_kick [id] - remove a user from the current area and move them to another area. [CM]\n"
-                          "/area_lock - prevent users from joining the current area unlesss /invite is used. [CM]\n"
+                          "/area [area id] - go to another area.\n"
+                          "/area_kick [id] - kick specified player from the area. [CM]\n"
+                          "/area_lock - lock area. It can be entered only by invited players. [CM]\n"
                           "/area_unlock - allow anyone to freely join/speak the current area. [CM]\n"
-                          "/area_spectate - sets the current area to spectatable, where anyone may join but only invited users may communicate in-character. [CM]\n"
-                          "/area_mute - Makes this area impossible to speak for normal users unlesss /invite is used. [CM]\n"
+                          "/area_spectate - mute area, making every player who is not invited forbidden to write in IC chat. Invites all players who are in the area automatically. [CM]\n"
+                          "/area_mute - does the same as /area_spectate, but doesn't invite players which were in area. [CM]\n"
                           "/allowiniswap - toggles whether iniswaps are allowed in the current area. [CM]\n"
                           "/bg [background name] - change background.\n"
                           "/bgs - get a list of backgrounds.\n"
                           "/forceimmediate - toggles immediate text processing in the current area. [CM]\n"
                           "/cleardoc - clear the link for the current case document.\n"
-                          "/currentbg - find out the name of the current background in the area.\n"
-                          "/doc (url) - show or change the link for the current case document.\n"
-                          "/getarea - show information about the current area.\n"
-                          "/getareas - show information about all areas in hub.\n"
-                          "/getareahubs - show information about all areas.\n"
-                          "/judgelog - list the last 10 uses of judge controls in the current area. [CM]\n"
-                          "/invite [id] - allow a particular user to join a locked or speak in spectator-only area. [CM]\n"
-                          "/uninvite [id] - revoke an invitation for a particular user. [CM]\n"
+                          "/currentbg - get the name of the current background in the area.\n"
+                          "/doc (url) - get or change the link for the current case document.\n"
+                          "/getarea - get information about the current area.\n"
+                          "/getareas - get information about all areas in hub.\n"
+                          "/getareahubs - get information about all areas.\n"
+                          "/judgelog - get list the last 10 uses of judge controls in the current area. [CM]\n"
+                          "/invite [id] - invite selected player in area, letting him access to write in IC if area locked/muted. [CM]\n"
+                          "/uninvite [id] - univite selected player from area, forbidding him to write in IC if area locked/muted. [CM]\n"
                           "/status [idle/rp/casing/looking-for-players/lfp/recess/gaming/erp/yablachki] - modify the current status of an area.\n"
                           "/togglechillmod - enable/disable Chill Mod in area. [CM]\n"
-                          "/toogleautomod - enable/disable automoderator in area. [CM]\n"
+                          "/toogleautomod - enable/disable Automod in area. [CM]\n"
                           "/togglefloodguard - enable/disable floodguard in area. [CM]\n"
                           "/togglemessage - toggles wether the client shows the area message when joining the current area. [CM]\n"
                           "/clearmessage - clears the areas message and disables automatic sending. [CM]\n"
@@ -302,18 +306,18 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/password (new password) - when given arguments, sets the password that the client needs to set to enter the passworded area. If no arguments are given, the command will return the current password of the client.\n"
                           "/bglock - locks the background of the current area, preventing it from being changed. [CM]\n"
                           "/bgunlock - unlocks the background of the current area, allowing it to be changed. [CM]\n"
-                          "/togglewtce - toggles wether WTCE can be used in the area. [CM]\n"
+                          "/togglewtce - toggles wether WTCE buttons can be used in the area. [CM]\n"
                           "/toggleshouts - toggles wether shouts can be used in the area. [CM]\n"
                           "/togglestatus - toggles wether status can be changed in the area. [CM]\n"
                           "/ooc_type [all/invited/cm] - allow everyone to speak in OOC chat, only invited clients or only CMs. [CM]");
     else if (argv[0] == "areaedit")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"
-                          "/renamearea [new name] - rename the current area.\n"
-                          "/createarea [name] - create a new area.\n"
-                          "/removearea [area id] - delete selected area.\n"
-                          "/swapareas [area id] [area id] - swap selected areas.\n"
-                          "/toggleprotected - toggle whether it is possible in the current area to become CM or not.\n"
+                          "/renamearea [new name] - rename the current area. [GM]\n"
+                          "/createarea [name] - create a new area. [GM]\n"
+                          "/removearea [area id] - delete selected area. [GM]\n"
+                          "/swapareas [area id] [area id] - swap selected areas. [GM]\n"
+                          "/toggleprotected - toggle whether it is possible in the current area to become CM or not. [GM]\n"
                           "/saveareas [file name] - save the area config file. [SAVEAREAS]");
     else if (argv[0] == "hubs")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
@@ -324,24 +328,25 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/hub_hideplayercount - show/hide the number of players in the hub and its areas.\n"
                           "/hub_rename [new name] - rename hub.\n"
                           "/hub_listening - receive messages from all areas in the hub.\n"
-                          "/hub_spectate - sets the current hub to spectatable.\n"
-                          "/hub_lock - prevent users from joining the current hub unlesss /hub_invite is used.\n"
-                          "/hub_unlock - allow anyone to freely join/speak the current hub.\n"
-                          "/hub_invite - allow a particular player to join a locked or speak in spectator-only hub.\n"
-                          "/hub_uninvite - revoke an invitation for a particular user.");
+                          "/hub_spectate - mute the hub, prohibit uninvited players from writing to IC chat in all areas of the hub.\n"
+                          "/hub_lock - lock the hub. Only invited players can enter it.\n"
+                          "/hub_unlock - unlock/unmute hub.\n"
+                          "/hub_invite - invite the specified client in hub.\n"
+                          "/hub_uninvite - uninvite the specified client in hub.");
     else if (argv[0] == "admin")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actual commands do not need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"
                           "/allowblankposting - allow/deny blankposting in the area. [MODCHAT]\n"
                           "/ban [ipid] [time (examples - 1h30m, 1h, 30m, 30s)] [reason] - ban player. [BAN]\n"
-                          "/unban [ban id] - unban player. [BAN]\n/baninfo [ban id] - get information about the ban. [BAN]\n"
+                          "/unban [ban id] - unban player. [BAN]\n"
+                          "/baninfo [ban id] - get information about the ban. [BAN]\n"
                           "/bans - get information about the last 5 bans. [BAN]\n"
                           "/blockdj [uid] - restricts a target client from changing music. [MUTE]\n"
-                          "/unblockdj [uid] - restores a client's DJ controls. [MUTE]\n"
-                          "/blockwtce [uid] - revokes judge controls from a client, preventing them from using WT/CE buttons or updating penalties. [MUTE]\n"
-                          "/unblockwtce [uid] - Grants judge controls back to a client. [MUTE]\n"
-                          "/blind [uid] - blind the targeted player from being able to see or talk IC/OOC. [MUTE]\n"
-                          "/unblind - undo effects of the /blind command. [MUTE]\n"
+                          "/unblockdj [uid] - restores target client's ability to change music. [MUTE]\n"
+                          "/blockwtce [uid] - forbid player to use WTCE buttons. [MUTE]\n"
+                          "/unblockwtce [uid] - allow player to use WTCE buttons. [MUTE]\n"
+                          "/blind [uid] - blinds specific players, which makes him unable to see any messages in IC/OOC chat. [MUTE]\n"
+                          "/unblind - returns player its access to see messages in IC/OOC chat. [MUTE]\n"
                           "/charcurse [uid] (character1,character2,...) - restricts a target client into only being able to switch between a set of characters. [MUTE]\n"
                           "/uncharcurse [uid] - uncharcurses a target client, allowing them to switch normally again. [MUTE]\n"
                           "/clearcm - removes all CMs from the current area. [KICK]\n"
@@ -349,15 +354,15 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/undisemvowel [uid] - undisemvowels a client. [MUTE]\n"
                           "/gimp [uid] - replaces a target client's IC messages with strings randomly selected from gimp.txt. [MUTE]\n"
                           "/ungimp [uid] - ungimps a client. [MUTE]\n"
-                          "/ipidinfo [ipid] - find out the ip address and date of ipid creation. [IPIDINFO]\n"
+                          "/ipidinfo [ipid] - get the ip address and date of ipid creation. [IPIDINFO]\n"
                           "/taketaked - allow/deny yourself take taked characters. [TAKETAKED]\n"
                           "/notice [message] - send all players in area a message in a special window. [SEND_NOTICE]\n"
                           "/noticeg [message] - send all players a message in a special window. [SEND_NOTICE]\n"
                           "/shake [uid] - shuffles the order of words in a target client's IC messages. [MUTE]\n"
                           "/unshake [uid] - unshakes a client.\n"
                           "/kick [ipid] [reason] - kick player [KICK].\n"
-                          "/login [username] [password] - enters the login prompt to login as a moderator.\n"
-                          "/unmod - logs a user out as a moderator.\n"
+                          "/login (username) [password] - login as a moderator.\n"
+                          "/unmod - log out as moderator.\n"
                           "/m [message] - sends a message to moderator-only chat. [MODCHAT]\n"
                           "/modarea_kick [uid] [area id] - kick the player into the specified area. [KICK]\n"
                           "/mute [uid] - mute player. [MUTE]\n"
@@ -1092,4 +1097,20 @@ void AOClient::cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv)
     l_target->m_wuso = false;
     l_target->m_usemodcall = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVEWUSO", "Target UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
+}
+
+void AOClient::cmdKickPhantoms(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients) {
+        if (l_client->m_ipid == m_ipid && l_client->m_id != m_id) {
+            l_client->sendPacket("KK", {"Phantom client."});
+            l_client->m_socket->close();
+        }
+    }
+
+    sendServerMessage("Kicked your phantom client.");
 }

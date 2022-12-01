@@ -14,9 +14,6 @@ void AOClient::autoMod(bool ic_chat)
         server->getDatabaseManager()->updateWarn(m_ipid, l_date);
     }
 
-    qDebug() << l_currentdate;
-    qDebug() << m_lastmessagetime;
-
     if ((l_currentdate - m_lastmessagetime) < ConfigManager::autoModTrigger()) {
 
         if ((l_currentdate - m_lastmessagetime) < 0) {

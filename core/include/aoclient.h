@@ -1659,6 +1659,8 @@ class AOClient : public QObject
      */
     void cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv);
 
+    void cmdKickPhantoms(int argc, QStringList argv);
+
     ///@}
 
     /**

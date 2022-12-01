@@ -190,7 +190,8 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"playggl", {{ACLRole::NONE}, 1, &AOClient::cmdPlayGgl}},
     {"playggl_once", {{ACLRole::NONE}, 1, &AOClient::cmdPlayOnceGgl}},
     {"playggl_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubGgl}},
-    {"playggl_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnceGgl}}};
+    {"playggl_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnceGgl}},
+    {"kickphantoms", {{ACLRole::NONE}, 0, &AOClient::cmdKickPhantoms}}};
 
 void AOClient::clientDisconnected(int f_hub)
 {
