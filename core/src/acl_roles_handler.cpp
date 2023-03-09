@@ -106,6 +106,10 @@ const QHash<ACLRole::Permission, QString> ACLRole::PERMISSION_CAPTIONS{
         "savearea",
     },
     {
+        ACLRole::Permission::CONFRELOAD,
+        "reload",
+    },
+    {
         ACLRole::Permission::SUPER,
         "super",
     },

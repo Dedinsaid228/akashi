@@ -56,7 +56,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
     if (evipresent)
         client.sendEvidenceList(area);
 
-    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid, QString::number(client.m_hub));
+    emit client.logIC((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, area->name(), client.m_last_message, QString::number(client.m_id), client.m_hwid, client.getServer()->getHubName(client.m_hub));
     area->updateLastICMessage(validated_packet->getContent());
     area->updateLastICMessageOwner(client.m_ipid);
 

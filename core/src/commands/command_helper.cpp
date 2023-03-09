@@ -116,31 +116,29 @@ int AOClient::genRand(int min, int max)
 #endif
 }
 
-void AOClient::diceThrower(int argc, QStringList argv, bool p_roll)
+void AOClient::diceThrower(int sides, int dice, bool p_roll, int roll_modifier)
 {
-    QString l_sender_name = getSenderName(m_id);
-    int l_sides = 6;
-    int l_dice = 1;
-    QStringList results;
-
-    if (argc >= 1)
-        l_sides = qBound(1, argv[0].toInt(), ConfigManager::diceMaxValue());
-
-    if (argc == 2)
-        l_dice = qBound(1, argv[1].toInt(), ConfigManager::diceMaxDice());
-
-    for (int i = 1; i <= l_dice; i++) {
-        results.append(QString::number(AOClient::genRand(1, l_sides)));
-    }
-
-    QString total_results = results.join(" ");
-
-    if (p_roll) {
-        sendServerMessage("You rolled a " + QString::number(l_dice) + "d" + QString::number(l_sides) + ". Results: " + total_results);
+    if (sides < 0 || dice < 0 || sides > ConfigManager::diceMaxValue() || dice > ConfigManager::diceMaxDice()) {
+        sendServerMessage("Dice or side number out of bounds.");
         return;
     }
-
-    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(l_dice) + "d" + QString::number(l_sides) + ". Results: " + total_results);
+    QStringList results;
+    for (int i = 1; i <= dice; i++) {
+        results.append(QString::number(AOClient::genRand(1, sides) + roll_modifier));
+    }
+    QString total_results = results.join(" ");
+    if (p_roll) {
+        if (roll_modifier)
+            sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
+        else
+            sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
+        return;
+    }
+    QString l_sender_name = getSenderName(m_id);
+    if (roll_modifier)
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
+    else
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
 }
 
 QString AOClient::getAreaTimer(int area_idx, int timer_idx)

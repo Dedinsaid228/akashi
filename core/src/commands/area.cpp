@@ -808,7 +808,7 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
         return;
     }
 
-    server->addArea(l_area_name, server->getAreaCount(), server->getHubName(m_hub));
+    server->addArea(l_area_name, server->getAreaCount(), QString::number(m_hub)); // Why the fuck instead QString::number was fucking getHubName? 🗿🗿🗿
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients)

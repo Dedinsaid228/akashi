@@ -38,6 +38,7 @@ class ACLRole
         IPIDINFO = 1 << 19,
         GM = 1 << 20,
         SAVEAREA = 1 << 21,
+        CONFRELOAD = 1 << 22,
         SUPER = 0xffffffff,
     };
     Q_DECLARE_FLAGS(Permissions, Permission);

@@ -96,7 +96,7 @@ void ULogger::logCMD(const QString &f_char_name, const QString &f_ipid, const QS
     }
     else {
         l_logEntry = QString(m_logtext.value("cmd") + "\n")
-                         .arg(l_time, f_area_name + " (" + f_hub + ")", f_char_name, f_ooc_name, f_command, f_args, f_ipid, f_uid, f_hwid);
+                         .arg(l_time, f_area_name + " [HUB: " + f_hub + "]", f_char_name, f_ooc_name, f_command, f_args, f_ipid, f_uid, f_hwid);
     }
     updateAreaBuffer(f_area_name, l_logEntry);
 }

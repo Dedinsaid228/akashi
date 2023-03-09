@@ -157,6 +157,7 @@ void Server::start()
 
     // Get IP bans
     m_ipban_list = ConfigManager::iprangeBans();
+    m_ipignore_list = ConfigManager::ipingoreBans();
 
     // Rate-Limiter for IC-Chat
     m_message_floodguard_timer = new QTimer(this);
@@ -251,7 +252,9 @@ void Server::clientConnected()
     client->clientConnected();
 
     auto ban = db_manager->isIPBanned(client->getIpid());
+    auto hwidban = db_manager->isIPBanned(client->getIpid());
     bool is_banned = ban.first;
+    bool is_hwid_banned = hwidban.first;
 
     for (AOClient *joined_client : qAsConst(m_clients)) {
         if (client->m_remote_ip.isEqual(joined_client->m_remote_ip))
@@ -267,7 +270,13 @@ void Server::clientConnected()
         socket->write(ban_reason->toUtf8());
     }
 
-    if (is_banned || is_at_multiclient_limit) {
+    if (is_hwid_banned) {
+        QString reason = hwidban.second;
+        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        socket->write(ban_reason->toUtf8());
+    }
+
+    if (is_banned || is_hwid_banned || is_at_multiclient_limit) {
         socket->flush();
         client->deleteLater();
         socket->close();
@@ -342,7 +351,9 @@ void Server::ws_clientConnected()
     client->calculateIpid();
     client->clientConnected();
     auto ban = db_manager->isIPBanned(client->getIpid());
+    auto hwidban = db_manager->isIPBanned(client->getIpid());
     bool is_banned = ban.first;
+    bool is_hwid_banned = hwidban.first;
     for (AOClient *joined_client : qAsConst(m_clients)) {
         if (client->m_remote_ip.isEqual(joined_client->m_remote_ip))
             multiclient_count++;
@@ -356,7 +367,14 @@ void Server::ws_clientConnected()
         AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
         socket->sendTextMessage(ban_reason->toUtf8());
     }
-    if (is_banned || is_at_multiclient_limit) {
+
+    if (is_hwid_banned) {
+        QString reason = hwidban.second;
+        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        socket->sendTextMessage(ban_reason->toUtf8());
+    }
+
+    if (is_banned || is_hwid_banned || is_at_multiclient_limit) {
         client->deleteLater();
         l_socket->close(QWebSocketProtocol::CloseCodeNormal);
         markIDFree(user_id);
@@ -455,7 +473,7 @@ QHostAddress Server::parseToIPv4(QHostAddress f_remote_ip)
     return l_remote_ip;
 }
 
-void Server::reloadSettings()
+void Server::reloadSettings(int f_uid)
 {
     ConfigManager::reloadSettings();
     emit reloadRequest(ConfigManager::serverName(), ConfigManager::serverDescription());
@@ -463,6 +481,7 @@ void Server::reloadSettings()
     handleDiscordIntegration();
     logger->loadLogtext();
     m_ipban_list = ConfigManager::iprangeBans();
+    m_ipignore_list = ConfigManager::ipingoreBans();
     acl_roles_handler->loadFile("config/acl_roles.ini");
     command_extension_collection->loadFile("config/command_extensions.ini");
     m_characters = ConfigManager::charlist();
@@ -470,6 +489,19 @@ void Server::reloadSettings()
     music_manager->reloadRequest();
     ConfigManager::musiclist();
     m_music_list = music_manager->rootMusiclist();
+
+    broadcast(PacketFactory::createPacket("SC", getCharacters()));
+    broadcast(PacketFactory::createPacket("FM", getMusicList()));
+
+    const QVector<AOClient *> l_clients = getClients();
+    for (AOClient *l_client : l_clients)
+        getAreaById(l_client->m_current_area)->changeCharacter(l_client->m_befrel_char_id, getCharID(l_client->m_current_char));
+
+    for (int i = 0; i < getAreaCount(); i++)
+        updateCharsTaken(getAreaById(i));
+
+    AOClient *l_client = getClientByID(f_uid);
+    l_client->sendServerMessage("Configurations is reloaded.");
 }
 
 void Server::hubListen(QString message, int area_index, QString sender_name)
@@ -624,6 +656,11 @@ int Server::getCharID(QString char_name)
 QVector<AreaData *> Server::getAreas()
 {
     return m_areas;
+}
+
+QVector<HubData *> Server::getHubs()
+{
+    return m_hubs;
 }
 
 QVector<AreaData *> Server::getClientAreas(int f_hub)
@@ -807,6 +844,20 @@ bool Server::isIPBanned(QHostAddress f_remote_IP)
     bool l_match_found = false;
     for (const QString &l_ipban : qAsConst(m_ipban_list)) {
         if (f_remote_IP.isInSubnet(QHostAddress::parseSubnet(l_ipban))) {
+            if (!isIPIngored(f_remote_IP.toString().replace(":ffff:", ""))) {
+                l_match_found = true;
+                break;
+            }
+        }
+    }
+    return l_match_found;
+}
+
+bool Server::isIPIngored(QString ip)
+{
+    bool l_match_found = false;
+    for (const QString &l_ip : qAsConst(m_ipignore_list)) {
+        if (l_ip == ip) {
             l_match_found = true;
             break;
         }

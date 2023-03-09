@@ -101,7 +101,7 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"delete", {{ACLRole::CM}, 0, &AOClient::cmdDeleteStatement}},
     {"update", {{ACLRole::CM}, 0, &AOClient::cmdUpdateStatement}},
     {"add", {{ACLRole::CM}, 0, &AOClient::cmdAddStatement}},
-    {"reload", {{ACLRole::SUPER}, 0, &AOClient::cmdReload}},
+    {"reload", {{ACLRole::CONFRELOAD}, 0, &AOClient::cmdReload}},
     {"disemvowel", {{ACLRole::MUTE}, 1, &AOClient::cmdDisemvowel}},
     {"undisemvowel", {{ACLRole::MUTE}, 1, &AOClient::cmdUnDisemvowel}},
     {"shake", {{ACLRole::MUTE}, 1, &AOClient::cmdShake}},
@@ -221,6 +221,11 @@ void AOClient::clientDisconnected(int f_hub)
     const QVector<AreaData *> l_areas = server->getAreas();
     for (AreaData *l_area : l_areas) {
         l_updateLocks = l_updateLocks || l_area->removeOwner(m_id);
+    }
+
+    const QVector<HubData *> l_hubs = server->getHubs();
+    for (HubData *l_hub : l_hubs) {
+        l_hub->removeHubOwner(m_id);
     }
 
     if (l_updateLocks)

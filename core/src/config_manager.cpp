@@ -229,6 +229,18 @@ QStringList ConfigManager::iprangeBans()
     return l_iprange_bans;
 }
 
+QStringList ConfigManager::ipingoreBans()
+{
+    QStringList l_iprange_ignore;
+    QFile l_file("config/iprange_ignore.txt");
+    l_file.open(QIODevice::ReadOnly | QIODevice::Text);
+    while (!(l_file.atEnd())) {
+        l_iprange_ignore.append(l_file.readLine().trimmed());
+    }
+    l_file.close();
+    return l_iprange_ignore;
+}
+
 void ConfigManager::reloadSettings()
 {
     m_settings->sync();

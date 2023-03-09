@@ -21,6 +21,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 #include <QFile>
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QMap>
@@ -259,6 +261,8 @@ class Server : public QObject
      **/
     bool isIPBanned(QHostAddress f_remote_IP);
 
+    bool isIPIngored(QString ip);
+
     void request_version(const std::function<void(QString)> &cb);
 
     void check_version();
@@ -286,6 +290,8 @@ class Server : public QObject
      * @return A list of areas.
      */
     QVector<AreaData *> getAreas();
+
+    QVector<HubData *> getHubs();
 
     QVector<AreaData *> getClientAreas(int f_hub);
 
@@ -372,9 +378,11 @@ class Server : public QObject
     /**
      * @brief Convenience class to call a reload of available configuraiton elements.
      */
-    void reloadSettings();
+    void reloadSettings(int f_uid);
 
     void hubListen(QString message, int area_index, QString sender_name);
+
+    QFutureWatcher<void> reload_watcher;
 
   public slots:
     /**
@@ -582,6 +590,11 @@ class Server : public QObject
      * @brief Collection of all IPs that are banned.
      */
     QStringList m_ipban_list;
+
+    /**
+     * @brief Collection of all IPs that are ingored.
+     */
+    QStringList m_ipignore_list;
 
     /**
      * @brief Timer until the next IC message can be sent.

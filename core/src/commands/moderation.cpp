@@ -22,6 +22,7 @@
 #include "include/db_manager.h"
 #include "include/packet/packet_factory.h"
 #include "include/server.h"
+#include <QtConcurrent/QtConcurrent>
 
 // This file is for commands under the moderation category in aoclient.h
 // Be sure to register the command in the header before adding it here!
@@ -184,7 +185,7 @@ void AOClient::cmdMods(int argc, QStringList argv)
 void AOClient::cmdHelp(int argc, QStringList argv)
 {
     if (argc == 0) {
-        sendServerMessage("(!) It is better to use the wiki: https://github.com/Ddedinya/kakashi/wiki"
+        sendServerMessage("(!) It's better to use the wiki: https://github.com/Ddedinya/kakashi/wiki"
                           "/help area - commands relate to area management.\n"
                           "/help areaedit - commands to manage areas.\n"
                           "/help hubs - commands to manage hubs.\n"
@@ -246,8 +247,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "If there is a [CM] prefix after the command description, then to use the command you need to be CM in area.\n"
                           "/8ball [text] - answers a question.\n"
                           "/coinflip - flip a coin.\n"
-                          "/roll (value/X Y) - roll a die. The result is shown publicly. X is the number of dice, Y is the maximum value on the die.\n"
-                          "/rollp (value/X Y) - roll a die privately. Same as /roll but the result is only shown to you and the CMs.\n"
+                          "/roll (XdY) - roll a die. The result is shown publicly. X is the number of dice, Y is the maximum value on the die.\n"
+                          "/rollp (XdY) - roll a die privately. Same as /roll but the result is only shown to you and the CMs.\n"
                           "/subtheme [subtheme name] - changes the subtheme of all clients in the current area. [CM]\n"
                           "/notecard [message] - writes a note card in the current area.\n"
                           "/notecard_reveal - reveals all note cards in the current area. [CM]\n"
@@ -725,22 +726,17 @@ void AOClient::cmdReload(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
+    if (server->reload_watcher.isRunning()) {
+        sendServerMessage("Another reloading configurations is still not finished.");
+        return;
+    }
+
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients)
         l_client->m_befrel_char_id = server->getCharID(l_client->m_current_char);
 
-    // Todo: Make this a signal when splitting AOClient and Server.
-    server->reloadSettings();
-    server->broadcast(PacketFactory::createPacket("SC", server->getCharacters()));
-    server->broadcast(PacketFactory::createPacket("FM", server->getMusicList()));
-
-    for (AOClient *l_client : l_clients)
-        server->getAreaById(l_client->m_current_area)->changeCharacter(l_client->m_befrel_char_id, server->getCharID(l_client->m_current_char));
-
-    for (int i = 0; i < server->getAreaCount(); i++)
-        server->updateCharsTaken(server->getAreaById(i));
-
-    sendServerMessage("Reloaded configurations");
+    server->reload_watcher.setFuture(QtConcurrent::run(&Server::reloadSettings, server, m_id));
+    sendServerMessage("Reloading configurations...");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RELOAD", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 

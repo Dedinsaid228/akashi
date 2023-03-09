@@ -196,6 +196,8 @@ class ConfigManager
      */
     static QStringList iprangeBans();
 
+    static QStringList ipingoreBans();
+
     /**
      * @brief Returns true if the server should advertise to the master server.
      *
