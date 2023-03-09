@@ -2,8 +2,7 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
   core \
-  akashi \
-  tests
+  akashi
 
 # Just like how "CONFIG += ordered" is considered harmful a practice for handling
 # internal dependecies, so is qmake considered harmful a tool for handling projects

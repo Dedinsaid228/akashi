@@ -735,7 +735,12 @@ void AOClient::cmdReload(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->m_befrel_char_id = server->getCharID(l_client->m_current_char);
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    server->reload_watcher.setFuture(QtConcurrent::run(server, &Server::reloadSettings, m_id));
+#else
     server->reload_watcher.setFuture(QtConcurrent::run(&Server::reloadSettings, server, m_id));
+#endif
+
     sendServerMessage("Reloading configurations...");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RELOAD", "", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
