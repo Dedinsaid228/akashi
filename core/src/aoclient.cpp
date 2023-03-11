@@ -599,6 +599,11 @@ void AOClient::sendServerBroadcast(QString message)
     server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}));
 }
 
+void AOClient::sendServerMessageHub(QString message)
+{
+    server->broadcast(m_hub, PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}));
+}
+
 bool AOClient::checkPermission(ACLRole::Permission f_permission) const
 {
     if (f_permission == ACLRole::NONE) {

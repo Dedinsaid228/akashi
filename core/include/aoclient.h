@@ -454,6 +454,8 @@ class AOClient : public QObject
      */
     void sendServerBroadcast(QString message);
 
+    void sendServerMessageHub(QString message);
+
     /**
      * @brief The main function of the automoderator.
      */

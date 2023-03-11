@@ -45,24 +45,6 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     client.fullArup(); // Give client all the area data
     client.getServer()->check_version();
 
-    QString version_message = "This server works on kakashi " + QCoreApplication::applicationVersion() + ". ";
-
-    if (QCoreApplication::applicationVersion() == "unstable")
-        version_message += "Github: https://github.com/Ddedinya/kakashi \n";
-    else if (client.getServer()->m_latest_version.isEmpty())
-        version_message += "Unable to get the latest version. \n";
-    else if (QCoreApplication::applicationVersion() == client.getServer()->m_latest_version)
-        version_message += "It's latest version. \n";
-    else
-        version_message += "New version available! \n";
-
-    if (!client.getServer()->m_latest_version.isEmpty() && QCoreApplication::applicationVersion() != "unstable")
-        version_message += "Github: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
-
-    version_message += "Built on Qt " + QLatin1String(QT_VERSION_STR) + ". Build date: " + QLatin1String(__DATE__);
-
-    client.sendServerMessage(version_message);
-
     if (client.getServer()->timer->isActive()) {
         client.sendPacket("TI", {"0", "2"});
         client.sendPacket("TI", {"0", "0", QString::number(QTime(0, 0).msecsTo(QTime(0, 0).addMSecs(client.getServer()->timer->remainingTime())))});
@@ -92,6 +74,37 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
 
     if (client.m_web_client && ConfigManager::webUsersSpectableOnly())
         client.m_wuso = true;
+
+    QString info_message = "This server works on kakashi " + QCoreApplication::applicationVersion() + ". ";
+
+    if (QCoreApplication::applicationVersion() == "unstable")
+        info_message += "Github: https://github.com/Ddedinya/kakashi \n";
+    else if (client.getServer()->m_latest_version.isEmpty())
+        info_message += "Unable to get the latest version. \n";
+    else if (QCoreApplication::applicationVersion() == client.getServer()->m_latest_version)
+        info_message += "It's latest version. \n";
+    else
+        info_message += "New version available! \n";
+
+    if (!client.getServer()->m_latest_version.isEmpty() && QCoreApplication::applicationVersion() != "unstable")
+        info_message += "Github: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
+
+    info_message += "Built on Qt " + QLatin1String(QT_VERSION_STR) + ". Build date: " + QLatin1String(__DATE__);
+
+    QStringList l_hub_list;
+    for (int i = 0; i < client.getServer()->getHubsCount(); i++) {
+        HubData *l_hub = client.getServer()->getHubById(i);
+        QString l_playercount;
+        if (l_hub->getHidePlayerCount())
+            l_playercount = "?";
+        else
+            l_playercount = QString::number(l_hub->getHubPlayerCount());
+
+        l_hub_list.append("[" + QString::number(i) + "] " + client.getServer()->getHubName(i) + " with " + l_playercount + " players.");
+    }
+    info_message += "\nYou are in hub [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) + "\nHub list:\n" + l_hub_list.join("\n") + "\nTo view a more detailed list, you can use /hub command.";
+
+    client.sendServerMessage(info_message);
 }
 
 bool PacketRD::validatePacket() const

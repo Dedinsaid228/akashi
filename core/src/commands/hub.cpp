@@ -11,16 +11,26 @@ void AOClient::cmdHub(int argc, QStringList argv)
         for (int i = 0; i < server->getHubsCount(); i++) {
             HubData *l_hub = server->getHubById(i);
             QString l_playercount;
-
             if (l_hub->getHidePlayerCount())
-                l_playercount = "HIDDEN count";
+                l_playercount = "?";
             else
                 l_playercount = QString::number(l_hub->getHubPlayerCount());
 
-            hub_list.append("[" + QString::number(i) + "] " + server->getHubName(i) + " with " + l_playercount + " players. [" + getHubLockStatus(i) + "]");
+            QString l_hub_string = "[" + QString::number(i) + "] " + server->getHubName(i) + " with " + l_playercount + " players. [" + getHubLockStatus(i) + "]";
+            QStringList l_hubs_owners;
+            const QList<int> l_owner_ids = l_hub->hubOwners();
+            for (int l_owner_id : l_owner_ids) {
+                AOClient *l_owner = server->getClientByID(l_owner_id);
+                QString l_sender_name = getSenderName(l_owner->m_id);
+                l_hubs_owners.append("[" + QString::number(l_owner->m_id) + "] " + l_sender_name);
+            }
+            if (!l_hubs_owners.isEmpty())
+                l_hub_string += " [GM: " + l_hubs_owners.join(", ") + "]";
+
+            hub_list.append(l_hub_string);
         }
 
-        sendServerMessage("Current hub is [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + "\nHub list:\n" + hub_list.join("\n"));
+        sendServerMessage("You are in hub [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + "\nHub list:\n" + hub_list.join("\n"));
     }
     else {
         bool ok;
@@ -88,6 +98,8 @@ void AOClient::cmdGm(int argc, QStringList argv)
         l_hub->addHubOwner(m_id);
         l_hub->hubInvite(m_id);
         sendServerMessage("You is now GM in this hub.");
+        QString l_sender_name = getSenderName(m_id);
+        sendServerMessageHub("[" + QString::number(m_id) + "] " + l_sender_name + " is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
     else if (!l_hub->hubOwners().contains(m_id)) {
@@ -111,6 +123,8 @@ void AOClient::cmdGm(int argc, QStringList argv)
         l_hub->addHubOwner(l_owner_candidate->m_id);
         l_hub->hubInvite(l_owner_candidate->m_id);
         l_owner_candidate->sendServerMessage("You is now GM in this hub.");
+        QString l_sender_name = getSenderName(l_owner_candidate->m_id);
+        sendServerMessageHub("[" + QString::number(l_owner_candidate->m_id) + "] " + l_sender_name + " is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(l_owner_candidate->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
     else
@@ -135,6 +149,8 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
         }
 
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        QString l_sender_name = getSenderName(m_id);
+        sendServerMessageHub("[" + QString::number(m_id) + "] " + l_sender_name + " no longer GM in this hub.");
         sendServerMessage("You are no longer GM in this hub.");
         m_hub_listen = false;
     }
@@ -160,6 +176,8 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
         }
 
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+        QString l_sender_name = getSenderName(target->m_id);
+        sendServerMessageHub("[" + QString::number(target->m_id) + "] " + l_sender_name + " no longer GM in this hub.");
         target->sendServerMessage("You have been unGMed.");
         target->m_hub_listen = false;
     }
