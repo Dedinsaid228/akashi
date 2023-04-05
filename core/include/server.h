@@ -233,7 +233,7 @@ class Server : public QObject
      *
      * @param ENUM to determine the targets of the altered packet.
      */
-    void broadcast(std::shared_ptr<AOPacket> packet, std::shared_ptr<AOPacket>other_packet, enum TARGET_TYPE target);
+    void broadcast(std::shared_ptr<AOPacket> packet, std::shared_ptr<AOPacket> other_packet, enum TARGET_TYPE target);
 
     void broadcast(int hub_index, std::shared_ptr<AOPacket> packet);
 

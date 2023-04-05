@@ -18,4 +18,3 @@ class PacketFactory
 
     static inline type_map class_map;
 };
-
