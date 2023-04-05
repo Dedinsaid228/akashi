@@ -121,8 +121,9 @@ void Server::start()
 
     // Build our music manager.
     MusicList l_musiclist = ConfigManager::musiclist();
-    music_manager = new MusicManager(ConfigManager::cdnList(), l_musiclist, ConfigManager::ordered_songs(), this);    connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
-    connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
+    music_manager = new MusicManager(ConfigManager::cdnList(), l_musiclist, ConfigManager::ordered_songs(), this);
+    connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
+    connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<std::shared_ptr<AOPacket>, int>::of(&Server::broadcast));
 
     // Get musiclist from config file
     m_music_list = music_manager->rootMusiclist();
@@ -135,7 +136,7 @@ void Server::start()
         AreaData *l_area = new AreaData(area_name, i, music_manager);
         m_areas.insert(i, l_area);
         connect(l_area, &AreaData::sendAreaPacket,
-                this, QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
+                this, QOverload<std::shared_ptr<AOPacket>, int>::of(&Server::broadcast));
         connect(l_area, &AreaData::userJoinedArea,
                 music_manager, &MusicManager::userJoinedArea);
         connect(l_area, &AreaData::sendAreaPacketClient,
@@ -189,7 +190,7 @@ void Server::addArea(QString f_areaName, int f_areaIndex, QString f_hubIndex)
     m_areas.insert(f_areaIndex, l_area);
     m_area_names.insert(f_areaIndex, f_areaName);
     connect(l_area, &AreaData::sendAreaPacket, this,
-            QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
+            QOverload<std::shared_ptr<AOPacket>, int>::of(&Server::broadcast));
     connect(l_area, &AreaData::userJoinedArea,
             music_manager, &MusicManager::userJoinedArea);
     music_manager->registerArea(f_areaIndex);
@@ -522,7 +523,7 @@ void Server::broadcast(std::shared_ptr<AOPacket> packet, int area_index)
     }
 }
 
-void Server::broadcast(std::shared_ptr<AOPacket>packet)
+void Server::broadcast(std::shared_ptr<AOPacket> packet)
 {
     for (AOClient *client : qAsConst(m_clients)) {
         if (!client->m_blinded)
