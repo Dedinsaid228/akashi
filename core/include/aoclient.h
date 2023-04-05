@@ -19,6 +19,7 @@
 #define AOCLIENT_H
 
 #include <algorithm>
+#include <memory>
 
 #include <QDateTime>
 #include <QHostAddress>
