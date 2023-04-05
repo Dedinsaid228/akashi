@@ -56,7 +56,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
 
     if (l_message.length() == 0 || l_message.length() > ConfigManager::maxCharacters())
         return;
-    AOPacket *final_packet = PacketFactory::createPacket("CT", {l_ooc_name, l_message, "0"});
+    std::shared_ptr<AOPacket> final_packet = PacketFactory::createPacket("CT", {l_ooc_name, l_message, "0"});
     if (l_message.at(0) == '/') {
         QStringList l_cmd_argv = l_message.split(" ", akashi::SkipEmptyParts);
         QString l_command = l_cmd_argv[0].trimmed().toLower();

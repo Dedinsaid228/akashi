@@ -102,17 +102,29 @@ class ULogger : public QObject
      */
     void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 
+    /**
+     * @brief Logs any client disconnects.
+     */
     void logDisconnect(const QString &f_char_name, const QString &f_ipid, const QString &f_ooc_name, const QString &f_area_name,
                        const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
+    /**
+     * @brief Logs any music change in areas.
+     */
     void logMusic(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                   const QString &f_area_name, const QString &f_music, const QString &f_uid,
                   const QString &f_hwid, const QString &f_hub);
 
+    /**
+     * @brief Logs any client's character change.
+     */
     void logChangeChar(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changechar, const QString &f_uid,
                        const QString &f_hwid, const QString &f_hub);
 
+    /**
+     * @brief Logs any client's area change.
+     */
     void logChangeArea(const QString &f_char_Name, const QString &f_ooc_name, const QString &f_ipid,
                        const QString &f_area_name, const QString &f_changearea, const QString &f_uid,
                        const QString &f_hwid, const QString &f_hub);

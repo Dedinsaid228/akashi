@@ -36,7 +36,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
-    AOPacket *validated_packet = validateIcPacket(client);
+    std::shared_ptr<AOPacket> validated_packet = validateIcPacket(client);
 
     if (validated_packet->getPacketInfo().header == "INVALID")
         return;
@@ -64,7 +64,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
         area->startMessageFloodguard(ConfigManager::messageFloodguard());
 }
 
-AOPacket *PacketMS::validateIcPacket(AOClient &client) const
+std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
 {
     // Welcome to the super cursed server-side IC chat validation hell
 
@@ -76,7 +76,7 @@ AOPacket *PacketMS::validateIcPacket(AOClient &client) const
     // This packet can be sent with a minimum required args of 15.
     // 2.6+ extensions raise this to 19, and 2.8 further raises this to 26.
 
-    AOPacket *l_invalid = PacketFactory::createPacket("INVALID", {});
+    std::shared_ptr<AOPacket> l_invalid = PacketFactory::createPacket("INVALID", {});
     QStringList l_args;
     if (client.isSpectator() || client.m_current_char.isEmpty() || !client.m_joined)
         // Spectators cannot use IC

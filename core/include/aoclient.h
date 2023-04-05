@@ -736,7 +736,7 @@ class AOClient : public QObject
      *
      * @param packet The incoming packet.
      */
-    void handlePacket(AOPacket *packet);
+    void handlePacket(std::shared_ptr<AOPacket> packet);
 
     /**
      * @brief A slot for when the client disconnects from the server.
@@ -750,7 +750,7 @@ class AOClient : public QObject
      *
      * @param packet The packet to send.
      */
-    void sendPacket(AOPacket *packet);
+    void sendPacket(std::shared_ptr<AOPacket> packet);
 
     /**
      * @overload

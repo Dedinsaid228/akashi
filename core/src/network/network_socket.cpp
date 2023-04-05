@@ -107,7 +107,7 @@ void NetworkSocket::readData()
     }
 
     for (const QString &l_single_packet : qAsConst(l_all_packets)) {
-        AOPacket *l_packet = PacketFactory::createPacket(l_single_packet);
+        std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket(l_single_packet);
         if (!l_packet) {
             qDebug() << "Unimplemented packet: " << l_single_packet;
             continue;
@@ -133,7 +133,7 @@ void NetworkSocket::ws_readData(QString f_data)
     }
 
     for (const QString &l_single_packet : qAsConst(l_all_packets)) {
-        AOPacket *l_packet = PacketFactory::createPacket(l_single_packet);
+        std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket(l_single_packet);
         if (!l_packet) {
             qDebug() << "Unimplemented packet: " << l_single_packet;
             continue;
@@ -143,7 +143,7 @@ void NetworkSocket::ws_readData(QString f_data)
     }
 }
 
-void NetworkSocket::write(AOPacket *f_packet)
+void NetworkSocket::write(std::shared_ptr<AOPacket> f_packet)
 {
     if (m_socket_type == TCP) {
         m_client_socket.tcp->write(f_packet->toUtf8());

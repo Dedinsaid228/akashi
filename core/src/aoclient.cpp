@@ -256,7 +256,7 @@ void AOClient::clientConnected()
     }
 }
 
-void AOClient::handlePacket(AOPacket *packet)
+void AOClient::handlePacket(std::shared_ptr<AOPacket> packet)
 {
 #ifdef NET_DEBUG
     qDebug() << "Received packet:" << packet->getPacketInfo().header << ":" << packet->getContent() << "args length:" << packet->getContent().length();
@@ -550,7 +550,7 @@ void AOClient::fullArup()
     arup(ARUPType::LOCKED, false, m_hub);
 }
 
-void AOClient::sendPacket(AOPacket *packet)
+void AOClient::sendPacket(std::shared_ptr<AOPacket> packet)
 {
 #ifdef NET_DEBUG
     qDebug() << "Sent packet:" << packet->getPacketInfo().header << ":" << packet->getContent();

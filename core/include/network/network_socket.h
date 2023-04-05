@@ -75,7 +75,7 @@ class NetworkSocket : public QObject
      *
      * @param Packet to be written to the socket.
      */
-    void write(AOPacket *f_packet);
+    void write(std::shared_ptr<AOPacket> f_packet);
 
   signals:
 
@@ -83,7 +83,7 @@ class NetworkSocket : public QObject
      * @brief handlePacket
      * @param f_packet
      */
-    void handlePacket(AOPacket *sf_packet);
+    void handlePacket(std::shared_ptr<AOPacket> sf_packet);
 
     /**
      * @brief Emitted when the socket has been closed and the client is disconnected.

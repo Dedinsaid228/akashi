@@ -120,10 +120,9 @@ void Server::start()
     m_backgrounds = ConfigManager::backgrounds();
 
     // Build our music manager.
-    ConfigManager::musiclist();
-    music_manager = new MusicManager(ConfigManager::cdnList(), ConfigManager::musiclist(), ConfigManager::ordered_songs(), this);
-    connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
-    connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<AOPacket *, int>::of(&Server::broadcast));
+    MusicList l_musiclist = ConfigManager::musiclist();
+    music_manager = new MusicManager(ConfigManager::cdnList(), l_musiclist, ConfigManager::ordered_songs(), this);    connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
+    connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
 
     // Get musiclist from config file
     m_music_list = music_manager->rootMusiclist();
@@ -136,9 +135,11 @@ void Server::start()
         AreaData *l_area = new AreaData(area_name, i, music_manager);
         m_areas.insert(i, l_area);
         connect(l_area, &AreaData::sendAreaPacket,
-                this, QOverload<AOPacket *, int>::of(&Server::broadcast));
+                this, QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
         connect(l_area, &AreaData::userJoinedArea,
                 music_manager, &MusicManager::userJoinedArea);
+        connect(l_area, &AreaData::sendAreaPacketClient,
+                this, &Server::unicast);
         music_manager->registerArea(i);
         QSettings *areas_ini = ConfigManager::areaData();
         areas_ini->beginGroup(area_name);
@@ -188,7 +189,7 @@ void Server::addArea(QString f_areaName, int f_areaIndex, QString f_hubIndex)
     m_areas.insert(f_areaIndex, l_area);
     m_area_names.insert(f_areaIndex, f_areaName);
     connect(l_area, &AreaData::sendAreaPacket, this,
-            QOverload<AOPacket *, int>::of(&Server::broadcast));
+            QOverload<std::shared_ptr<AOPacket> , int>::of(&Server::broadcast));
     connect(l_area, &AreaData::userJoinedArea,
             music_manager, &MusicManager::userJoinedArea);
     music_manager->registerArea(f_areaIndex);
@@ -230,7 +231,7 @@ void Server::clientConnected()
     // Too many players. Reject connection!
     // This also enforces the maximum playercount.
     if (m_available_ids.empty()) {
-        AOPacket *disconnect_reason = PacketFactory::createPacket("BD", {"Maximum playercount has been reached."});
+        std::shared_ptr<AOPacket> disconnect_reason = PacketFactory::createPacket("BD", {"Maximum playercount has been reached."});
         socket->write(disconnect_reason->toUtf8());
         socket->flush();
         socket->close();
@@ -266,13 +267,13 @@ void Server::clientConnected()
 
     if (is_banned) {
         QString reason = ban.second;
-        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        std::shared_ptr<AOPacket> ban_reason = PacketFactory::createPacket("BD", {reason});
         socket->write(ban_reason->toUtf8());
     }
 
     if (is_hwid_banned) {
         QString reason = hwidban.second;
-        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        std::shared_ptr<AOPacket> ban_reason = PacketFactory::createPacket("BD", {reason});
         socket->write(ban_reason->toUtf8());
     }
 
@@ -291,7 +292,7 @@ void Server::clientConnected()
 
     if (isIPBanned(l_remote_ip)) {
         QString l_reason = "Your IP has been banned by a moderator.";
-        AOPacket *l_ban_reason = PacketFactory::createPacket("BD", {l_reason});
+        std::shared_ptr<AOPacket> l_ban_reason = PacketFactory::createPacket("BD", {l_reason});
         socket->write(l_ban_reason->toUtf8());
         client->deleteLater();
         socket->close();
@@ -318,7 +319,7 @@ void Server::clientConnected()
     // This is the infamous workaround for
     // tsuserver4. It should disable fantacrypt
     // completely in any client 2.4.3 or newer
-    AOPacket *decryptor = PacketFactory::createPacket("decryptor", {"NOENCRYPT"});
+    std::shared_ptr<AOPacket> decryptor = PacketFactory::createPacket("decryptor", {"NOENCRYPT"});
     client->sendPacket(decryptor);
     hookupAOClient(client);
 
@@ -335,7 +336,7 @@ void Server::ws_clientConnected()
     // Too many players. Reject connection!
     // This also enforces the maximum playercount.
     if (m_available_ids.empty()) {
-        AOPacket *disconnect_reason = PacketFactory::createPacket("BD", {"Maximum playercount has been reached."});
+        std::shared_ptr<AOPacket> disconnect_reason = PacketFactory::createPacket("BD", {"Maximum playercount has been reached."});
         l_socket->write(disconnect_reason);
         l_socket->close();
         l_socket->deleteLater();
@@ -364,13 +365,13 @@ void Server::ws_clientConnected()
 
     if (is_banned) {
         QString reason = ban.second;
-        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        std::shared_ptr<AOPacket> ban_reason = PacketFactory::createPacket("BD", {reason});
         socket->sendTextMessage(ban_reason->toUtf8());
     }
 
     if (is_hwid_banned) {
         QString reason = hwidban.second;
-        AOPacket *ban_reason = PacketFactory::createPacket("BD", {reason});
+        std::shared_ptr<AOPacket> ban_reason = PacketFactory::createPacket("BD", {reason});
         socket->sendTextMessage(ban_reason->toUtf8());
     }
 
@@ -388,7 +389,7 @@ void Server::ws_clientConnected()
 
     if (isIPBanned(l_remote_ip)) {
         QString l_reason = "Your IP has been banned by a moderator.";
-        AOPacket *l_ban_reason = PacketFactory::createPacket("BD", {l_reason});
+        std::shared_ptr<AOPacket> l_ban_reason = PacketFactory::createPacket("BD", {l_reason});
         l_socket->write(l_ban_reason);
         client->deleteLater();
         l_socket->close(QWebSocketProtocol::CloseCodeNormal);
@@ -413,7 +414,7 @@ void Server::ws_clientConnected()
     // This is the infamous workaround for
     // tsuserver4. It should disable fantacrypt
     // completely in any client 2.4.3 or newer
-    AOPacket *decryptor = PacketFactory::createPacket("decryptor", {"NOENCRYPT"});
+    std::shared_ptr<AOPacket> decryptor = PacketFactory::createPacket("decryptor", {"NOENCRYPT"});
     client->sendPacket(decryptor);
     hookupAOClient(client);
 }
@@ -428,7 +429,7 @@ void Server::updateCharsTaken(AreaData *area)
                                : QStringLiteral("0"));
     }
 
-    AOPacket *response_cc = PacketFactory::createPacket("CharsCheck", chars_taken);
+    std::shared_ptr<AOPacket> response_cc = PacketFactory::createPacket("CharsCheck", chars_taken);
 
     for (AOClient *client : qAsConst(m_clients)) {
         if (client->m_current_area == area->index()) {
@@ -436,7 +437,7 @@ void Server::updateCharsTaken(AreaData *area)
                 client->sendPacket(response_cc);
             else {
                 QStringList chars_taken_cursed = getCursedCharsTaken(client, chars_taken);
-                AOPacket *response_cc_cursed = PacketFactory::createPacket("CharsCheck", chars_taken_cursed);
+                std::shared_ptr<AOPacket> response_cc_cursed = PacketFactory::createPacket("CharsCheck", chars_taken_cursed);
                 client->sendPacket(response_cc_cursed);
             }
         }
@@ -512,7 +513,7 @@ void Server::hubListen(QString message, int area_index, QString sender_name)
     }
 }
 
-void Server::broadcast(AOPacket *packet, int area_index)
+void Server::broadcast(std::shared_ptr<AOPacket> packet, int area_index)
 {
     QVector<int> l_client_ids = m_areas.value(area_index)->joinedIDs();
     for (const int l_client_id : qAsConst(l_client_ids)) {
@@ -521,7 +522,7 @@ void Server::broadcast(AOPacket *packet, int area_index)
     }
 }
 
-void Server::broadcast(AOPacket *packet)
+void Server::broadcast(std::shared_ptr<AOPacket>packet)
 {
     for (AOClient *client : qAsConst(m_clients)) {
         if (!client->m_blinded)
@@ -529,7 +530,7 @@ void Server::broadcast(AOPacket *packet)
     }
 }
 
-void Server::broadcast(AOPacket *packet, TARGET_TYPE target)
+void Server::broadcast(std::shared_ptr<AOPacket> packet, TARGET_TYPE target)
 {
     for (AOClient *l_client : qAsConst(m_clients)) {
         switch (target) {
@@ -549,7 +550,7 @@ void Server::broadcast(AOPacket *packet, TARGET_TYPE target)
     }
 }
 
-void Server::broadcast(AOPacket *packet, AOPacket *other_packet, TARGET_TYPE target)
+void Server::broadcast(std::shared_ptr<AOPacket> packet, std::shared_ptr<AOPacket> other_packet, TARGET_TYPE target)
 {
     switch (target) {
     case TARGET_TYPE::AUTHENTICATED:
@@ -567,7 +568,7 @@ void Server::broadcast(AOPacket *packet, AOPacket *other_packet, TARGET_TYPE tar
     }
 }
 
-void Server::broadcast(int hub_index, AOPacket *packet)
+void Server::broadcast(int hub_index, std::shared_ptr<AOPacket> packet)
 {
     for (AOClient *client : qAsConst(m_clients)) {
         if (!client->m_blinded && client->m_hub == hub_index)
@@ -575,7 +576,7 @@ void Server::broadcast(int hub_index, AOPacket *packet)
     }
 }
 
-void Server::unicast(AOPacket *f_packet, int f_client_id)
+void Server::unicast(std::shared_ptr<AOPacket> f_packet, int f_client_id)
 {
     AOClient *l_client = getClientByID(f_client_id);
     if (l_client != nullptr) { // This should never happen, but safety first.

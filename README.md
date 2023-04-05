@@ -24,7 +24,7 @@ Required Qt => 5.10 and Qt Websockets
    #Ubuntu 22.04/Debian 11:
    #If you are using Debian to build, you will need Debian Backports
    #Если для компиляции используется Debian, то вам потребуется Debian Backports
-   sudoapt-get install qt6-base-dev gcc g++ libqt6websockets6-dev
+   sudo apt-get install qt6-base-dev gcc g++ libqt6websockets6-dev
 
    #Building
    #Компиляция

@@ -12,6 +12,6 @@ class PacketMS : public AOPacket
     virtual bool validatePacket() const;
 
   private:
-    AOPacket *validateIcPacket(AOClient &client) const;
+    std::shared_ptr<AOPacket> validateIcPacket(AOClient &client) const;
 };
 #endif

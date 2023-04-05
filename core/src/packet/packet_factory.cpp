@@ -1,13 +1,13 @@
 #include "include/packet/packet_factory.h"
 #include "include/packet/packet_generic.h"
-AOPacket *PacketFactory::createPacket(QString header, QStringList contents)
+std::shared_ptr<AOPacket> PacketFactory::createPacket(QString header, QStringList contents)
 {
     if (!class_map.count(header)) {
         return createInstance<PacketGeneric>(header, contents);
     }
     return class_map[header](contents);
 }
-AOPacket *PacketFactory::createPacket(QString raw_packet)
+std::shared_ptr<AOPacket> PacketFactory::createPacket(QString raw_packet)
 {
     QString header;
     QStringList contents;
@@ -31,7 +31,7 @@ AOPacket *PacketFactory::createPacket(QString raw_packet)
     }
     contents = packet_contents;
 
-    AOPacket *packet = PacketFactory::createPacket(header, contents);
+    std::shared_ptr<AOPacket> packet = PacketFactory::createPacket(header, contents);
 
     packet->unescapeContent();
     return packet;

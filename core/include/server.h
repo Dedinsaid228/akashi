@@ -206,14 +206,14 @@ class Server : public QObject
      *
      * @note Does nothing if an area by the given index does not exist.
      */
-    void broadcast(AOPacket *packet, int area_index);
+    void broadcast(std::shared_ptr<AOPacket> packet, int area_index);
 
     /**
      * @brief Sends a packet to all clients in the server.
      *
      * @param packet The packet to send to the clients.
      */
-    void broadcast(AOPacket *packet);
+    void broadcast(std::shared_ptr<AOPacket> packet);
 
     /**
      * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
@@ -222,7 +222,7 @@ class Server : public QObject
      *
      * @param ENUM to determine the targets of the altered packet.
      */
-    void broadcast(AOPacket *packet, TARGET_TYPE target);
+    void broadcast(std::shared_ptr<AOPacket> packet, TARGET_TYPE target);
 
     /**
      * @brief Sends a packet to clients, sends an altered packet to a specific usergroup.
@@ -233,9 +233,9 @@ class Server : public QObject
      *
      * @param ENUM to determine the targets of the altered packet.
      */
-    void broadcast(AOPacket *packet, AOPacket *other_packet, enum TARGET_TYPE target);
+    void broadcast(std::shared_ptr<AOPacket> packet, std::shared_ptr<AOPacket>other_packet, enum TARGET_TYPE target);
 
-    void broadcast(int hub_index, AOPacket *packet);
+    void broadcast(int hub_index, std::shared_ptr<AOPacket> packet);
 
     /**
      * @brief Sends a packet to a single client.
@@ -244,7 +244,7 @@ class Server : public QObject
      *
      * @param The temporary userID of the client.
      */
-    void unicast(AOPacket *f_packet, int f_client_id);
+    void unicast(std::shared_ptr<AOPacket> f_packet, int f_client_id);
 
     /**
      * @brief Returns the character's character ID (= their index in the character list).

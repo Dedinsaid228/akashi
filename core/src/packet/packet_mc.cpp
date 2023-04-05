@@ -67,7 +67,7 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
         else
             l_final_song = l_argument;
 
-        AOPacket *l_music_change = PacketFactory::createPacket("MC", {l_final_song, m_content[1], client.m_showname, "1", "0", l_effects});
+        std::shared_ptr<AOPacket> l_music_change = PacketFactory::createPacket("MC", {l_final_song, m_content[1], client.m_showname, "1", "0", l_effects});
         client.getServer()->broadcast(l_music_change, client.m_current_area);
 
         // Since we can't ensure a user has their showname set, we check if its empty to prevent

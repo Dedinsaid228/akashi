@@ -171,7 +171,8 @@ void AOClient::cmdMods(int argc, QStringList argv)
 
             l_entries << "OOC name: " + l_client->m_ooc_name;
             l_entries << "ID: " + QString::number(l_client->m_id);
-            l_entries << "Area: " + QString::number(l_client->m_current_area);
+            l_entries << "Hub: " + QString::number(l_client->m_hub);
+            l_entries << "Area: " + QString::number(l_client->m_area_list.indexOf(l_client->m_current_area));
             l_entries << "Character: " + l_client->m_current_char;
             l_online_count++;
         }

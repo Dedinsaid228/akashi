@@ -256,7 +256,7 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     l_message += "notice:\n\n" + f_notice;
 
     sendServerMessageArea(l_message);
-    AOPacket *l_packet = PacketFactory::createPacket("BB", {l_message});
+    std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket("BB", {l_message});
 
     if (f_global)
         server->broadcast(l_packet);
@@ -311,7 +311,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
     else
         l_play_once = "1";
 
-    AOPacket *music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
+    std::shared_ptr<AOPacket> music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
 
     if (f_hubbroadcast) {
         server->broadcast(m_hub, music_change);

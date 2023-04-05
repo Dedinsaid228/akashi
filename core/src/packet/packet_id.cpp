@@ -56,13 +56,6 @@ void PacketID::handlePacket(AreaData *area, AOClient &client) const
             client.m_web_client = true;
     }
 
-    if (client.m_version.release != 2) {
-        // No valid ID packet resolution.
-        client.sendPacket("BD", {"A protocol error has been encountered. Packet : ID\nMajor version not recognised."});
-        client.m_socket->close();
-        return;
-    }
-
     client.sendPacket("PN", {QString::number(client.getServer()->getPlayerCount()), QString::number(ConfigManager::maxPlayers()), ConfigManager::serverDescription()});
     client.sendPacket("FL", l_feature_list);
 
