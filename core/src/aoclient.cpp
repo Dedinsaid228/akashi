@@ -237,7 +237,7 @@ void AOClient::clientDisconnected(int f_hub)
 
 void AOClient::clientConnected()
 {
-    server->getDatabaseManager()->ipidip(m_ipid, m_remote_ip.toString().replace("::ffff:", ""), QDateTime::currentDateTime().toString("dd-MM-yyyy"));
+    server->getDatabaseManager()->ipidip(m_ipid, m_remote_ip.toString().replace("::ffff:", ""), QDateTime::currentDateTime().toString("dd-MM-yyyy"), m_hwid);
 
     long l_haznumdate = server->getDatabaseManager()->getHazNumDate(m_ipid);
     long l_currentdate = QDateTime::currentDateTime().toSecsSinceEpoch();

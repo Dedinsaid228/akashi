@@ -251,10 +251,9 @@ void Server::clientConnected()
     bool is_at_multiclient_limit = false;
 
     client->calculateIpid();
-    client->clientConnected();
 
     auto ban = db_manager->isIPBanned(client->getIpid());
-    auto hwidban = db_manager->isIPBanned(client->getIpid());
+    auto hwidban = db_manager->isHDIDBanned(client->getHwid());
     bool is_banned = ban.first;
     bool is_hwid_banned = hwidban.first;
 
@@ -279,6 +278,7 @@ void Server::clientConnected()
     }
 
     if (is_banned || is_hwid_banned || is_at_multiclient_limit) {
+        client->clientConnected();
         socket->flush();
         client->deleteLater();
         socket->close();

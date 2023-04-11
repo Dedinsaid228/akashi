@@ -316,12 +316,13 @@ class DBManager : public QObject
         QString ipid; //!< User's IPID.
         QString ip;   //!< User's IP.
         QString date; //!< The date the IPID was "created".
+        QString hwid;
     };
 
     /**
      * @brief Registers a IPID into the database.
      */
-    void ipidip(QString ipid, QString ip, QString date);
+    void ipidip(QString ipid, QString ip, QString date, QString hwid);
 
     /**
      * @brief Gets information on a IPID.

@@ -953,6 +953,7 @@ void AOClient::cmdIpidInfo(int argc, QStringList argv)
         l_ipid_info << "IPID: " + l_ipidip.ipid;
         l_ipid_info << "IP: " + l_ipidip.ip;
         l_ipid_info << "Created: " + l_ipidip.date;
+        l_ipid_info << "Last HWID: " + l_ipidip.hwid;
         l_ipid_info << "-----";
     }
 

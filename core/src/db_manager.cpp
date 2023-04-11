@@ -43,7 +43,7 @@ DBManager::DBManager() :
 
     QSqlQuery create_ban_table("CREATE TABLE IF NOT EXISTS bans ('ID' INTEGER, 'IPID' TEXT, 'HDID' TEXT, 'IP' TEXT, 'TIME' INTEGER, 'REASON' TEXT, 'DURATION' INTEGER, 'MODERATOR' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_user_table("CREATE TABLE IF NOT EXISTS users ('ID' INTEGER, 'USERNAME' TEXT, 'SALT' TEXT, 'PASSWORD' TEXT, 'ACL' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
-    QSqlQuery create_ipidip_table("CREATE TABLE IF NOT EXISTS ipidip ('ID' INTEGER, 'IPID' TEXT, 'IP' TEXT, 'CREATED' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
+    QSqlQuery create_ipidip_table("CREATE TABLE IF NOT EXISTS ipidip ('ID' INTEGER, 'IPID' TEXT, 'IP' TEXT, 'CREATED' TEXT, 'HWID' TEXT, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_automod_table("CREATE TABLE IF NOT EXISTS automod ('ID' INTEGER, 'IPID' TEXT, 'DATE' TEXT, 'ACTION' TEXT, 'HAZNUM' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT))");
     QSqlQuery create_automodwarns_table("CREATE TABLE IF NOT EXISTS automodwarns ('ID' INTEGER, 'IPID' TEXT, 'DATE' TEXT, 'WARNS' INTEGER, PRIMARY KEY('ID' AUTOINCREMENT))");
 
@@ -52,6 +52,17 @@ DBManager::DBManager() :
     create_ipidip_table.exec();
     create_automod_table.exec();
     create_automodwarns_table.exec();
+
+    QSqlQuery query;
+    query.prepare("SELECT HWID FROM ipidip");
+    query.setForwardOnly(true);
+    query.exec();
+    if (!query.exec()) {
+        query.clear();
+        query.prepare("ALTER TABLE ipidip ADD HWID TEXT");
+        if (!query.exec())
+            qDebug() << "SQL Error:" << query.lastError().text();
+    }
 
     if (db_version != DB_VERSION)
         updateDB(db_version);
@@ -173,9 +184,15 @@ void DBManager::addBan(BanInfo ban)
 {
     QSqlQuery query;
 
+    QList<DBManager::idipinfo> l_ipidinfo = getIpidInfo(ban.ipid);
     query.prepare("INSERT INTO BANS(IPID, HDID, IP, TIME, REASON, DURATION, MODERATOR) VALUES(?, ?, ?, ?, ?, ?, ?)");
     query.addBindValue(ban.ipid);
-    query.addBindValue(ban.hdid);
+    if (!ban.hdid.isEmpty())
+        query.addBindValue(ban.hdid);
+    else if (!l_ipidinfo.isEmpty())
+        query.addBindValue(l_ipidinfo[0].hwid);
+    else
+        query.addBindValue("");
     query.addBindValue(ban.ip.toString());
     query.addBindValue(QString::number(ban.time));
     query.addBindValue(ban.reason);
@@ -629,22 +646,40 @@ bool DBManager::ipidExist(QString ipid)
     return true;
 }
 
-void DBManager::ipidip(QString ipid, QString ip, QString date)
+void DBManager::ipidip(QString ipid, QString ip, QString date, QString hwid)
 {
     QSqlQuery query;
 
-    bool exist = ipidExist(ipid);
-
-    if (exist == false)
+    if (!ipidExist(ipid)) {
+        query.prepare("SELECT * FROM IPIDIP WHERE IPID = ?");
+        query.addBindValue(ipid);
+        idipinfo ipidip;
+        query.setForwardOnly(true);
+        query.exec();
+        while (query.next()) {
+            idipinfo ipidip;
+            ipidip.hwid = query.value(4).toString();
+            if (ipidip.hwid.isEmpty() && !hwid.isEmpty() && hwid != ipidip.hwid) {
+                query.clear();
+                query.prepare("UPDATE ipidip SET HWID = ? WHERE IPID = ?");
+                query.addBindValue(hwid);
+                query.addBindValue(ipid);
+                if (!query.exec())
+                    qDebug() << "SQL Error: " << query.lastError().text();
+            }
+        }
         return;
+    }
 
-    query.prepare("INSERT INTO IPIDIP(IPID, IP, CREATED) VALUES(?, ?, ?)");
+    query.clear();
+    query.prepare("INSERT INTO IPIDIP(IPID, IP, CREATED, HWID) VALUES(?, ?, ?, ?)");
     query.addBindValue(ipid);
     query.addBindValue(ip);
     query.addBindValue(date);
+    query.addBindValue(hwid);
 
     if (!query.exec())
-        qDebug() << "SQL Error:" << query.lastError().text();
+        qDebug() << "SQL Error: " << query.lastError().text();
 }
 
 QList<DBManager::idipinfo> DBManager::getIpidInfo(QString ipid)
@@ -662,6 +697,7 @@ QList<DBManager::idipinfo> DBManager::getIpidInfo(QString ipid)
         ipidip.ipid = query.value(1).toString();
         ipidip.ip = query.value(2).toString();
         ipidip.date = query.value(3).toString();
+        ipidip.hwid = query.value(4).toString();
         return_list.append(ipidip);
     }
 
