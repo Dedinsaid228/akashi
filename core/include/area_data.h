@@ -879,12 +879,12 @@ class AreaData : public QObject
     void toggleAreaMessageJoin();
 
     /**
-     * @brief Toggles wether testimony animations can be used in the area.
+     * @brief Toggles whether testimony animations can be used in the area.
      */
     void toggleWtceAllowed();
 
     /**
-     * @brief Toggles wether shouts can be used in the area.
+     * @brief Toggles whether shouts can be used in the area.
      */
     void toggleShoutAllowed();
 

@@ -124,7 +124,7 @@ class AOPacket
     QStringList m_content;
 
     /**
-     * @brief Wether the packet is currently escaped or not. If false, the packet is unescaped.
+     * @brief whether the packet is currently escaped or not. If false, the packet is unescaped.
      */
     bool m_escaped;
 

@@ -399,5 +399,5 @@ void AOClient::cmdVote(int argc, QStringList argv)
         }
     }
     else
-        sendServerMessage("You didn't provide an ID, you have already voted, or you are not allowed to use the command.");
+        sendServerMessage("You didn't provide an UID, you have already voted, or you are not allowed to use the command.");
 }

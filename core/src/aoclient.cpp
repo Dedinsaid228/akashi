@@ -418,7 +418,7 @@ bool AOClient::changeCharacter(int char_id)
 void AOClient::changePosition(QString new_pos)
 {
     if (new_pos == "hidden") {
-        sendServerMessage("You cannot be change position to this.");
+        sendServerMessage("You can't change position to this.");
         return;
     }
 

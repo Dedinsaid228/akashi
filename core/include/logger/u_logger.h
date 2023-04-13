@@ -98,7 +98,7 @@ class ULogger : public QObject
                     const QString &f_uid, const QString &f_hwid, const QString &f_hub);
 
     /**
-     * @brief Logs any connection attempt to the server, wether sucessful or not.
+     * @brief Logs any connection attempt to the server, whether sucessful or not.
      */
     void logConnectionAttempt(const QString &f_ipid, const QString &f_hwid);
 

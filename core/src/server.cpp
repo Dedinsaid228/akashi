@@ -159,7 +159,7 @@ void Server::start()
 
     // Get IP bans
     m_ipban_list = ConfigManager::iprangeBans();
-    m_ipignore_list = ConfigManager::ipingoreBans();
+    m_ipignore_list = ConfigManager::ipignoreBans();
 
     // Rate-Limiter for IC-Chat
     m_message_floodguard_timer = new QTimer(this);
@@ -483,7 +483,7 @@ void Server::reloadSettings(int f_uid)
     handleDiscordIntegration();
     logger->loadLogtext();
     m_ipban_list = ConfigManager::iprangeBans();
-    m_ipignore_list = ConfigManager::ipingoreBans();
+    m_ipignore_list = ConfigManager::ipignoreBans();
     acl_roles_handler->loadFile("config/acl_roles.ini");
     command_extension_collection->loadFile("config/command_extensions.ini");
     m_characters = ConfigManager::charlist();
@@ -846,7 +846,7 @@ bool Server::isIPBanned(QHostAddress f_remote_IP)
     bool l_match_found = false;
     for (const QString &l_ipban : qAsConst(m_ipban_list)) {
         if (f_remote_IP.isInSubnet(QHostAddress::parseSubnet(l_ipban))) {
-            if (!isIPIngored(f_remote_IP.toString().replace(":ffff:", ""))) {
+            if (!isIPignored(f_remote_IP.toString().replace(":ffff:", ""))) {
                 l_match_found = true;
                 break;
             }
@@ -855,7 +855,7 @@ bool Server::isIPBanned(QHostAddress f_remote_IP)
     return l_match_found;
 }
 
-bool Server::isIPIngored(QString ip)
+bool Server::isIPignored(QString ip)
 {
     bool l_match_found = false;
     for (const QString &l_ip : qAsConst(m_ipignore_list)) {

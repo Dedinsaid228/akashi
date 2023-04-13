@@ -1125,7 +1125,7 @@ class AOClient : public QObject
     void cmdClearAreaMessage(int argc, QStringList argv);
 
     /**
-     * @brief Toggles wether the client shows the area message when joining the current area.
+     * @brief Toggles whether the client shows the area message when joining the current area.
      *
      * @details No arguments.
      *
@@ -1134,7 +1134,7 @@ class AOClient : public QObject
     void cmdToggleAreaMessageOnJoin(int argc, QStringList argv);
 
     /**
-     * @brief Toggles wether the client can use testimony animations in the area.
+     * @brief Toggles whether the client can use testimony animations in the area.
      *
      * @details No arguments.
      *
@@ -1143,7 +1143,7 @@ class AOClient : public QObject
     void cmdToggleWtce(int argc, QStringList argv);
 
     /**
-     * @brief Toggles wether the client can send game shouts in the area.
+     * @brief Toggles whether the client can send game shouts in the area.
      *
      * @details No arguments.
      *

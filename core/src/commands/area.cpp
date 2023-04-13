@@ -102,7 +102,7 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         sendServerMessage("You are no longer CM in this area.");
     }
-    else {
+    else if (checkPermission(ACLRole::UNCM) && argc >= 1) {
         bool l_conv_ok = false;
         l_uid = argv[0].toInt(&l_conv_ok);
 
@@ -128,6 +128,10 @@ void AOClient::cmdUnCM(int argc, QStringList argv)
         sendServerMessageArea("[" + QString::number(l_uid) + "] " + l_sender_name + " no longer CM in this area.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         target->sendServerMessage("You have been unCMed.");
+    }
+    else {
+        sendServerMessage("You do not have permission to unCM others.");
+        return;
     }
 
     if (l_area->removeOwner(l_uid)) {
@@ -397,8 +401,8 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
         l_area->removeOwner(l_client_to_kick->m_id);
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         arup(ARUPType::CM, true, m_hub);
-        sendServerMessage("Client " + argv[0] + " kicked from area.");
-        l_client_to_kick->sendServerMessage("You kicked from area.");
+        sendServerMessage("Client " + argv[0] + " kicked from the area.");
+        l_client_to_kick->sendServerMessage("You kicked from the area.");
     }
     else if (argv[0] == "*") { // kick all clients in the area
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players from area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -408,10 +412,10 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
                 l_client->changeArea(l_client->m_area_list[0]);
                 l_area->uninvite(l_client->m_id);
                 l_area->removeOwner(l_client->m_id);
-                l_client->sendServerMessage("You kicked from area.");
+                l_client->sendServerMessage("You kicked from the area.");
             }
             arup(ARUPType::CM, true, m_hub);
-            sendServerMessage("Clients kicked from area.");
+            sendServerMessage("Clients kicked from the area.");
         }
     }
 }
@@ -442,8 +446,8 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
     l_area->removeOwner(l_client_to_kick->m_id);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODAREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     arup(ARUPType::CM, true, m_hub);
-    sendServerMessage("Client " + argv[0] + " kicked from area.");
-    l_client_to_kick->sendServerMessage("You kicked from area by moderator.");
+    sendServerMessage("Client " + argv[0] + " kicked from the area.");
+    l_client_to_kick->sendServerMessage("You kicked from the area by moderator.");
 }
 
 void AOClient::cmdSetBackground(int argc, QStringList argv)

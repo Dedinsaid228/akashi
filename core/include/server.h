@@ -261,7 +261,7 @@ class Server : public QObject
      **/
     bool isIPBanned(QHostAddress f_remote_IP);
 
-    bool isIPIngored(QString ip);
+    bool isIPignored(QString ip);
 
     void request_version(const std::function<void(QString)> &cb);
 
@@ -592,7 +592,7 @@ class Server : public QObject
     QStringList m_ipban_list;
 
     /**
-     * @brief Collection of all IPs that are ingored.
+     * @brief Collection of all IPs that are ignored.
      */
     QStringList m_ipignore_list;
 

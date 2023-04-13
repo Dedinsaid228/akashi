@@ -372,7 +372,7 @@ void AOClient::cmdHubUnInvite(int argc, QStringList argv)
         return;
     }
     else if (l_hub->hubOwners().contains(l_uninvited_id)) {
-        sendServerMessage("You cannot uninvite a CM!");
+        sendServerMessage("You cannot uninvite a GM!");
         return;
     }
     else if (!l_hub->hubUninvite(l_uninvited_id)) {

@@ -229,7 +229,7 @@ QStringList ConfigManager::iprangeBans()
     return l_iprange_bans;
 }
 
-QStringList ConfigManager::ipingoreBans()
+QStringList ConfigManager::ipignoreBans()
 {
     QStringList l_iprange_ignore;
     QFile l_file("config/iprange_ignore.txt");

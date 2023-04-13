@@ -64,7 +64,7 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
     if (server->getHubById(area->getHub())->getHidePlayerCount()) {
         if (!ignore_hubs)
             entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
-        entries.append("[PLAYER COUNT HIDED][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
+        entries.append("[???][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
         return entries;
     }
 
@@ -274,7 +274,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
     }
 
     if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_music_change_time <= 2) {
-        sendServerMessage("You change music a lot!");
+        sendServerMessage("You change music very often!");
         return;
     }
 
@@ -293,7 +293,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
     else
         l_song = f_args.join(" ");
 
-    if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be//")) {
+    if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be/")) {
         sendServerMessage("You cannot use YouTube links.");
         return;
     }
@@ -431,7 +431,7 @@ QString AOClient::getHubLockStatus(int f_hub)
 
 void AOClient::endVote()
 {
-    QString l_message = "Results: \nWinner(-s) is ";
+    QString l_message = "Results: \nWinner(-s) is/are ";
     QString l_winner;
     int l_winner_points;
     l_winner_points = 0;

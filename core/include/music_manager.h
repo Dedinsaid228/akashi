@@ -74,7 +74,7 @@ class MusicManager : public QObject
      *
      * @param f_approved_cdns A list of approved remote content sources.
      *
-     * @return Wether or not the song can be played or added.
+     * @return whether or not the song can be played or added.
      */
     bool validateSong(QString f_song_name, QStringList f_approved_cdns);
 
@@ -112,7 +112,7 @@ class MusicManager : public QObject
     bool removeCategorySong(QString f_songcategory_name, int f_area_id);
 
     /**
-     * @brief Toggles wether the root list is included for this area.
+     * @brief Toggles whether the root list is included for this area.
      * This also delets the custom llist if it was enabled prior.
      *
      * @return Current state of the music list.
@@ -211,7 +211,7 @@ class MusicManager : public QObject
     QMap<int, QStringList> m_customs_ordered;
 
     /**
-     * @brief Wether the global musiclist is prepend and validation when adding custom music.
+     * @brief whether the global musiclist is prepend and validation when adding custom music.
      */
     QHash<int, bool> m_global_enabled;
 
