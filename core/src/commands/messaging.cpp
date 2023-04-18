@@ -91,8 +91,6 @@ void AOClient::cmdG(int argc, QStringList argv)
         return;
     }
 
-    autoMod();
-
     if (l_sender_auth && !l_sender_sneak)
         l_areaname += "[M]";
 
@@ -117,8 +115,6 @@ void AOClient::cmdNeed(int argc, QStringList argv)
         sendServerMessage("Your message is too long!");
         return;
     }
-
-    autoMod();
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {

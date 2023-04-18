@@ -567,7 +567,12 @@ QString ConfigManager::LogText(QString f_logtype)
 
 int ConfigManager::autoModTrigger()
 {
-    return m_settings->value("Options/automodtrigseconds", 300).toInt();
+    return m_settings->value("Options/automodtrig", 300).toInt();
+}
+
+int ConfigManager::autoModOocTrigger()
+{
+    return m_settings->value("Options/automodooctrig", 300).toInt();
 }
 
 QString ConfigManager::autoModBanDuration()

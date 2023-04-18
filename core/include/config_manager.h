@@ -387,6 +387,8 @@ class ConfigManager
      */
     static int autoModTrigger();
 
+    static int autoModOocTrigger();
+
     /**
      * @brief Returns the duration of the ban given by the automoderator.
      *

@@ -401,8 +401,6 @@ void AOClient::cmdGHub(int argc, QStringList argv)
         return;
     }
 
-    autoMod();
-
     if (l_sender_auth && !l_sender_sneak)
         l_areaname += "[M]";
 

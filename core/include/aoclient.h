@@ -460,7 +460,9 @@ class AOClient : public QObject
     /**
      * @brief The main function of the automoderator.
      */
-    void autoMod(bool ic_chat = false);
+    void autoMod(bool ic_chat = false, int chars = 0);
+
+    void updateLastTime(bool ic_chat, int chars);
 
     /**
      * @brief An auxiliary function of the automoderator, which is responsible for the mute of the player.
@@ -657,6 +659,10 @@ class AOClient : public QObject
      * @details Used by an automoderator.
      */
     long m_lastmessagetime;
+
+    long m_lastoocmessagetime;
+
+    int m_lastmessagechars;
 
     int m_blankposts_row;
 

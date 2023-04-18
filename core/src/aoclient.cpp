@@ -319,7 +319,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
     QString l_sender_name = getSenderName(m_id);
 
     if (!m_sneaked)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " moved to area " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " moved to the area " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
 
     if (m_current_char != "") {
         server->getAreaById(m_current_area)->changeCharacter(server->getCharID(m_current_char), -1);
@@ -666,6 +666,8 @@ AOClient::AOClient(Server *p_server, NetworkSocket *socket, QObject *parent, int
     m_last_music_change_time(0),
     m_last_status_change_time(0),
     m_lastmessagetime(0),
+    m_lastoocmessagetime(0),
+    m_lastmessagechars(0),
     m_blankposts_row(0),
     server(p_server),
     is_partial(false)

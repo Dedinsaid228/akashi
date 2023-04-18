@@ -463,7 +463,7 @@ std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
         if (l_incoming_msg.isEmpty() && client.m_blankposts_row < 3)
             client.m_blankposts_row++;
         else if (!l_incoming_msg.isEmpty()) {
-            client.autoMod(true);
+            client.autoMod(true, l_incoming_args[4].toString().size());
             client.m_blankposts_row = 0;
         }
         else

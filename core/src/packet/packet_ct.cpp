@@ -63,8 +63,11 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         l_command = l_command.right(l_command.length() - 1);
         l_cmd_argv.removeFirst();
         int l_cmd_argc = l_cmd_argv.length();
-
         client.handleCommand(l_command, l_cmd_argc, l_cmd_argv);
+
+        if (l_command == "g" || l_command == "g_hub" || l_command == "need")
+            client.autoMod();
+
         return;
     }
     else {

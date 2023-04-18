@@ -3,23 +3,32 @@
 #include "include/db_manager.h"
 #include "include/server.h"
 
-void AOClient::autoMod(bool ic_chat)
+void AOClient::autoMod(bool ic_chat, int chars)
 {
     int l_warn = server->getDatabaseManager()->getWarnNum(m_ipid);
     long l_currentdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
 
-    if (QDateTime::currentDateTime().toSecsSinceEpoch() - server->getDatabaseManager()->getWarnDate(m_ipid) > parseTime(ConfigManager::autoModWarnTerm()) && l_warn != 0 && l_warn != 1) {
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - server->getDatabaseManager()->getWarnDate(m_ipid) > parseTime(ConfigManager::autoModWarnTerm()) && l_warn > 1) {
         long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
         server->getDatabaseManager()->updateWarn(m_ipid, l_warn - 1);
         server->getDatabaseManager()->updateWarn(m_ipid, l_date);
     }
 
-    if ((l_currentdate - m_lastmessagetime) < ConfigManager::autoModTrigger()) {
+    bool l_ic_lastmessagetime_empty = (ic_chat && m_lastmessagetime == 0);
+    bool l_ooc_lastmessagetime_empty = (!ic_chat && m_lastoocmessagetime == 0);
 
-        if ((l_currentdate - m_lastmessagetime) < 0) {
-            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
-            return;
-        }
+    qDebug() << l_ic_lastmessagetime_empty;
+    qDebug() << l_ooc_lastmessagetime_empty;
+    if (l_ic_lastmessagetime_empty || l_ooc_lastmessagetime_empty) {
+        updateLastTime(ic_chat, chars);
+        return;
+    }
+
+    bool l_ic_match = ((l_currentdate - m_lastmessagetime) + m_lastmessagechars * 0.046875 * 1000) < ConfigManager::autoModTrigger() && ic_chat;
+    bool l_ooc_match = (l_currentdate - m_lastoocmessagetime) < ConfigManager::autoModOocTrigger() && !ic_chat;
+    qDebug() << l_ic_match;
+    qDebug() << l_ooc_match;
+    if (l_ic_match || l_ooc_match) {
 
         if (l_warn == 0) {
             DBManager::automodwarns l_warn;
@@ -28,18 +37,18 @@ void AOClient::autoMod(bool ic_chat)
             l_warn.warns = 2;
 
             server->getDatabaseManager()->addWarn(l_warn);
-            sendServerMessage("You got a warn from an automod! If you get 5 warns, you will be punished.");
-            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            sendServerMessage("You got a warn from the Automod! If you get 2 warns, you will be punished.");
+            updateLastTime(ic_chat, chars);
             return;
         }
 
-        if (l_warn <= 5) {
+        if (l_warn <= 4) {
             long date = QDateTime::currentDateTime().toSecsSinceEpoch();
 
             server->getDatabaseManager()->updateWarn(m_ipid, l_warn + 1);
             server->getDatabaseManager()->updateWarn(m_ipid, date);
-            sendServerMessage("You got a warn from an automod! If you get " + QString::number(6 - l_warn) + " warns, you will be punished.");
-            m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+            sendServerMessage("You got a warn from the Automod! If you get " + QString::number(5 - l_warn) + " warns, you will be punished.");
+            updateLastTime(ic_chat, chars);
             return;
         }
 
@@ -59,7 +68,17 @@ void AOClient::autoMod(bool ic_chat)
         }
     }
 
-    m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    updateLastTime(ic_chat, chars);
+}
+
+void AOClient::updateLastTime(bool ic_chat, int chars)
+{
+    if (ic_chat) {
+        m_lastmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+        m_lastmessagechars = chars;
+    }
+    else
+        m_lastoocmessagetime = QDateTime::currentDateTime().toMSecsSinceEpoch();
 }
 
 void AOClient::autoMute(bool ic_chat, int haznum)
@@ -93,11 +112,11 @@ void AOClient::autoKick()
 {
     const QList<AOClient *> l_targets = server->getClientsByIpid(m_ipid);
     for (AOClient *l_client : l_targets) {
-        l_client->sendPacket("KK", {"You were kicked by a automod."});
+        l_client->sendPacket("KK", {"You were kicked by the Automod."});
         l_client->m_socket->close();
     }
 
-    emit logKick("Automoderator", m_ipid, "You were kicked by a automod.", "", "");
+    emit logKick("Automoderator", m_ipid, "You were kicked by the Automod.", "", "");
     long l_date = QDateTime::currentDateTime().toSecsSinceEpoch();
     QString l_action = "KICK";
     int l_haznum = 3;
@@ -126,7 +145,7 @@ void AOClient::autoBan()
 
     l_ban.duration = l_duration_seconds;
     l_ban.ipid = m_ipid;
-    l_ban.reason = "You were banned by a automod.";
+    l_ban.reason = "You were banned by the Automod.";
     l_ban.moderator = "Automod";
     l_ban.time = QDateTime::currentDateTime().toSecsSinceEpoch();
     bool ban_logged = false;
