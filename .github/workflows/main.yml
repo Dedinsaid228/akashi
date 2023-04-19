@@ -128,12 +128,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
 
-      - name: Cache Qt
-        id: cache-qt
-        uses: actions/cache@v1
-        with:
-          path: ../Qt
-          key: ${{ runner.os }}-QtCache
+     # - name: Cache Qt
+     #   id: cache-qt
+     #   uses: actions/cache@v1
+     #   with:
+     #     path: ../Qt
+     #     key: ${{ runner.os }}-QtCache
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -141,12 +141,12 @@ jobs:
           version: '6.4.2'
           arch: 'win64_mingw'
           modules: 'qtwebsockets'
-          cached: ${{ steps.cache-qt.outputs.cache-hit }}
+         # cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Build
         run: |
           cd $Env:GITHUB_WORKSPACE
-          qmake "CONFIG += qtquickcompiler" kakashi.pro
+          qmake QMAKE_CXXFLAGS+="-fno-sized-deallocation"
           make
           windeployqt bin\akashi.exe --release --no-opengl-sw
           mv bin\config_sample bin\config
