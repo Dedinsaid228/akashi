@@ -128,20 +128,12 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
 
-     # - name: Cache Qt
-     #   id: cache-qt
-     #   uses: actions/cache@v1
-     #   with:
-     #     path: ../Qt
-     #     key: ${{ runner.os }}-QtCache
-
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
           version: '6.4.2'
           arch: 'win64_mingw'
           modules: 'qtwebsockets'
-         # cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
       - name: Build
         run: |
@@ -151,12 +143,15 @@ jobs:
           windeployqt bin\akashi.exe --release --no-opengl-sw
           mv bin\config_sample bin\config
 
-      - name: Deploy OpenSSL
+      - name: Deploy OpenSSL and TLS plugins
         run: |
           curl https://sshapeshifter.ru/openssl-1.1.1j-x64.zip --output openssl-1.1.1j.zip
           tar -xf openssl-1.1.1j.zip
           copy .\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll
           copy .\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
+          copy .\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
+          copy .\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
+          copy .\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
 
       - name: Upload zip
         uses: actions/upload-artifact@v2
