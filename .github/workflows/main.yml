@@ -149,6 +149,7 @@ jobs:
           tar -xf openssl-1.1.1j.zip
           copy .\libcrypto-1_1-x64.dll .\bin\libcrypto-1_1-x64.dll
           copy .\libssl-1_1-x64.dll .\bin\libssl-1_1-x64.dll
+          mkdir "bin\tls"
           copy .\tls\qcertonlybackend.dll .\bin\tls\qcertonlybackend.dll
           copy .\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
           copy .\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
