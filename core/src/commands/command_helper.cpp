@@ -93,8 +93,6 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
                 char_entry += ": " + l_client->m_ooc_name;
             if (l_client->m_vote_candidate)
                 char_entry.insert(0, "[VC]");
-            if (l_client->m_authenticated && !l_client->m_sneak_mod)
-                char_entry.insert(0, "[M]");
             if (l_client->m_is_afk)
                 char_entry.insert(0, "[AFK]");
             entries.append(char_entry);

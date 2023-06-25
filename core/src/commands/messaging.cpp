@@ -82,17 +82,12 @@ void AOClient::cmdG(int argc, QStringList argv)
     QString l_sender_area = server->getAreaName(m_current_area);
     QString l_sender_hub = server->getHubName(m_hub);
     QString l_sender_message = argv.join(" ");
-    bool l_sender_auth = m_authenticated;
-    bool l_sender_sneak = m_sneak_mod;
     QString l_areaname = "[G][" + l_sender_hub + "][" + l_sender_area + "]";
 
     if (l_sender_message.size() > ConfigManager::maxCharacters()) {
         sendServerMessage("Your message is too long!");
         return;
     }
-
-    if (l_sender_auth && !l_sender_sneak)
-        l_areaname += "[M]";
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {

@@ -47,12 +47,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
     }
 
     QString l_message = client.dezalgo(m_content[1]);
-    QString l_ooc_name;
-
-    if (client.m_authenticated && !client.m_sneak_mod)
-        l_ooc_name = "[M]" + client.m_ooc_name;
-    else
-        l_ooc_name = client.m_ooc_name;
+    QString l_ooc_name = client.m_ooc_name;
 
     if (l_message.length() == 0 || l_message.length() > ConfigManager::maxCharacters())
         return;

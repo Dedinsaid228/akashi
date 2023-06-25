@@ -33,12 +33,11 @@ class ACLRole
         IGNORE_BGLIST = 1 << 14,
         SEND_NOTICE = 1 << 15,
         WUSO = 1 << 16,
-        SNEAK = 1 << 17,
-        TAKETAKED = 1 << 18,
-        IPIDINFO = 1 << 19,
-        GM = 1 << 20,
-        SAVEAREA = 1 << 21,
-        CONFRELOAD = 1 << 22,
+        TAKETAKED = 1 << 17,
+        IPIDINFO = 1 << 18,
+        GM = 1 << 19,
+        SAVEAREA = 1 << 20,
+        CONFRELOAD = 1 << 21,
         SUPER = 0xffffffff,
     };
     Q_DECLARE_FLAGS(Permissions, Permission);

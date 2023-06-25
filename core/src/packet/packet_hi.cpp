@@ -36,7 +36,14 @@ void PacketHI::handlePacket(AreaData *area, AOClient &client) const
     client.clientConnected();
     auto ban = client.getServer()->getDatabaseManager()->isHDIDBanned(client.m_hwid);
     if (ban.first) {
-        client.sendPacket("BD", {ban.second + "\nBan ID: " + QString::number(client.getServer()->getDatabaseManager()->getBanID(client.m_hwid))});
+        QString ban_duration;
+        if (!(ban.second.duration == -2)) {
+            ban_duration = QDateTime::fromSecsSinceEpoch(ban.second.time).addSecs(ban.second.duration).toString("MM/dd/yyyy, hh:mm");
+        }
+        else {
+            ban_duration = "The heat death of the universe.";
+        }
+        client.sendPacket("BD", {"Reason: " + ban.second.reason + "\nBan ID: " + QString::number(ban.second.id) + "\nUntil: " + ban_duration});
         client.m_socket->close();
         return;
     }

@@ -152,7 +152,6 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"blind", {{ACLRole::MUTE}, 1, &AOClient::cmdBlind}},
     {"unblind", {{ACLRole::MUTE}, 1, &AOClient::cmdUnBlind}},
     {"currentbg", {{ACLRole::NONE}, 0, &AOClient::cmdCurBg}},
-    {"sneak_mod", {{ACLRole::SNEAK}, 0, &AOClient::cmdSneakMod}},
     {"togglefloodguard", {{ACLRole::CM}, 0, &AOClient::cmdToggleFloodguardActuve}},
     {"togglechillmod", {{ACLRole::CM}, 0, &AOClient::cmdToggleChillMod}},
     {"toggleautomod", {{ACLRole::CM}, 0, &AOClient::cmdToggleAutoMod}},

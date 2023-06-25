@@ -188,11 +188,6 @@ class AOClient : public QObject
     QString m_current_iniswap;
 
     /**
-     * @brief If true, the client will not be shown as a moderator, even if it is one.
-     */
-    bool m_sneak_mod = false;
-
-    /**
      * @brief If using advanced authentication, this is the moderator name that the client has logged in with.
      */
     QString m_moderator_name = "";
@@ -1634,17 +1629,6 @@ class AOClient : public QObject
      * @see #blinded
      */
     void cmdUnBlind(int argc, QStringList argv);
-
-    /**
-     * @brief Hide/show the status of the moderator.
-     *
-     * @details No arguments.
-     *
-     * @see #slient_mod
-     *
-     * @iscommand
-     */
-    void cmdSneakMod(int argc, QStringList argv);
 
     /**
      * @brief Allow/deny WUSO Mod.

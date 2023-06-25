@@ -161,7 +161,7 @@ void AOClient::cmdMods(int argc, QStringList argv)
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
-        if (l_client->m_authenticated && !l_client->m_sneak_mod) {
+        if (l_client->m_authenticated) {
             l_entries << "---";
 
             if (ConfigManager::authType() != DataTypes::AuthType::SIMPLE) {
@@ -1036,18 +1036,6 @@ void AOClient::cmdUnBlind(int argc, QStringList argv)
 
     l_target->m_blinded = false;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNBLIND", "Unblinded UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
-}
-
-void AOClient::cmdSneakMod(int argc, QStringList argv)
-{
-    Q_UNUSED(argc);
-    Q_UNUSED(argv);
-
-    m_sneak_mod = !m_sneak_mod;
-
-    QString l_str_en = m_sneak_mod ? "invisible" : "visible";
-    sendServerMessage("Your moderator status is now " + l_str_en + ".");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SNEAKMOD", l_str_en, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdToggleWebUsersSpectateOnly(int argc, QStringList argv)
