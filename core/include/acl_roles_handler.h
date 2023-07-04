@@ -138,7 +138,7 @@ class ACLRolesHandler : public QObject
     ACLRolesHandler(QObject *parent = nullptr);
 
     /**
-     * Destroys the role handler.
+     * @brief Destroys the role handler.
      */
     ~ACLRolesHandler();
 

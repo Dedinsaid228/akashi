@@ -6,8 +6,7 @@
 
 PacketCH::PacketCH(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketCH::getPacketInfo() const
 {
@@ -27,7 +26,4 @@ void PacketCH::handlePacket(AreaData *area, AOClient &client) const
     client.sendPacket("CHECK");
 }
 
-bool PacketCH::validatePacket() const
-{
-    return AkashiUtils::checkArgType<int>(m_content.at(0));
-}
+bool PacketCH::validatePacket() const { return AkashiUtils::checkArgType<int>(m_content.at(0)); }

@@ -5,8 +5,7 @@
 
 PacketPE::PacketPE(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketPE::getPacketInfo() const
 {
@@ -21,8 +20,8 @@ void PacketPE::handlePacket(AreaData *area, AOClient &client) const
 {
     if (!client.checkEvidenceAccess(area))
         return;
-    AreaData::Evidence l_evi;
 
+    AreaData::Evidence l_evi;
     if (area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM && !m_content[1].startsWith("<owner="))
         l_evi = {m_content[0], "<owner=hidden>\n" + m_content[1], m_content[2]};
     else
@@ -32,7 +31,4 @@ void PacketPE::handlePacket(AreaData *area, AOClient &client) const
     client.sendEvidenceList(area);
 }
 
-bool PacketPE::validatePacket() const
-{
-    return true;
-}
+bool PacketPE::validatePacket() const { return true; }

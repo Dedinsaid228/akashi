@@ -7,8 +7,7 @@
 
 PacketHI::PacketHI(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketHI::getPacketInfo() const
 {
@@ -33,16 +32,14 @@ void PacketHI::handlePacket(AreaData *area, AOClient &client) const
 
     client.m_hwid = incoming_hwid;
     emit client.getServer()->logConnectionAttempt(client.m_ipid, client.m_hwid);
-    client.clientConnected();
     auto ban = client.getServer()->getDatabaseManager()->isHDIDBanned(client.m_hwid);
     if (ban.first) {
         QString ban_duration;
-        if (!(ban.second.duration == -2)) {
+        if (!(ban.second.duration == -2))
             ban_duration = QDateTime::fromSecsSinceEpoch(ban.second.time).addSecs(ban.second.duration).toString("MM/dd/yyyy, hh:mm");
-        }
-        else {
+        else
             ban_duration = "The heat death of the universe.";
-        }
+
         client.sendPacket("BD", {"Reason: " + ban.second.reason + "\nBan ID: " + QString::number(ban.second.id) + "\nUntil: " + ban_duration});
         client.m_socket->close();
         return;
@@ -51,8 +48,4 @@ void PacketHI::handlePacket(AreaData *area, AOClient &client) const
     client.sendPacket("ID", {QString::number(client.m_id), "kakashi", QCoreApplication::applicationVersion()});
 }
 
-bool PacketHI::validatePacket() const
-{
-    // We can always convert a string to a string. No point in checking.
-    return true;
-}
+bool PacketHI::validatePacket() const { return true; } // We can always convert a string to a string. No point in checking.

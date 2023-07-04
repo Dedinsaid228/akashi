@@ -6,8 +6,7 @@
 
 PacketID::PacketID(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketID::getPacketInfo() const
 {
@@ -48,6 +47,7 @@ void PacketID::handlePacket(AreaData *area, AOClient &client) const
         client.m_version.major = l_match.captured(2).toInt();
         client.m_version.minor = l_match.captured(3).toInt();
     }
+
     if (m_content[0] == "webAO") {
         client.m_version.release = 2;
         client.m_version.major = 10;
@@ -65,7 +65,4 @@ void PacketID::handlePacket(AreaData *area, AOClient &client) const
     }
 }
 
-bool PacketID::validatePacket() const
-{
-    return true;
-}
+bool PacketID::validatePacket() const { return true; }

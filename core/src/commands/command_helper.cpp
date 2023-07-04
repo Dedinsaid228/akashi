@@ -16,7 +16,6 @@
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
-
 #include "include/area_data.h"
 #include "include/config_manager.h"
 #include "include/hub_data.h"
@@ -38,7 +37,6 @@ void AOClient::cmdDefault(int argc, QStringList argv)
 QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
 {
     QStringList entries;
-    QString area_name = server->getAreaName(area_idx);
     AreaData *area = server->getAreaById(area_idx);
 
     if (area->playerCount() == 0)
@@ -47,6 +45,7 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
     if (area->getHub() != m_hub && ignore_hubs)
         return entries;
 
+    QString area_name = server->getAreaName(area_idx);
     entries.append("=== " + area_name + " ===");
 
     switch (area->lockStatus()) {
@@ -64,6 +63,7 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
     if (server->getHubById(area->getHub())->getHidePlayerCount()) {
         if (!ignore_hubs)
             entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
+
         entries.append("[???][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
         return entries;
     }
@@ -95,6 +95,7 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
                 char_entry.insert(0, "[VC]");
             if (l_client->m_is_afk)
                 char_entry.insert(0, "[AFK]");
+
             entries.append(char_entry);
         }
     }
@@ -120,10 +121,11 @@ void AOClient::diceThrower(int sides, int dice, bool p_roll, int roll_modifier)
         sendServerMessage("Dice or side number out of bounds.");
         return;
     }
+
     QStringList results;
-    for (int i = 1; i <= dice; i++) {
+    for (int i = 1; i <= dice; i++)
         results.append(QString::number(AOClient::genRand(1, sides) + roll_modifier));
-    }
+
     QString total_results = results.join(" ");
     if (p_roll) {
         if (roll_modifier)
@@ -132,6 +134,7 @@ void AOClient::diceThrower(int sides, int dice, bool p_roll, int roll_modifier)
             sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
         return;
     }
+
     QString l_sender_name = getSenderName(m_id);
     if (roll_modifier)
         sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
@@ -143,8 +146,6 @@ QString AOClient::getAreaTimer(int area_idx, int timer_idx)
 {
     AreaData *l_area = server->getAreaById(area_idx);
     QTimer *l_timer;
-    QString l_timer_name = (timer_idx == 0) ? "Global timer" : "Timer " + QString::number(timer_idx);
-
     if (timer_idx == 0)
         l_timer = server->timer;
     else if (timer_idx > 0 && timer_idx <= 4)
@@ -152,14 +153,13 @@ QString AOClient::getAreaTimer(int area_idx, int timer_idx)
     else
         return "Invalid timer ID.";
 
+    QString l_timer_name = (timer_idx == 0) ? "Global timer" : "Timer " + QString::number(timer_idx);
     if (l_timer->isActive()) {
         QTime current_time = QTime(0, 0).addMSecs(l_timer->remainingTime());
-
         return l_timer_name + " is at " + current_time.toString("hh:mm:ss.zzz");
     }
-    else {
+    else
         return l_timer_name + " is inactive.";
-    }
 }
 
 long long AOClient::parseTime(QString input)
@@ -179,10 +179,8 @@ long long AOClient::parseTime(QString input)
     bool l_is_well_formed = false;
     QString concat_str(str_year + str_week + str_day + str_hour + str_minute + str_second);
     concat_str.toInt(&l_is_well_formed);
-
-    if (!l_is_well_formed) {
+    if (!l_is_well_formed)
         return -1;
-    }
 
     year = str_year.toInt();
     week = str_week.toInt();
@@ -207,11 +205,10 @@ long long AOClient::parseTime(QString input)
 
 bool AOClient::checkPasswordRequirements(QString f_username, QString f_password)
 {
-    QString l_decoded_password = decodeMessage(f_password);
-
     if (!ConfigManager::passwordRequirements())
         return true;
 
+    QString l_decoded_password = decodeMessage(f_password);
     if (ConfigManager::passwordMinLength() > l_decoded_password.length())
         return false;
 
@@ -244,6 +241,7 @@ bool AOClient::checkPasswordRequirements(QString f_username, QString f_password)
         if (l_decoded_password.contains(f_username))
             return false;
     }
+
     return true;
 }
 
@@ -252,7 +250,6 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
     QString l_message = "A moderator sent this ";
     l_message += (f_global ? "server-wide " : "");
     l_message += "notice:\n\n" + f_notice;
-
     sendServerMessageArea(l_message);
     std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket("BB", {l_message});
 
@@ -278,14 +275,12 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
 
     m_last_music_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
     AreaData *l_area = server->getAreaById(m_current_area);
-
     if (l_area->isMusicAllowed() == false && !checkPermission(ACLRole::CM)) {
         sendServerMessage("Music is disabled in this area.");
         return;
     }
 
     QString l_song;
-
     if (f_gdrive)
         l_song = "https://drive.google.com/uc?export=download&id=" + f_args.join(" "); // Thanks RedFox
     else
@@ -301,16 +296,14 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         return;
     }
 
-    QString l_sender_name = getSenderName(m_id);
     QString l_play_once;
-
     if (f_once)
         l_play_once = "0";
     else
         l_play_once = "1";
 
     std::shared_ptr<AOPacket> music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(m_current_char)), m_showname, l_play_once, "0"});
-
+    QString l_sender_name = getSenderName(m_id);
     if (f_hubbroadcast) {
         server->broadcast(m_hub, music_change);
 
@@ -331,7 +324,6 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
 QString AOClient::getSenderName(int f_uid)
 {
     AOClient *l_target = server->getClientByID(f_uid);
-
     if (l_target->m_showname.isEmpty() && l_target->m_current_char.isEmpty())
         return "Spectator";
     else if (l_target->m_showname.isEmpty())
@@ -343,7 +335,6 @@ QString AOClient::getSenderName(int f_uid)
 QString AOClient::getEviMod(int f_area)
 {
     AreaData *l_area = server->getAreaById(f_area);
-
     switch (l_area->eviMod()) {
     case AreaData::EvidenceMod::FFA:
         return "FFA";
@@ -354,13 +345,13 @@ QString AOClient::getEviMod(int f_area)
     case AreaData::EvidenceMod::MOD:
         return "MOD";
     }
+
     return "UNKNOWN";
 }
 
 QString AOClient::getAreaStatus(int f_area)
 {
     AreaData *l_area = server->getAreaById(f_area);
-
     switch (l_area->status()) {
     case AreaData::Status::IDLE:
         return "IDLE";
@@ -379,13 +370,13 @@ QString AOClient::getAreaStatus(int f_area)
     case AreaData::Status::YABLACHKI:
         return "YABLACHKI";
     }
+
     return "UNKNOWN";
 }
 
 QString AOClient::getLockStatus(int f_area)
 {
     AreaData *l_area = server->getAreaById(f_area);
-
     switch (l_area->lockStatus()) {
     case AreaData::LockStatus::FREE:
         return "FREE";
@@ -394,13 +385,13 @@ QString AOClient::getLockStatus(int f_area)
     case AreaData::LockStatus::LOCKED:
         return "LOCKED";
     }
+
     return "UNKNOWN";
 }
 
 QString AOClient::getOocType(int f_area)
 {
     AreaData *l_area = server->getAreaById(f_area);
-
     switch (l_area->oocType()) {
     case AreaData::OocType::ALL:
         return "ALL";
@@ -409,13 +400,13 @@ QString AOClient::getOocType(int f_area)
     case AreaData::OocType::INVITED:
         return "INVITED";
     }
+
     return "UNKNOWN";
 }
 
 QString AOClient::getHubLockStatus(int f_hub)
 {
     HubData *l_hub = server->getHubById(f_hub);
-
     switch (l_hub->hubLockStatus()) {
     case HubData::HubLockStatus::FREE:
         return "FREE";
@@ -424,6 +415,7 @@ QString AOClient::getHubLockStatus(int f_hub)
     case HubData::HubLockStatus::LOCKED:
         return "LOCKED";
     }
+
     return "UNKNOWN";
 }
 
@@ -435,7 +427,6 @@ void AOClient::endVote()
     l_winner_points = 0;
     QString l_results;
     const QVector<AOClient *> l_clients = server->getClients();
-
     for (AOClient *l_client : l_clients) {
         if (l_client->m_vote_candidate) {
             l_client->m_can_vote = false;

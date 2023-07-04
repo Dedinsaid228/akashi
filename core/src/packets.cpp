@@ -30,19 +30,17 @@
 void AOClient::sendEvidenceList(AreaData *area) const
 {
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
+    for (AOClient *l_client : l_clients)
         if (l_client->m_current_area == m_current_area)
             l_client->updateEvidenceList(area);
-    }
 }
 
 void AOClient::sendEvidenceListHidCmNoCm(AreaData *area) const
 {
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
+    for (AOClient *l_client : l_clients)
         if (l_client->m_current_area == m_current_area)
             l_client->updateEvidenceListHidCmNoCm(area);
-    }
 }
 
 void AOClient::updateEvidenceList(AreaData *area)
@@ -52,15 +50,12 @@ void AOClient::updateEvidenceList(AreaData *area)
     int l_evidence_id = 0;
     m_evi_list = {0};
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
-
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
             QRegularExpression l_regex("<owner=(.*?)>");
             QRegularExpressionMatch l_match = l_regex.match(evidence.description);
-
             if (l_match.hasMatch()) {
                 QStringList owners = l_match.captured(1).split(",");
-
                 if (!owners.contains("all", Qt::CaseSensitivity::CaseInsensitive) && !owners.contains(m_pos, Qt::CaseSensitivity::CaseInsensitive)) {
                     l_evidence_id++;
                     continue;
@@ -68,6 +63,7 @@ void AOClient::updateEvidenceList(AreaData *area)
             }
             // no match = show it to all
         }
+
         l_evidence_list.append(l_evidence_format.arg(evidence.name, evidence.description, evidence.image));
         l_evidence_id++;
         m_evi_list.append(l_evidence_id);
@@ -81,15 +77,12 @@ void AOClient::updateEvidenceListHidCmNoCm(AreaData *area)
     QStringList l_evidence_list;
     QString l_evidence_format("%1&%2&%3");
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
-
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
             QRegularExpression l_regex("<owner=(.*?)>");
             QRegularExpressionMatch l_match = l_regex.match(evidence.description);
-
             if (l_match.hasMatch()) {
                 QStringList owners = l_match.captured(1).split(",");
-
                 if (!owners.contains("all", Qt::CaseSensitivity::CaseInsensitive) && !owners.contains(m_pos, Qt::CaseSensitivity::CaseInsensitive)) {
                     l_evidence_list.append(l_evidence_format.arg("", "", ""));
                     continue;
@@ -97,6 +90,7 @@ void AOClient::updateEvidenceListHidCmNoCm(AreaData *area)
             }
             // no match = show it to all
         }
+
         l_evidence_list.append(l_evidence_format.arg(evidence.name, evidence.description, evidence.image));
     }
 
@@ -106,24 +100,20 @@ void AOClient::updateEvidenceListHidCmNoCm(AreaData *area)
 bool AOClient::evidencePresent(QString id)
 {
     AreaData *l_area = server->getAreaById(m_current_area);
-
     if (l_area->eviMod() != AreaData::EvidenceMod::HIDDEN_CM)
         return false;
 
     int l_idvalid = id.toInt() - 1;
-
     if (l_idvalid < 0)
         return false;
 
     QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
     QRegularExpression l_regex("<owner=(.*?)>");
     QRegularExpressionMatch l_match = l_regex.match(l_area_evidence[l_idvalid].description);
-
     if (l_match.hasMatch()) {
         QStringList l_owners = l_match.captured(1).split(",");
         QString l_description = l_area_evidence[l_idvalid].description.replace(l_owners[0], "all");
         AreaData::Evidence l_evi = {l_area_evidence[l_idvalid].name, l_description, l_area_evidence[l_idvalid].image};
-
         l_area->replaceEvidence(l_idvalid, l_evi);
         return true;
     }
@@ -137,7 +127,6 @@ void AOClient::getAreaList()
 
     for (int i = 0; i < server->getAreaCount(); i++) {
         AreaData *l_area = server->getAreaById(i);
-
         if (l_area->getHub() == m_hub)
             m_area_list.append(i);
     }
@@ -147,7 +136,6 @@ QString AOClient::dezalgo(QString p_text)
 {
     QRegularExpression rxp("([̴̵̶̷̸̡̢̧̨̛̖̗̘̙̜̝̞̟̠̣̤̥̦̩̪̫̬̭̮̯̰̱̲̳̹̺̻̼͇͈͉͍͎̀́̂̃̄̅̆̇̈̉̊̋̌̍̎̏̐̑̒̓̔̽̾̿̀́͂̓̈́͆͊͋͌̕̚ͅ͏͓͔͕͖͙͚͐͑͒͗͛ͣͤͥͦͧͨͩͪͫͬͭͮͯ͘͜͟͢͝͞͠͡])");
     QString filtered = p_text.replace(rxp, "");
-
     return filtered;
 }
 

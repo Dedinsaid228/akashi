@@ -69,7 +69,6 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_chillMod = areas_ini->value("chillmod", "false").toBool();
     m_autoMod = areas_ini->value("automod", "false").toBool();
     m_floodguardactive = areas_ini->value("floodguard_active", "false").toBool();
-    m_areapassword = areas_ini->value("password", "").toString();
     setEvidenceList(areas_ini->value("evidence", "").toStringList());
     m_can_change_status = areas_ini->value("change_status", "true").toBool();
     m_ooc_type = QVariant(areas_ini->value("ooc_type", "ALL").toString().toUpper()).value<AreaData::OocType>();
@@ -187,9 +186,8 @@ void AreaData::spectatable()
 
 bool AreaData::invite(int f_clientId)
 {
-    if (m_invited.contains(f_clientId)) {
+    if (m_invited.contains(f_clientId))
         return false;
-    }
 
     m_invited.append(f_clientId);
     return true;
@@ -197,65 +195,43 @@ bool AreaData::invite(int f_clientId)
 
 bool AreaData::uninvite(int f_clientId)
 {
-    if (!m_invited.contains(f_clientId)) {
+    if (!m_invited.contains(f_clientId))
         return false;
-    }
 
     m_invited.removeAll(f_clientId);
     return true;
 }
 
-int AreaData::playerCount() const
-{
-    return m_playerCount;
-}
+int AreaData::playerCount() const { return m_playerCount; }
 
-QList<QTimer *> AreaData::timers() const
-{
-    return m_timers;
-}
+QList<QTimer *> AreaData::timers() const { return m_timers; }
 
-QString AreaData::name() const
-{
-    return m_name;
-}
+QString AreaData::name() const { return m_name; }
 
-int AreaData::index() const
-{
-    return m_index;
-}
+int AreaData::index() const { return m_index; }
 
-QList<int> AreaData::charactersTaken() const
-{
-    return m_charactersTaken;
-}
+QList<int> AreaData::charactersTaken() const { return m_charactersTaken; }
 
 bool AreaData::changeCharacter(int f_from, int f_to, bool taketaked)
 {
-    if (m_charactersTaken.contains(f_to) && taketaked == false) {
+    if (m_charactersTaken.contains(f_to) && taketaked == false)
         return false;
-    }
 
     if (f_to != -1) {
-        if (f_from != -1) {
+        if (f_from != -1)
             m_charactersTaken.removeAll(f_from);
-        }
 
         m_charactersTaken.append(f_to);
         return true;
     }
 
-    if (f_to == -1 && f_from != -1) {
+    if (f_to == -1 && f_from != -1)
         m_charactersTaken.removeAll(f_from);
-    }
 
     return false;
 }
 
-QList<AreaData::Evidence> AreaData::evidence() const
-{
-    return m_evidence;
-}
+QList<AreaData::Evidence> AreaData::evidence() const { return m_evidence; }
 
 void AreaData::swapEvidence(int f_eviId1, int f_eviId2)
 {
@@ -267,25 +243,13 @@ void AreaData::swapEvidence(int f_eviId1, int f_eviId2)
 #endif
 }
 
-void AreaData::appendEvidence(const AreaData::Evidence &f_evi_r)
-{
-    m_evidence.append(f_evi_r);
-}
+void AreaData::appendEvidence(const AreaData::Evidence &f_evi_r) { m_evidence.append(f_evi_r); }
 
-void AreaData::deleteEvidence(int f_eviId)
-{
-    m_evidence.removeAt(f_eviId);
-}
+void AreaData::deleteEvidence(int f_eviId) { m_evidence.removeAt(f_eviId); }
 
-void AreaData::replaceEvidence(int f_eviId, const AreaData::Evidence &f_newEvi_r)
-{
-    m_evidence.replace(f_eviId, f_newEvi_r);
-}
+void AreaData::replaceEvidence(int f_eviId, const AreaData::Evidence &f_newEvi_r) { m_evidence.replace(f_eviId, f_newEvi_r); }
 
-AreaData::Status AreaData::status() const
-{
-    return m_status;
-}
+AreaData::Status AreaData::status() const { return m_status; }
 
 bool AreaData::changeStatus(const QString &f_newStatus_r)
 {
@@ -297,51 +261,28 @@ bool AreaData::changeStatus(const QString &f_newStatus_r)
     return false;
 }
 
-QList<int> AreaData::invited() const
-{
-    return m_invited;
-}
+QList<int> AreaData::invited() const { return m_invited; }
 
-bool AreaData::isMusicAllowed() const
-{
-    return m_toggleMusic;
-}
+bool AreaData::isMusicAllowed() const { return m_toggleMusic; }
 
-bool AreaData::isMessageAllowed() const
-{
-    return m_can_send_ic_messages;
-}
+bool AreaData::isMessageAllowed() const { return m_can_send_ic_messages; }
 
-bool AreaData::isWtceAllowed() const
-{
-    return m_can_send_wtce;
-}
+bool AreaData::isWtceAllowed() const { return m_can_send_wtce; }
 
-bool AreaData::isShoutAllowed() const
-{
-    return m_can_use_shouts;
-}
+bool AreaData::isShoutAllowed() const { return m_can_use_shouts; }
 
 void AreaData::startMessageFloodguard(int f_duration)
 {
     m_can_send_ic_messages = false;
+
     m_message_floodguard_timer->start(f_duration);
 }
 
-void AreaData::toggleMusic()
-{
-    m_toggleMusic = !m_toggleMusic;
-}
+void AreaData::toggleMusic() { m_toggleMusic = !m_toggleMusic; }
 
-void AreaData::setEviMod(const EvidenceMod &f_eviMod_r)
-{
-    m_eviMod = f_eviMod_r;
-}
+void AreaData::setEviMod(const EvidenceMod &f_eviMod_r) { m_eviMod = f_eviMod_r; }
 
-void AreaData::setTestimonyRecording(const TestimonyRecording &f_testimonyRecording_r)
-{
-    m_testimonyRecording = f_testimonyRecording_r;
-}
+void AreaData::setTestimonyRecording(const TestimonyRecording &f_testimonyRecording_r) { m_testimonyRecording = f_testimonyRecording_r; }
 
 void AreaData::restartTestimony()
 {
@@ -353,57 +294,33 @@ void AreaData::clearTestimony()
 {
     m_testimonyRecording = AreaData::TestimonyRecording::STOPPED;
     m_statement = -1;
+
     m_testimony.clear();
 }
 
-bool AreaData::forceImmediate() const
-{
-    return m_forceImmediate;
-}
+bool AreaData::forceImmediate() const { return m_forceImmediate; }
 
-void AreaData::toggleImmediate()
-{
-    m_forceImmediate = !m_forceImmediate;
-}
+void AreaData::toggleImmediate() { m_forceImmediate = !m_forceImmediate; }
 
-const QStringList &AreaData::lastICMessage() const
-{
-    return m_lastICMessage;
-}
+const QStringList &AreaData::lastICMessage() const { return m_lastICMessage; }
 
-const QString &AreaData::lastICMessageOwner() const
-{
-    return m_lastICMessageOwner;
-}
+const QString &AreaData::lastICMessageOwner() const { return m_lastICMessageOwner; }
 
-void AreaData::updateLastICMessageOwner(const QString &f_lastMessageOwner_r)
-{
-    m_lastICMessageOwner = f_lastMessageOwner_r;
-}
+void AreaData::updateLastICMessageOwner(const QString &f_lastMessageOwner_r) { m_lastICMessageOwner = f_lastMessageOwner_r; }
 
-void AreaData::updateLastICMessage(const QStringList &f_lastMessage_r)
-{
-    m_lastICMessage = f_lastMessage_r;
-}
+void AreaData::updateLastICMessage(const QStringList &f_lastMessage_r) { m_lastICMessage = f_lastMessage_r; }
 
-QStringList AreaData::judgelog() const
-{
-    return m_judgelog;
-}
+QStringList AreaData::judgelog() const { return m_judgelog; }
 
 void AreaData::appendJudgelog(const QString &f_newLog_r)
 {
-    if (m_judgelog.size() == 10) {
+    if (m_judgelog.size() == 10)
         m_judgelog.removeFirst();
-    }
 
     m_judgelog.append(f_newLog_r);
 }
 
-int AreaData::statement() const
-{
-    return m_statement;
-}
+int AreaData::statement() const { return m_statement; }
 
 void AreaData::recordStatement(const QStringList &f_newStatement_r)
 {
@@ -411,15 +328,9 @@ void AreaData::recordStatement(const QStringList &f_newStatement_r)
     m_testimony.append(f_newStatement_r);
 }
 
-void AreaData::addStatement(int f_position, const QStringList &f_newStatement_r)
-{
-    m_testimony.insert(f_position, f_newStatement_r);
-}
+void AreaData::addStatement(int f_position, const QStringList &f_newStatement_r) { m_testimony.insert(f_position, f_newStatement_r); }
 
-void AreaData::replaceStatement(int f_position, const QStringList &f_newStatement_r)
-{
-    m_testimony.replace(f_position, f_newStatement_r);
-}
+void AreaData::replaceStatement(int f_position, const QStringList &f_newStatement_r) { m_testimony.replace(f_position, f_newStatement_r); }
 
 void AreaData::removeStatement(int f_position)
 {
@@ -435,29 +346,20 @@ QPair<QStringList, AreaData::TestimonyProgress> AreaData::jumpToStatement(int f_
         m_statement = 1;
         return {m_testimony.at(m_statement), TestimonyProgress::LOOPED};
     }
+
     if (m_statement <= 1) {
         m_statement = 1;
         return {m_testimony.at(m_statement), TestimonyProgress::STAYED_AT_FIRST};
     }
-    else {
+    else
         return {m_testimony.at(m_statement), TestimonyProgress::OK};
-    }
 }
 
-const QVector<QStringList> &AreaData::testimony() const
-{
-    return m_testimony;
-}
+const QVector<QStringList> &AreaData::testimony() const { return m_testimony; }
 
-AreaData::TestimonyRecording AreaData::testimonyRecording() const
-{
-    return m_testimonyRecording;
-}
+AreaData::TestimonyRecording AreaData::testimonyRecording() const { return m_testimonyRecording; }
 
-AreaData::EvidenceMod AreaData::eviMod() const
-{
-    return m_eviMod;
-}
+AreaData::EvidenceMod AreaData::eviMod() const { return m_eviMod; }
 
 bool AreaData::addNotecard(const QString &f_owner_r, const QString &f_notecard_r)
 {
@@ -482,19 +384,12 @@ QStringList AreaData::getNotecards()
     }
 
     m_notecards.clear();
-
     return l_notecards;
 }
 
-QString AreaData::musicPlayerBy() const
-{
-    return m_musicPlayedBy;
-}
+QString AreaData::musicPlayerBy() const { return m_musicPlayedBy; }
 
-void AreaData::setMusicPlayedBy(const QString &f_music_player)
-{
-    m_musicPlayedBy = f_music_player;
-}
+void AreaData::setMusicPlayedBy(const QString &f_music_player) { m_musicPlayedBy = f_music_player; }
 
 void AreaData::changeMusic(const QString &f_source_r, const QString &f_newSong_r)
 {
@@ -502,175 +397,73 @@ void AreaData::changeMusic(const QString &f_source_r, const QString &f_newSong_r
     m_musicPlayedBy = f_source_r;
 }
 
-QString AreaData::currentMusic() const
-{
-    return m_currentMusic;
-}
+QString AreaData::currentMusic() const { return m_currentMusic; }
 
-void AreaData::setCurrentMusic(QString f_current_song)
-{
-    m_currentMusic = f_current_song;
-}
+void AreaData::setCurrentMusic(QString f_current_song) { m_currentMusic = f_current_song; }
 
-int AreaData::proHP() const
-{
-    return m_proHP;
-}
+int AreaData::proHP() const { return m_proHP; }
 
 void AreaData::changeHP(AreaData::Side f_side, int f_newHP)
 {
-    if (f_side == Side::DEFENCE) {
+    if (f_side == Side::DEFENCE)
         m_defHP = std::min(std::max(0, f_newHP), 10);
-    }
-    else if (f_side == Side::PROSECUTOR) {
+    else if (f_side == Side::PROSECUTOR)
         m_proHP = std::min(std::max(0, f_newHP), 10);
-    }
 }
 
-int AreaData::defHP() const
-{
-    return m_defHP;
-}
+int AreaData::defHP() const { return m_defHP; }
 
-QString AreaData::document() const
-{
-    return m_document;
-}
+QString AreaData::document() const { return m_document; }
 
-void AreaData::changeDoc(const QString &f_newDoc_r)
-{
-    m_document = f_newDoc_r;
-}
+void AreaData::changeDoc(const QString &f_newDoc_r) { m_document = f_newDoc_r; }
 
-QString AreaData::areaMessage() const
-{
-    return m_area_message.isEmpty() ? "No area message set." : m_area_message;
-}
+QString AreaData::areaMessage() const { return m_area_message.isEmpty() ? "No area message set." : m_area_message; }
 
-bool AreaData::sendAreaMessageOnJoin() const
-{
-    return m_send_area_message;
-}
+bool AreaData::sendAreaMessageOnJoin() const { return m_send_area_message; }
 
-void AreaData::changeAreaMessage(const QString &f_newMessage_r)
-{
-    m_area_message = f_newMessage_r;
-}
+void AreaData::changeAreaMessage(const QString &f_newMessage_r) { m_area_message = f_newMessage_r; }
 
-void AreaData::clearAreaMessage()
-{
-    changeAreaMessage(QString{});
-}
+void AreaData::clearAreaMessage() { changeAreaMessage(QString{}); }
 
-bool AreaData::bgLocked() const
-{
-    return m_bgLocked;
-}
+bool AreaData::bgLocked() const { return m_bgLocked; }
 
-void AreaData::toggleBgLock()
-{
-    m_bgLocked = !m_bgLocked;
-}
+void AreaData::toggleBgLock() { m_bgLocked = !m_bgLocked; }
 
-bool AreaData::iniswapAllowed() const
-{
-    return m_iniswapAllowed;
-}
+bool AreaData::iniswapAllowed() const { return m_iniswapAllowed; }
 
-void AreaData::toggleIniswap()
-{
-    m_iniswapAllowed = !m_iniswapAllowed;
-}
+void AreaData::toggleIniswap() { m_iniswapAllowed = !m_iniswapAllowed; }
 
-bool AreaData::shownameAllowed() const
-{
-    return m_shownameAllowed;
-}
+bool AreaData::shownameAllowed() const { return m_shownameAllowed; }
 
-QString AreaData::background() const
-{
-    return m_background;
-}
+QString AreaData::background() const { return m_background; }
 
-void AreaData::setBackground(const QString f_background)
-{
-    m_background = f_background;
-}
+void AreaData::setBackground(const QString f_background) { m_background = f_background; }
 
-bool AreaData::ignoreBgList()
-{
-    return m_ignoreBgList;
-}
+bool AreaData::ignoreBgList() { return m_ignoreBgList; }
 
-void AreaData::toggleIgnoreBgList()
-{
-    m_ignoreBgList = !m_ignoreBgList;
-}
+void AreaData::toggleIgnoreBgList() { m_ignoreBgList = !m_ignoreBgList; }
 
-void AreaData::toggleAreaMessageJoin()
-{
-    m_send_area_message = !m_send_area_message;
-}
+void AreaData::toggleAreaMessageJoin() { m_send_area_message = !m_send_area_message; }
 
-void AreaData::toggleWtceAllowed()
-{
-    m_can_send_wtce = !m_can_send_wtce;
-}
+void AreaData::toggleWtceAllowed() { m_can_send_wtce = !m_can_send_wtce; }
 
-void AreaData::toggleShoutAllowed()
-{
-    m_can_use_shouts = !m_can_use_shouts;
-}
+void AreaData::toggleShoutAllowed() { m_can_use_shouts = !m_can_use_shouts; }
 
-bool AreaData::floodguardActive()
-{
-    return m_floodguardactive;
-}
+bool AreaData::floodguardActive() { return m_floodguardactive; }
 
-void AreaData::toggleFloodguardActive()
-{
-    m_floodguardactive = !m_floodguardactive;
-}
+void AreaData::toggleFloodguardActive() { m_floodguardactive = !m_floodguardactive; }
 
-bool AreaData::chillMod()
-{
-    return m_chillMod;
-}
+bool AreaData::chillMod() { return m_chillMod; }
 
-void AreaData::toggleChillMod()
-{
-    m_chillMod = !m_chillMod;
-}
+void AreaData::toggleChillMod() { m_chillMod = !m_chillMod; }
 
-bool AreaData::autoMod()
-{
-    return m_autoMod;
-}
+bool AreaData::autoMod() { return m_autoMod; }
 
-void AreaData::toggleAutoMod()
-{
-    m_autoMod = !m_autoMod;
-}
+void AreaData::toggleAutoMod() { m_autoMod = !m_autoMod; }
 
-QString AreaData::areaPassword()
-{
-    return m_areapassword;
-}
+bool AreaData::allowChangeStatus() { return m_can_change_status; }
 
-void AreaData::setAreaPassword(QString f_password)
-{
-    m_areapassword = f_password;
-}
-
-bool AreaData::allowChangeStatus()
-{
-    return m_can_change_status;
-}
-
-void AreaData::toggleChangeStatus()
-{
-    m_can_change_status = !m_can_change_status;
-}
+void AreaData::toggleChangeStatus() { m_can_change_status = !m_can_change_status; }
 
 void AreaData::setEvidenceList(QStringList f_evi_list)
 {
@@ -692,42 +485,18 @@ void AreaData::setEvidenceList(QStringList f_evi_list)
     }
 }
 
-QVector<int> AreaData::joinedIDs() const
-{
-    return m_joined_ids;
-}
+QVector<int> AreaData::joinedIDs() const { return m_joined_ids; }
 
-void AreaData::allowMessage()
-{
-    m_can_send_ic_messages = true;
-}
+void AreaData::allowMessage() { m_can_send_ic_messages = true; }
 
-bool AreaData::isVoteStarted() const
-{
-    return m_vote_started;
-}
+bool AreaData::isVoteStarted() const { return m_vote_started; }
 
-void AreaData::toggleVote()
-{
-    m_vote_started = !m_vote_started;
-}
+void AreaData::toggleVote() { m_vote_started = !m_vote_started; }
 
-AreaData::OocType AreaData::oocType() const
-{
-    return m_ooc_type;
-}
+AreaData::OocType AreaData::oocType() const { return m_ooc_type; }
 
-void AreaData::setOocType(const OocType &f_oocType_r)
-{
-    m_ooc_type = f_oocType_r;
-}
+void AreaData::setOocType(const OocType &f_oocType_r) { m_ooc_type = f_oocType_r; }
 
-int AreaData::getHub()
-{
-    return m_hub;
-}
+int AreaData::getHub() { return m_hub; }
 
-void AreaData::setHub(int f_index)
-{
-    m_hub = f_index;
-}
+void AreaData::setHub(int f_index) { m_hub = f_index; }

@@ -99,7 +99,7 @@ class AOClient : public QObject
      *
      * @return The IPID.
      *
-     * @see #ipid
+     * @see #m_ipid
      */
     QString getIpid() const;
 
@@ -108,7 +108,7 @@ class AOClient : public QObject
      *
      * @return The HWID.
      *
-     * @see #hwid
+     * @see #m_hwid
      */
     QString getHwid() const;
 
@@ -462,7 +462,7 @@ class AOClient : public QObject
     /**
      * @brief An auxiliary function of the automoderator, which is responsible for the mute of the player.
      */
-    void autoMute(bool ic_chat, int haznum);
+    void autoMute(bool ic_chat);
 
     /**
      * @brief An auxiliary function of the automoderator, which is responsible for the kick of the player.
@@ -1214,20 +1214,6 @@ class AOClient : public QObject
      * @iscommand
      */
     void cmdToggleAutoMod(int argc, QStringList argv);
-
-    /**
-     * @brief When given arguments, sets the password that the client needs to set to enter the area. If no arguments are given, the command will return the current password in area.
-     *
-     * @iscommand
-     */
-    void cmdSetAreaPassword(int argc, QStringList argv);
-
-    /**
-     * @brief When given arguments, sets the password that the client needs to set to enter the passworded area. If no arguments are given, the command will return the current password of the client.
-     *
-     * @iscommand
-     */
-    void cmdSetClientPassword(int argc, QStringList argv);
 
     /**
      * @brief Rename the area in which the client is located.

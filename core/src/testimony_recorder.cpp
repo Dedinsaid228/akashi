@@ -16,20 +16,17 @@
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/aoclient.h"
-
 #include "include/area_data.h"
 #include "include/config_manager.h"
 #include "include/server.h"
 
 void AOClient::addStatement(QStringList packet)
 {
-    if (checkTestimonySymbols(packet[4])) {
+    if (checkTestimonySymbols(packet[4]))
         return;
-    }
 
     AreaData *area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
-
     if (c_statement >= -1) {
         if (area->testimonyRecording() == AreaData::TestimonyRecording::RECORDING) {
             if (c_statement <= ConfigManager::maxStatements()) {
@@ -41,9 +38,8 @@ void AOClient::addStatement(QStringList packet)
                 area->recordStatement(packet);
                 return;
             }
-            else {
+            else
                 sendServerMessage("Unable to add more statements. The maximum amount of statements has been reached.");
-            }
         }
         else if (area->testimonyRecording() == AreaData::TestimonyRecording::ADD) {
             packet[14] = "1";
@@ -59,15 +55,12 @@ void AOClient::addStatement(QStringList packet)
 
 QStringList AOClient::updateStatement(QStringList packet)
 {
-    if (checkTestimonySymbols(packet[4])) {
+    if (checkTestimonySymbols(packet[4]))
         return packet;
-    }
 
     AreaData *area = server->getAreaById(m_current_area);
     int c_statement = area->statement();
-
     area->setTestimonyRecording(AreaData::TestimonyRecording::PLAYBACK);
-
     if (c_statement <= 0 || area->testimony()[c_statement].empty())
         sendServerMessage("Unable to update an empty statement. Please use /addtestimony.");
     else {
@@ -92,5 +85,6 @@ bool AOClient::checkTestimonySymbols(const QString &message)
         sendServerMessage("Unable to add statements containing '>' or '<'.");
         return true;
     }
+
     return false;
 }

@@ -2,11 +2,12 @@
 #include "include/packet/packet_generic.h"
 std::shared_ptr<AOPacket> PacketFactory::createPacket(QString header, QStringList contents)
 {
-    if (!class_map.count(header)) {
+    if (!class_map.count(header))
         return createInstance<PacketGeneric>(header, contents);
-    }
+
     return class_map[header](contents);
 }
+
 std::shared_ptr<AOPacket> PacketFactory::createPacket(QString raw_packet)
 {
     QString header;
@@ -26,13 +27,11 @@ std::shared_ptr<AOPacket> PacketFactory::createPacket(QString raw_packet)
     header = packet_contents[0];
     packet_contents.removeFirst(); // Remove header
 
-    if (!packet_contents.isEmpty()) {
+    if (!packet_contents.isEmpty())
         packet_contents.removeLast(); // Remove anything trailing after delimiter
-    }
+
     contents = packet_contents;
-
     std::shared_ptr<AOPacket> packet = PacketFactory::createPacket(header, contents);
-
     packet->unescapeContent();
     return packet;
 }

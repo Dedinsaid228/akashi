@@ -931,16 +931,6 @@ class AreaData : public QObject
     void toggleAutoMod();
 
     /**
-     * @brief Returns the password set in area.
-     */
-    QString areaPassword();
-
-    /**
-     * @brief Sets a new password for area.
-     */
-    void setAreaPassword(QString f_password);
-
-    /**
      * @brief Return whether status can be changed in this area.
      *
      * @return See short description.
@@ -1260,11 +1250,6 @@ class AreaData : public QObject
      * @brief Whether or not the automoderator is active.
      */
     bool m_autoMod;
-
-    /**
-     * @brief The password set in area.
-     */
-    QString m_areapassword;
 
     /**
      * @brief Timer until the next IC message can be sent.

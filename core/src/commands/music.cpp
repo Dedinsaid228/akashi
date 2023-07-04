@@ -45,7 +45,6 @@ void AOClient::cmdCurrentMusic(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     AreaData *l_area = server->getAreaById(m_current_area);
-
     if (l_area->currentMusic() != "" && l_area->currentMusic() != "~stop.mp3") // dummy track for stopping music
         sendServerMessage("The current song is " + l_area->currentMusic() + " played by " + l_area->musicPlayerBy());
     else
@@ -58,14 +57,12 @@ void AOClient::cmdBlockDj(int argc, QStringList argv)
 
     bool conv_ok = false;
     int l_uid = argv[0].toInt(&conv_ok);
-
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
     AOClient *l_target = server->getClientByID(l_uid);
-
     if (l_target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
@@ -78,9 +75,8 @@ void AOClient::cmdBlockDj(int argc, QStringList argv)
 
     if (l_target->m_is_dj_blocked)
         sendServerMessage("That player is already DJ blocked!");
-    else {
+    else
         sendServerMessage("DJ blocked player.");
-    }
 
     l_target->m_is_dj_blocked = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BLOCKDJ", "Blocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -92,14 +88,12 @@ void AOClient::cmdUnBlockDj(int argc, QStringList argv)
 
     bool conv_ok = false;
     int l_uid = argv[0].toInt(&conv_ok);
-
     if (!conv_ok) {
         sendServerMessage("Invalid user ID.");
         return;
     }
 
     AOClient *l_target = server->getClientByID(l_uid);
-
     if (l_target == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
@@ -124,7 +118,6 @@ void AOClient::cmdToggleMusic(int argc, QStringList argv)
     AreaData *l_area = server->getAreaById(m_current_area);
     l_area->toggleMusic();
     QString l_state = l_area->isMusicAllowed() ? "allowed." : "disallowed.";
-
     sendServerMessage("Music in this area is now " + l_state);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEMUSIC", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }

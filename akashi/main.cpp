@@ -25,10 +25,7 @@
 
 Server *server;
 
-void cleanup()
-{
-    server->deleteLater();
-}
+void cleanup() { server->deleteLater(); }
 
 int main(int argc, char *argv[])
 {

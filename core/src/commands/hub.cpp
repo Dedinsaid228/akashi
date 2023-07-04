@@ -21,9 +21,9 @@ void AOClient::cmdHub(int argc, QStringList argv)
             const QList<int> l_owner_ids = l_hub->hubOwners();
             for (int l_owner_id : l_owner_ids) {
                 AOClient *l_owner = server->getClientByID(l_owner_id);
-                QString l_sender_name = getSenderName(l_owner->m_id);
-                l_hubs_owners.append("[" + QString::number(l_owner->m_id) + "] " + l_sender_name);
+                l_hubs_owners.append("[" + QString::number(l_owner->m_id) + "] " + getSenderName(l_owner->m_id));
             }
+
             if (!l_hubs_owners.isEmpty())
                 l_hub_string += " [GM: " + l_hubs_owners.join(", ") + "]";
 
@@ -33,10 +33,15 @@ void AOClient::cmdHub(int argc, QStringList argv)
         sendServerMessage("You are in hub [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + "\nHub list:\n" + hub_list.join("\n"));
     }
     else {
+        if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_area_change_time <= 2) {
+            sendServerMessage("You change an area or a hub very often!");
+            return;
+        }
+
+        m_last_area_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
         bool ok;
         int l_new_hub = argv[0].toInt(&ok);
         bool l_sneaked = m_sneaked;
-
         if (!ok || l_new_hub >= server->getHubsCount() || l_new_hub < 0) {
             sendServerMessage("That does not look like a valid hub ID.");
             return;
@@ -85,7 +90,6 @@ void AOClient::cmdHub(int argc, QStringList argv)
 void AOClient::cmdGm(int argc, QStringList argv)
 {
     HubData *l_hub = server->getHubById(m_hub);
-
     if (l_hub->hubProtected()) {
         sendServerMessage("This hub is protected, you may not become GM.");
         return;
@@ -98,8 +102,7 @@ void AOClient::cmdGm(int argc, QStringList argv)
         l_hub->addHubOwner(m_id);
         l_hub->hubInvite(m_id);
         sendServerMessage("You is now GM in this hub.");
-        QString l_sender_name = getSenderName(m_id);
-        sendServerMessageHub("[" + QString::number(m_id) + "] " + l_sender_name + " is now GM in this hub.");
+        sendServerMessageHub("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
     else if (!l_hub->hubOwners().contains(m_id)) {
@@ -112,19 +115,21 @@ void AOClient::cmdGm(int argc, QStringList argv)
             sendServerMessage("That doesn't look like a valid ID.");
             return;
         }
+
         if (l_owner_candidate == nullptr) {
             sendServerMessage("Unable to find client with ID " + argv[0] + ".");
             return;
         }
+
         if (l_hub->hubOwners().contains(l_owner_candidate->m_id)) {
             sendServerMessage("This client are already a GM in this hub.");
             return;
         }
+
         l_hub->addHubOwner(l_owner_candidate->m_id);
         l_hub->hubInvite(l_owner_candidate->m_id);
         l_owner_candidate->sendServerMessage("You is now GM in this hub.");
-        QString l_sender_name = getSenderName(l_owner_candidate->m_id);
-        sendServerMessageHub("[" + QString::number(l_owner_candidate->m_id) + "] " + l_sender_name + " is now GM in this hub.");
+        sendServerMessageHub("[" + QString::number(l_owner_candidate->m_id) + "] " + getSenderName(l_owner_candidate->m_id) + " is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(l_owner_candidate->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
     else
@@ -142,22 +147,19 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
     }
     else if (argc == 0) {
         l_uid = m_id;
-
         if (!l_hub->hubOwners().contains(l_uid)) {
             sendServerMessage("You are not the GM of this hub!");
             return;
         }
 
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-        QString l_sender_name = getSenderName(m_id);
-        sendServerMessageHub("[" + QString::number(m_id) + "] " + l_sender_name + " no longer GM in this hub.");
+        sendServerMessageHub("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " no longer GM in this hub.");
         sendServerMessage("You are no longer GM in this hub.");
         m_hub_listen = false;
     }
     else {
         bool l_conv_ok = false;
         l_uid = argv[0].toInt(&l_conv_ok);
-
         if (!l_conv_ok) {
             sendServerMessage("Invalid user ID.");
             return;
@@ -169,15 +171,13 @@ void AOClient::cmdUnGm(int argc, QStringList argv)
         }
 
         AOClient *target = server->getClientByID(l_uid);
-
         if (target == nullptr) {
             sendServerMessage("No client with that ID found.");
             return;
         }
 
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "REMOVE AREA OWNER", "Owner UID: " + QString::number(target->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-        QString l_sender_name = getSenderName(target->m_id);
-        sendServerMessageHub("[" + QString::number(target->m_id) + "] " + l_sender_name + " no longer GM in this hub.");
+        sendServerMessageHub("[" + QString::number(target->m_id) + "] " + getSenderName(target->m_id) + " no longer GM in this hub.");
         target->sendServerMessage("You have been unGMed.");
         target->m_hub_listen = false;
     }
@@ -192,11 +192,8 @@ void AOClient::cmdHubProtected(int argc, QStringList argv)
     Q_UNUSED(argv)
 
     HubData *l_hub = server->getHubById(m_hub);
-
     l_hub->toggleHubProtected();
-
     QString l_state = l_hub->hubProtected() ? "protected." : "not protected.";
-
     sendServerMessage("This hub is now " + l_state);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEHUBPROTECTED", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
@@ -207,15 +204,12 @@ void AOClient::cmdHidePlayerCount(int argc, QStringList argv)
     Q_UNUSED(argv)
 
     HubData *l_hub = server->getHubById(m_hub);
-
     l_hub->toggleHidePlayerCount();
-
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
     QString l_state = l_hub->getHidePlayerCount() ? "hided." : "not hided.";
-
     sendServerMessage("Player count in this hub is now " + l_state);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLEHUB PLAYERCOUNT HIDED", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
@@ -224,24 +218,16 @@ void AOClient::cmdHubRename(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    for (int i = 0; i < server->getHubsCount(); i++) {
-        QString l_hub = server->getHubName(i);
-        QString l_hub_name = dezalgo(argv.join(" "));
-
-        if (server->getAreaNames().contains(l_hub_name)) {
-            sendServerMessage("An hub with that name already exists!");
-            return;
-        }
-
-        if (l_hub == server->getHubName(m_hub)) {
-            emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RENAMEHUB", l_hub_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
-            server->renameHub(l_hub_name, i);
-            sendServerMessage("Hub has been renamed!");
-            return;
-        }
+    QString l_hub_name = dezalgo(argv.join(" "));
+    if (server->getAreaNames().contains(l_hub_name)) {
+        sendServerMessage("An hub with that name already exists!");
+        return;
     }
 
-    sendServerMessage("For unknown reasons hub could not be renamed.");
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "RENAMEHUB", l_hub_name, server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
+    server->renameHub(l_hub_name, m_hub);
+    sendServerMessage("Hub has been renamed!");
+    return;
 }
 
 void AOClient::cmdHubListening(int argc, QStringList argv)
@@ -250,9 +236,7 @@ void AOClient::cmdHubListening(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     m_hub_listen = !m_hub_listen;
-
     QString l_state = m_hub_listen ? "listening" : "not listening";
-
     sendServerMessage("You are " + l_state + " to this hub.");
 }
 
@@ -262,7 +246,6 @@ void AOClient::cmdHubUnlock(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     HubData *l_hub = server->getHubById(m_hub);
-
     if (l_hub->hubLockStatus() == HubData::HubLockStatus::FREE) {
         sendServerMessage("This hub is not locked.");
         return;
@@ -279,7 +262,6 @@ void AOClient::cmdHubSpectate(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     HubData *l_hub = server->getHubById(m_hub);
-
     if (l_hub->hubLockStatus() == HubData::HubLockStatus::SPECTATABLE) {
         sendServerMessage("This hub is already in spectate mode.");
         return;
@@ -289,11 +271,9 @@ void AOClient::cmdHubSpectate(int argc, QStringList argv)
     l_hub->hubSpectatable();
 
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
-        if (l_client->m_hub == m_hub) {
+    for (AOClient *l_client : l_clients)
+        if (l_client->m_hub == m_hub)
             l_hub->hubInvite(l_client->m_id);
-        }
-    }
 
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBSPECTATABLE", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
@@ -304,7 +284,6 @@ void AOClient::cmdHubLock(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     HubData *l_hub = server->getHubById(m_hub);
-
     if (l_hub->hubLockStatus() == HubData::HubLockStatus::LOCKED) {
         sendServerMessage("This hub is already locked.");
         return;
@@ -314,11 +293,9 @@ void AOClient::cmdHubLock(int argc, QStringList argv)
     l_hub->hubLock();
 
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
-        if (l_client->m_hub == m_hub) {
+    for (AOClient *l_client : l_clients)
+        if (l_client->m_hub == m_hub)
             l_hub->hubInvite(l_client->m_id);
-        }
-    }
 
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBLOCK", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
 }
@@ -337,7 +314,6 @@ void AOClient::cmdHubInvite(int argc, QStringList argv)
     }
 
     AOClient *target_client = server->getClientByID(l_invited_id);
-
     if (target_client == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
@@ -366,7 +342,6 @@ void AOClient::cmdHubUnInvite(int argc, QStringList argv)
     }
 
     AOClient *target_client = server->getClientByID(l_uninvited_id);
-
     if (target_client == nullptr) {
         sendServerMessage("No client with that ID found.");
         return;
@@ -389,22 +364,17 @@ void AOClient::cmdGHub(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    QString l_sender_name = m_ooc_name;
-    QString l_sender_area = server->getAreaName(m_current_area);
     QString l_sender_message = argv.join(" ");
-    QString l_areaname = "[G][HUB MESSAGE][" + l_sender_area + "]";
-
     if (l_sender_message.size() > ConfigManager::maxCharacters()) {
         sendServerMessage("Your message is too long!");
         return;
     }
 
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
+    for (AOClient *l_client : l_clients)
         if (l_client->m_global_enabled && l_client->m_hub == m_hub)
-            l_client->sendPacket("CT", {l_areaname + l_sender_name, l_sender_message});
-    }
+            l_client->sendPacket("CT", {"[HUB MESSAGE][" + server->getAreaName(m_current_area) + "]" + m_ooc_name, l_sender_message});
 
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBGLOBALCHAT", l_sender_message, l_sender_area, QString::number(m_id), m_hwid, QString::number(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBGLOBALCHAT", l_sender_message, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
     return;
 }

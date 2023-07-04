@@ -5,8 +5,7 @@
 
 PacketSetcase::PacketSetcase(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketSetcase::getPacketInfo() const
 {
@@ -27,12 +26,11 @@ void PacketSetcase::handlePacket(AreaData *area, AOClient &client) const
         bool pref = m_content[i].toInt(&is_int);
         if (!is_int)
             return;
+
         l_prefs_list.append(pref);
     }
+
     client.m_casing_preferences = l_prefs_list;
 }
 
-bool PacketSetcase::validatePacket() const
-{
-    return true;
-}
+bool PacketSetcase::validatePacket() const { return true; }

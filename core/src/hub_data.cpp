@@ -18,10 +18,7 @@ HubData::HubData(QString p_name, int p_index) :
     hubs_ini->endGroup();
 }
 
-QList<int> HubData::hubOwners() const
-{
-    return m_hub_owners;
-}
+QList<int> HubData::hubOwners() const { return m_hub_owners; }
 
 void HubData::addHubOwner(int f_clientId)
 {
@@ -42,71 +39,34 @@ bool HubData::removeHubOwner(int f_clientId)
     return false;
 }
 
-bool HubData::hubProtected() const
-{
-    return m_hub_protected;
-}
+bool HubData::hubProtected() const { return m_hub_protected; }
 
-void HubData::toggleHubProtected()
-{
-    m_hub_protected = !m_hub_protected;
-}
+void HubData::toggleHubProtected() { m_hub_protected = !m_hub_protected; }
 
-void HubData::clientLeftHub()
-{
-    --m_hub_player_count;
-}
+void HubData::clientLeftHub() { --m_hub_player_count; }
 
-void HubData::clientJoinedHub()
-{
-    ++m_hub_player_count;
-}
+void HubData::clientJoinedHub() { ++m_hub_player_count; }
 
-int HubData::getHubPlayerCount() const
-{
-    return m_hub_player_count;
-}
+int HubData::getHubPlayerCount() const { return m_hub_player_count; }
 
-bool HubData::getHidePlayerCount() const
-{
-    return m_hub_player_count_hide;
-}
+bool HubData::getHidePlayerCount() const { return m_hub_player_count_hide; }
 
-void HubData::toggleHidePlayerCount()
-{
-    m_hub_player_count_hide = !m_hub_player_count_hide;
-}
+void HubData::toggleHidePlayerCount() { m_hub_player_count_hide = !m_hub_player_count_hide; }
 
-HubData::HubLockStatus HubData::hubLockStatus() const
-{
-    return m_hub_locked;
-}
+HubData::HubLockStatus HubData::hubLockStatus() const { return m_hub_locked; }
 
-void HubData::hubLock()
-{
-    m_hub_locked = HubLockStatus::LOCKED;
-}
+void HubData::hubLock() { m_hub_locked = HubLockStatus::LOCKED; }
 
-void HubData::hubUnlock()
-{
-    m_hub_locked = HubLockStatus::FREE;
-}
+void HubData::hubUnlock() { m_hub_locked = HubLockStatus::FREE; }
 
-void HubData::hubSpectatable()
-{
-    m_hub_locked = HubLockStatus::SPECTATABLE;
-}
+void HubData::hubSpectatable() { m_hub_locked = HubLockStatus::SPECTATABLE; }
 
-QList<int> HubData::hubInvited() const
-{
-    return m_hub_invited;
-}
+QList<int> HubData::hubInvited() const { return m_hub_invited; }
 
 bool HubData::hubInvite(int f_clientId)
 {
-    if (m_hub_invited.contains(f_clientId)) {
+    if (m_hub_invited.contains(f_clientId))
         return false;
-    }
 
     m_hub_invited.append(f_clientId);
     return true;
@@ -114,9 +74,8 @@ bool HubData::hubInvite(int f_clientId)
 
 bool HubData::hubUninvite(int f_clientId)
 {
-    if (!m_hub_invited.contains(f_clientId)) {
+    if (!m_hub_invited.contains(f_clientId))
         return false;
-    }
 
     m_hub_invited.removeAll(f_clientId);
     return true;

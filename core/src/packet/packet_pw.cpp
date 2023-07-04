@@ -5,8 +5,7 @@
 
 PacketPW::PacketPW(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketPW::getPacketInfo() const
 {
@@ -24,7 +23,4 @@ void PacketPW::handlePacket(AreaData *area, AOClient &client) const
     client.m_password = m_content[0];
 }
 
-bool PacketPW::validatePacket() const
-{
-    return true;
-}
+bool PacketPW::validatePacket() const { return true; }

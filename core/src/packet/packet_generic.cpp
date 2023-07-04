@@ -5,8 +5,7 @@
 PacketGeneric::PacketGeneric(QString header, QStringList contents) :
     AOPacket(contents),
     header(header)
-{
-}
+{}
 
 PacketInfo PacketGeneric::getPacketInfo() const
 {
@@ -25,7 +24,4 @@ void PacketGeneric::handlePacket(AreaData *area, AOClient &client) const
     qDebug() << "Packet is either unimplemented, or is meant to be sent to client";
 }
 
-bool PacketGeneric::validatePacket() const
-{
-    return true;
-}
+bool PacketGeneric::validatePacket() const { return true; }

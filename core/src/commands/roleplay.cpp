@@ -30,19 +30,15 @@ void AOClient::cmdFlip(int argc, QStringList argv)
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
-    QString l_sender_name = getSenderName(m_id);
     QStringList l_faces = {"heads", "tails"};
     QString l_face = l_faces[AOClient::genRand(0, 1)];
-
-    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " flipped a coin and got " + l_face + ".");
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " flipped a coin and got " + l_face + ".");
 }
 
 void AOClient::cmdRoll(int argc, QStringList argv)
 {
     int l_sides = 6;
     int l_dice = 1;
-    QStringList results;
-
     if (argc >= 1) {
         if (argv[0].contains('d')) {
             QStringList l_arguments = argv[0].split('d');
@@ -88,8 +84,10 @@ void AOClient::cmdRoll(int argc, QStringList argv)
         else
             l_sides = qBound(1, argv[0].toInt(), ConfigManager::diceMaxValue());
     }
+
     if (argc == 2)
         l_dice = qBound(1, argv[1].toInt(), ConfigManager::diceMaxDice());
+
     diceThrower(l_sides, l_dice, false);
 }
 
@@ -97,8 +95,6 @@ void AOClient::cmdRollP(int argc, QStringList argv)
 {
     int l_sides = 6;
     int l_dice = 1;
-    QStringList results;
-
     if (argc >= 1) {
         if (argv[0].contains('d')) {
             QStringList l_arguments = argv[0].split('d');
@@ -144,8 +140,10 @@ void AOClient::cmdRollP(int argc, QStringList argv)
         else
             l_sides = qBound(1, argv[0].toInt(), ConfigManager::diceMaxValue());
     }
+
     if (argc == 2)
         l_dice = qBound(1, argv[1].toInt(), ConfigManager::diceMaxDice());
+
     diceThrower(l_sides, l_dice, true);
 }
 
@@ -158,10 +156,8 @@ void AOClient::cmdTimer(int argc, QStringList argv)
     if (argc == 0) {
         QStringList timers;
         timers.append("Currently active timers:");
-
-        for (int i = 0; i <= 4; i++) {
+        for (int i = 0; i <= 4; i++)
             timers.append(getAreaTimer(l_area->index(), i));
-        }
 
         sendServerMessage(timers.join("\n"));
         return;
@@ -249,10 +245,8 @@ void AOClient::cmdNoteCard(int argc, QStringList argv)
 
     AreaData *l_area = server->getAreaById(m_current_area);
     QString l_notecard = argv.join(" ");
-    QString l_sender_name = getSenderName(m_id);
-
     l_area->addNotecard(m_current_char, l_notecard);
-    sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " wrote a note card.");
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " wrote a note card.");
 }
 
 void AOClient::cmdNoteCardClear(int argc, QStringList argv)
@@ -261,10 +255,8 @@ void AOClient::cmdNoteCardClear(int argc, QStringList argv)
     Q_UNUSED(argv);
 
     AreaData *l_area = server->getAreaById(m_current_area);
-    QString l_sender_name = getSenderName(m_id);
-
     if (!l_area->addNotecard(m_current_char, QString()))
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " erased their note card.");
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " erased their note card.");
 }
 
 void AOClient::cmdNoteCardReveal(int argc, QStringList argv)
@@ -282,7 +274,6 @@ void AOClient::cmdNoteCardReveal(int argc, QStringList argv)
 
     QString l_message("Note cards have been revealed.\n");
     l_message.append(l_notecards.join(""));
-
     sendServerMessageArea(l_message);
 }
 
@@ -296,11 +287,8 @@ void AOClient::cmd8Ball(int argc, QStringList argv)
     }
     else {
         QString l_response = ConfigManager::magic8BallAnswers().at((genRand(1, ConfigManager::magic8BallAnswers().size() - 1)));
-        QString l_sender_name = getSenderName(m_id);
-        QString l_sender_id = "[" + QString::number(m_id) + "] ";
         QString l_sender_message = argv.join(" ");
-
-        sendServerMessageArea(l_sender_id + l_sender_name + " asked the magic 8-ball, \"" + l_sender_message + "\" and the answer is: " + l_response);
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " asked the magic 8-ball, \"" + l_sender_message + "\" and the answer is: " + l_response);
     }
 }
 
@@ -311,10 +299,9 @@ void AOClient::cmdSubTheme(int argc, QStringList argv)
     QString l_subtheme = argv.join(" ");
 
     const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients) {
+    for (AOClient *l_client : l_clients)
         if (l_client->m_current_area == m_current_area)
             l_client->sendPacket("ST", {l_subtheme, "1"});
-    }
 
     sendServerMessageArea("Subtheme was set to " + l_subtheme);
 }
@@ -322,13 +309,11 @@ void AOClient::cmdSubTheme(int argc, QStringList argv)
 void AOClient::cmdVote(int argc, QStringList argv)
 {
     AreaData *l_area = server->getAreaById(m_current_area);
-
     if (argc == 0 && checkPermission(ACLRole::CM)) {
         l_area->toggleVote();
 
         QString l_state = l_area->isVoteStarted() ? "started!" : "forcibly stopped!";
         sendServerMessageArea("Voting is " + l_state);
-
         if (l_area->isVoteStarted()) {
             QString l_candidates = "Candidates:";
             int l_candidates_count = 0;
@@ -365,7 +350,6 @@ void AOClient::cmdVote(int argc, QStringList argv)
 
         bool l_ok;
         AOClient *l_target_client = server->getClientByID(argv[0].toInt(&l_ok));
-
         if (!l_ok) {
             sendServerMessage("That doesn't look like a valid ID.");
             return;
@@ -383,15 +367,12 @@ void AOClient::cmdVote(int argc, QStringList argv)
 
         sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " voted.");
         l_target_client->m_vote_points++;
-
         m_can_vote = false;
         bool l_all_voted = true;
         const QVector<AOClient *> l_clients = server->getClients();
-
-        for (AOClient *l_client : l_clients) {
+        for (AOClient *l_client : l_clients)
             if (l_client->m_current_area == m_current_area && l_client->m_can_vote)
                 l_all_voted = false;
-        }
 
         if (l_all_voted) {
             endVote();

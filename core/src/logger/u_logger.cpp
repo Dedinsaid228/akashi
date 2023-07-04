@@ -29,6 +29,7 @@ ULogger::ULogger(QObject *parent) :
         writerFull = new WriterFull;
         break;
     }
+
     loadLogtext();
 }
 
@@ -82,22 +83,19 @@ void ULogger::logCMD(const QString &f_char_name, const QString &f_ipid, const QS
     QString l_logEntry;
     // Some commands contain sensitive data, like passwords
     // These must be filtered out
-    if (f_command == "login") {
+    if (f_command == "login")
         l_logEntry = QString(m_logtext.value("cmdlogin") + "\n")
                          .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
-    }
-    else if (f_command == "rootpass") {
+    else if (f_command == "rootpass")
         l_logEntry = QString(m_logtext.value("cmdrootpass") + "\n")
                          .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
-    }
-    else if (f_command == "adduser" && !f_args.isEmpty()) {
+    else if (f_command == "adduser" && !f_args.isEmpty())
         l_logEntry = QString(m_logtext.value("adduser") + "\n")
                          .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_args.at(0), f_ipid, f_uid, f_hwid, f_hub);
-    }
-    else {
+    else
         l_logEntry = QString(m_logtext.value("cmd") + "\n")
                          .arg(l_time, f_area_name + " [HUB: " + f_hub + "]", f_char_name, f_ooc_name, f_command, f_args, f_ipid, f_uid, f_hwid);
-    }
+
     updateAreaBuffer(f_area_name, l_logEntry);
 }
 
@@ -127,9 +125,8 @@ void ULogger::logModcall(const QString &f_char_name, const QString &f_ipid, cons
                              .arg(l_time, f_area_name, f_char_name, f_ooc_name, f_ipid, f_uid, f_hwid, f_hub);
     updateAreaBuffer(f_area_name, l_logEvent);
 
-    if (ConfigManager::loggingType() == DataTypes::LogType::MODCALL) {
+    if (ConfigManager::loggingType() == DataTypes::LogType::MODCALL)
         writerModcall->flush(f_area_name, buffer(f_area_name));
-    }
 }
 
 void ULogger::logConnectionAttempt(const QString &f_ipid, const QString &f_hwid)
@@ -181,9 +178,8 @@ void ULogger::loadLogtext()
     // All of this to prevent one single clazy warning from appearing.
     for (auto iterator = m_logtext.keyBegin(), end = m_logtext.keyEnd(); iterator != end; ++iterator) {
         QString l_tempstring = ConfigManager::LogText(iterator.operator*());
-        if (!l_tempstring.isEmpty()) {
+        if (!l_tempstring.isEmpty())
             m_logtext[iterator.operator*()] = l_tempstring;
-        }
     }
 }
 
@@ -191,24 +187,20 @@ void ULogger::updateAreaBuffer(const QString &f_area_name, const QString &f_log_
 {
     QQueue<QString> l_buffer = m_bufferMap.value(f_area_name);
 
-    if (l_buffer.length() <= ConfigManager::logBuffer()) {
+    if (l_buffer.length() <= ConfigManager::logBuffer())
         l_buffer.enqueue(f_log_entry);
-    }
     else {
         l_buffer.dequeue();
         l_buffer.enqueue(f_log_entry);
     }
+
     m_bufferMap.insert(f_area_name, l_buffer);
 
-    if (ConfigManager::loggingType() == DataTypes::LogType::FULL) {
+    if (ConfigManager::loggingType() == DataTypes::LogType::FULL)
         writerFull->flush(f_log_entry);
-    }
-    if (ConfigManager::loggingType() == DataTypes::LogType::FULLAREA) {
+
+    if (ConfigManager::loggingType() == DataTypes::LogType::FULLAREA)
         writerFull->flush(f_log_entry, f_area_name);
-    }
 }
 
-QQueue<QString> ULogger::buffer(const QString &f_area_name)
-{
-    return m_bufferMap.value(f_area_name);
-}
+QQueue<QString> ULogger::buffer(const QString &f_area_name) { return m_bufferMap.value(f_area_name); }

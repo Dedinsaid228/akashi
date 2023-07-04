@@ -8,8 +8,7 @@
 
 PacketCT::PacketCT(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketCT::getPacketInfo() const
 {
@@ -28,7 +27,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
     }
 
     if (client.m_wuso) {
-        client.sendServerMessage("You cannot speak while you are affected by WUSO Mod.");
+        client.sendServerMessage("You cannot speak while you are affected by WUSO.");
         return;
     }
 
@@ -48,9 +47,9 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
 
     QString l_message = client.dezalgo(m_content[1]);
     QString l_ooc_name = client.m_ooc_name;
-
     if (l_message.length() == 0 || l_message.length() > ConfigManager::maxCharacters())
         return;
+
     std::shared_ptr<AOPacket> final_packet = PacketFactory::createPacket("CT", {l_ooc_name, l_message, "0"});
     if (l_message.at(0) == '/') {
         QStringList l_cmd_argv = l_message.split(" ", akashi::SkipEmptyParts);
@@ -66,12 +65,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
     else {
-        if (l_message.size() > ConfigManager::maxCharacters()) {
-            client.sendServerMessage("Your message is too long!");
-            return;
-        }
-
-        if (area->chillMod() && l_message.size() > ConfigManager::maxCharactersChillMod()) {
+        if (l_message.size() > ConfigManager::maxCharacters() || (area->chillMod() && l_message.size() > ConfigManager::maxCharactersChillMod())) {
             client.sendServerMessage("Your message is too long!");
             return;
         }
@@ -83,8 +77,4 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
     }
 }
 
-bool PacketCT::validatePacket() const
-{
-    // Nothing to validate.
-    return true;
-}
+bool PacketCT::validatePacket() const { return true; } // Nothing to validate.

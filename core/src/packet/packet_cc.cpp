@@ -7,8 +7,7 @@
 
 PacketCC::PacketCC(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketCC::getPacketInfo() const
 {
@@ -25,9 +24,8 @@ void PacketCC::handlePacket(AreaData *area, AOClient &client) const
 
     bool argument_ok;
     int l_selected_char_id = m_content[1].toInt(&argument_ok);
-    if (!argument_ok) {
+    if (!argument_ok)
         l_selected_char_id = client.SPECTATOR_ID;
-    }
 
     if (l_selected_char_id < -1 || l_selected_char_id > client.getServer()->getCharacters().size() - 1) {
         client.sendPacket("KK", {"A protocol error has been encountered.Packet : CC\nCharacter ID out of range."});
@@ -37,12 +35,8 @@ void PacketCC::handlePacket(AreaData *area, AOClient &client) const
     if (client.changeCharacter(l_selected_char_id))
         client.m_char_id = l_selected_char_id;
 
-    if (client.m_char_id > client.SPECTATOR_ID) {
+    if (client.m_char_id > client.SPECTATOR_ID)
         client.setSpectator(false);
-    }
 }
 
-bool PacketCC::validatePacket() const
-{
-    return AkashiUtils::checkArgType<int>(m_content.at(1));
-}
+bool PacketCC::validatePacket() const { return AkashiUtils::checkArgType<int>(m_content.at(1)); }

@@ -5,8 +5,7 @@
 
 PacketRM::PacketRM(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketRM::getPacketInfo() const
 {
@@ -24,7 +23,4 @@ void PacketRM::handlePacket(AreaData *area, AOClient &client) const
     client.sendPacket("SM", client.getServer()->getAreaNames() + client.getServer()->getMusicList());
 }
 
-bool PacketRM::validatePacket() const
-{
-    return true;
-}
+bool PacketRM::validatePacket() const { return true; }

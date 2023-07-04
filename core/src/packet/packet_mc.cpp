@@ -7,8 +7,7 @@
 
 PacketMC::PacketMC(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketMC::getPacketInfo() const
 {
@@ -28,10 +27,8 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
     // First, we check if the provided
     // argument is a valid song
     QString l_argument = m_content[0];
-
     if (client.getServer()->getMusicList().contains(l_argument) || client.m_music_manager->isCustom(client.m_current_area, l_argument) || l_argument == "~stop.mp3") { // ~stop.mp3 is a dummy track used by 2.9+
         // We have a song here
-
         if (client.m_is_spectator) {
             client.sendServerMessage("Spectator are blocked from changing the music.");
             return;
@@ -53,14 +50,13 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
         }
 
         client.m_last_music_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
-
         QString l_effects;
         if (m_content.length() >= 4)
             l_effects = m_content[3];
         else
             l_effects = "0";
-        QString l_final_song;
 
+        QString l_final_song;
         // As categories can be used to stop music we need to check if it has a dot for the extension. If not, we assume its a category.
         if (!l_argument.contains("."))
             l_final_song = "~stop.mp3";
@@ -72,9 +68,7 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
 
         // Since we can't ensure a user has their showname set, we check if its empty to prevent
         //"played by ." in /currentmusic.
-        QString l_sender_name = client.getSenderName(client.m_id);
-
-        area->changeMusic(l_sender_name, l_final_song);
+        area->changeMusic(client.getSenderName(client.m_id), l_final_song);
         emit client.logMusic((client.m_current_char + " " + client.m_showname), client.m_ooc_name, client.m_ipid, client.getServer()->getAreaName(client.m_current_area), l_final_song, QString::number(client.m_id), client.m_hwid, client.getServer()->getHubName(client.m_hub));
         return;
     }
@@ -88,7 +82,4 @@ void PacketMC::handlePacket(AreaData *area, AOClient &client) const
     }
 }
 
-bool PacketMC::validatePacket() const
-{
-    return true;
-}
+bool PacketMC::validatePacket() const { return true; }

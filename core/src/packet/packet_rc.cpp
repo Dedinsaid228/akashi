@@ -5,8 +5,7 @@
 
 PacketRC::PacketRC(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketRC::getPacketInfo() const
 {
@@ -24,7 +23,4 @@ void PacketRC::handlePacket(AreaData *area, AOClient &client) const
     client.sendPacket("SC", client.getServer()->getCharacters());
 }
 
-bool PacketRC::validatePacket() const
-{
-    return true;
-}
+bool PacketRC::validatePacket() const { return true; }

@@ -21,9 +21,8 @@ WriterFull::WriterFull(QObject *parent) :
     QObject(parent)
 {
     l_dir.setPath("logs/");
-    if (!l_dir.exists()) {
+    if (!l_dir.exists())
         l_dir.mkpath(".");
-    }
 }
 
 void WriterFull::flush(const QString f_entry)
@@ -37,6 +36,7 @@ void WriterFull::flush(const QString f_entry)
 #endif
         file_stream << f_entry;
     }
+
     l_logfile.close();
 }
 
@@ -51,5 +51,6 @@ void WriterFull::flush(const QString f_entry, const QString f_area_name)
 #endif
         file_stream << f_entry;
     }
+
     l_logfile.close();
 };

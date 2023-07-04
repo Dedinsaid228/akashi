@@ -7,8 +7,7 @@
 
 PacketZZ::PacketZZ(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketZZ::getPacketInfo() const
 {
@@ -38,10 +37,9 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
 
     const QVector<AOClient *> l_clients = client.getServer()->getClients();
 
-    for (AOClient *l_client : l_clients) {
+    for (AOClient *l_client : l_clients)
         if (l_client->m_authenticated)
             l_client->sendPacket(PacketFactory::createPacket("ZZ", {l_modcallNotice}));
-    }
 
     emit client.logModcall((client.m_current_char + " " + client.m_showname), client.m_ipid, client.m_ooc_name, l_areaName, QString::number(client.m_id), client.m_hwid, client.getServer()->getHubName(client.m_hub));
 
@@ -52,7 +50,4 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
         client.m_usemodcall = false;
 }
 
-bool PacketZZ::validatePacket() const
-{
-    return true;
-}
+bool PacketZZ::validatePacket() const { return true; }

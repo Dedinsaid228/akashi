@@ -46,65 +46,49 @@ NetworkSocket::NetworkSocket(QWebSocket *f_socket, QObject *parent) :
     // TLDR : We check if the header comes trough a proxy/tunnel running locally.
     // This is to ensure nobody can send those headers from the web.
     QNetworkRequest l_request = m_client_socket.ws->request();
-    if (l_request.hasRawHeader("x-forwarded-for") && l_is_local) {
+    if (l_request.hasRawHeader("x-forwarded-for") && l_is_local)
         m_socket_ip = QHostAddress(QString::fromUtf8(l_request.rawHeader("x-forwarded-for")));
-    }
-    else {
+    else
         m_socket_ip = f_socket->peerAddress();
-    }
 }
 
 NetworkSocket::~NetworkSocket()
 {
-    if (m_socket_type == TCP) {
+    if (m_socket_type == TCP)
         m_client_socket.tcp->deleteLater();
-    }
-    else {
+    else
         m_client_socket.ws->deleteLater();
-    }
 }
 
-QHostAddress NetworkSocket::peerAddress()
-{
-    return m_socket_ip;
-}
+QHostAddress NetworkSocket::peerAddress() { return m_socket_ip; }
 
 void NetworkSocket::close()
 {
-    if (m_socket_type == TCP) {
+    if (m_socket_type == TCP)
         m_client_socket.ws->deleteLater();
-    }
-    else {
+    else
         m_client_socket.ws->deleteLater();
-    }
 }
 
-void NetworkSocket::close(QWebSocketProtocol::CloseCode f_code)
-{
-    m_client_socket.ws->close(f_code);
-}
+void NetworkSocket::close(QWebSocketProtocol::CloseCode f_code) { m_client_socket.ws->close(f_code); }
 
 void NetworkSocket::readData()
 {
-    if (m_client_socket.tcp->bytesAvailable() > 30720) { // Client can send a max of 30KB to the server.
+    if (m_client_socket.tcp->bytesAvailable() > 30720) // Client can send a max of 30KB to the server.
         m_client_socket.tcp->close();
-    }
 
     QString l_data = QString(m_client_socket.tcp->readAll());
-
-    if (m_is_partial) {
+    if (m_is_partial)
         l_data = m_partial_packet + l_data;
-    }
-    if (!l_data.endsWith("%")) {
+
+    if (!l_data.endsWith("%"))
         m_is_partial = true;
-    }
 
     QStringList l_all_packets = l_data.split("%");
     l_all_packets.removeLast(); // Remove the entry after the last delimiter
 
-    if (l_all_packets.value(0).startsWith("MC", Qt::CaseInsensitive)) {
+    if (l_all_packets.value(0).startsWith("MC", Qt::CaseInsensitive))
         l_all_packets = QStringList{l_all_packets.value(0)};
-    }
 
     for (const QString &l_single_packet : qAsConst(l_all_packets)) {
         std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket(l_single_packet);
@@ -112,6 +96,7 @@ void NetworkSocket::readData()
             qDebug() << "Unimplemented packet: " << l_single_packet;
             continue;
         }
+
         emit handlePacket(l_packet);
     }
 }
@@ -119,18 +104,15 @@ void NetworkSocket::readData()
 void NetworkSocket::ws_readData(QString f_data)
 {
     QString l_data = f_data;
-
-    if (l_data.toUtf8().size() > 30720) {
+    if (l_data.toUtf8().size() > 30720)
         m_client_socket.ws->close(QWebSocketProtocol::CloseCodeTooMuchData);
-    }
 
     QStringList l_all_packets = l_data.split("%");
     l_all_packets.removeLast();  // Remove the entry after the last delimiter
     l_all_packets.removeAll({}); // Remove empty or null strings.
 
-    if (l_all_packets.value(0).startsWith("MC", Qt::CaseInsensitive)) {
+    if (l_all_packets.value(0).startsWith("MC", Qt::CaseInsensitive))
         l_all_packets = QStringList{l_all_packets.value(0)};
-    }
 
     for (const QString &l_single_packet : qAsConst(l_all_packets)) {
         std::shared_ptr<AOPacket> l_packet = PacketFactory::createPacket(l_single_packet);

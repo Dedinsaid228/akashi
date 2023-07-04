@@ -259,6 +259,8 @@ class DBManager : public QObject
      */
     void updateHazNum(QString ipid, QString action);
 
+    bool hazNumExist(QString ipid);
+
     /**
      * @brief Returns the user's number of warns.
      */
@@ -283,6 +285,8 @@ class DBManager : public QObject
      * @overload
      */
     void updateWarn(QString ipid, long date);
+
+    bool warnExist(QString ipid);
 
     /**
      * @brief Updates a ban.

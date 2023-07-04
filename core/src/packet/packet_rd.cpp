@@ -7,8 +7,7 @@
 
 PacketRD::PacketRD(QStringList &contents) :
     AOPacket(contents)
-{
-}
+{}
 
 PacketInfo PacketRD::getPacketInfo() const
 {
@@ -27,9 +26,8 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
-    if (client.m_joined) {
+    if (client.m_joined)
         return;
-    }
 
     client.m_joined = true;
     client.getServer()->updateCharsTaken(area);
@@ -49,21 +47,18 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
         client.sendPacket("TI", {"0", "2"});
         client.sendPacket("TI", {"0", "0", QString::number(QTime(0, 0).msecsTo(QTime(0, 0).addMSecs(client.getServer()->timer->remainingTime())))});
     }
-    else {
+    else
         client.sendPacket("TI", {"0", "3"});
-    }
 
     const QList<QTimer *> l_timers = area->timers();
-
     for (QTimer *l_timer : l_timers) {
         int l_timer_id = area->timers().indexOf(l_timer) + 1;
         if (l_timer->isActive()) {
             client.sendPacket("TI", {QString::number(l_timer_id), "2"});
             client.sendPacket("TI", {QString::number(l_timer_id), "0", QString::number(QTime(0, 0).msecsTo(QTime(0, 0).addMSecs(l_timer->remainingTime())))});
         }
-        else {
+        else
             client.sendPacket("TI", {QString::number(l_timer_id), "3"});
-        }
     }
 
     emit client.joined();
@@ -76,7 +71,6 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
         client.m_wuso = true;
 
     QString info_message = "This server works on kakashi " + QCoreApplication::applicationVersion() + ". ";
-
     if (QCoreApplication::applicationVersion() == "unstable")
         info_message += "Github: https://github.com/Ddedinya/kakashi \n";
     else if (client.getServer()->m_latest_version.isEmpty())
@@ -102,12 +96,9 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
 
         l_hub_list.append("[" + QString::number(i) + "] " + client.getServer()->getHubName(i) + " with " + l_playercount + " players.");
     }
-    info_message += "\nYou are in hub [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) + "\nHub list:\n" + l_hub_list.join("\n") + "\nTo view a more detailed list, you can use /hub command.";
 
+    info_message += "\nYou are in hub [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) + "\nHub list:\n" + l_hub_list.join("\n") + "\nTo view a more detailed list, you can use /hub command.";
     client.sendServerMessage(info_message);
 }
 
-bool PacketRD::validatePacket() const
-{
-    return true;
-}
+bool PacketRD::validatePacket() const { return true; }
