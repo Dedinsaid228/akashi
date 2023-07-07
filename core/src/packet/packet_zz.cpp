@@ -20,8 +20,8 @@ PacketInfo PacketZZ::getPacketInfo() const
 
 void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
 {
-    QString l_modcallNotice = "!!!MODCALL!!!"
-                              "\nArea: [" + QString::number(client.m_area_list.indexOf(client.m_current_area)) + "] " + area->name() +
+    QString l_modcallNotice = "!!!MODCALL!!!\nArea: [" +
+                              QString::number(client.m_area_list.indexOf(client.m_current_area)) + "] " + area->name() +
                               "\nHub: [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) +
                               "\nCaller: [" + QString::number(client.m_id) + "] " + client.getSenderName(client.m_id) + "(" + client.m_ipid + ")\n";
 

@@ -781,15 +781,15 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
             for (int l_hub = 0; l_hub < server->getHubsCount(); l_hub++) {
                 for (int i = 0; i < server->getAreaCount(); i++) {
                     AreaData *l_area = server->getAreaById(i);
-                        if (l_area->getHub() == l_hub) {
-                            QStringList l_evidence_list;
-                            QString l_evidence_format("%1%2name%3desc%4image");
-                            int l_evidence_count = 0;
-                            const QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
-                            for (const AreaData::Evidence &evidence : l_area_evidence) {
-                                l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
-                                l_evidence_count++;
-                            }
+                    if (l_area->getHub() == l_hub) {
+                        QStringList l_evidence_list;
+                        QString l_evidence_format("%1%2name%3desc%4image");
+                        int l_evidence_count = 0;
+                        const QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
+                        for (const AreaData::Evidence &evidence : l_area_evidence) {
+                            l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
+                            l_evidence_count++;
+                        }
 
                         file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
                                         "\nbackground=" + QVariant(l_area->background()).toString() +
@@ -817,10 +817,10 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                                         "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
 
                         l_area_id++;
-                        }
                     }
                 }
             }
+        }
 
         new_areas_ini.close();
 
