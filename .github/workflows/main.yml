@@ -57,28 +57,23 @@ jobs:
   build-windows-qt5:
     needs: formatting-check
     runs-on: windows-latest
-    
+
     steps:
       - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
-      
-      - name: Cache Qt
-        id: cache-qt
-        uses: actions/cache@v1  # not v2!
-        with:
-          path: ../Qt
-          key: ${{ runner.os }}-QtCache
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
-          cached: ${{ steps.cache-qt.outputs.cache-hit }}
-     
+          version: '5.15.2'
+          arch: 'win32_mingw81'
+          modules: 'qtwebsockets'
+
       - name: Build
         run: |
           cd $Env:GITHUB_WORKSPACE
-          qmake "CONFIG += qtquickcompiler" kakashi.pro
-          nmake
+          qmake QMAKE_CXXFLAGS+="-fno-sized-deallocation"
+          make
           windeployqt bin\akashi.exe --release --no-opengl-sw
           mv bin\config_sample bin\config
 

@@ -48,12 +48,12 @@ void AOClient::cmdHub(int argc, QStringList argv)
         }
 
         if (m_hub == l_new_hub) {
-            sendServerMessage("You are already in hub [" + QString::number(m_hub) + "] " + server->getHubName(m_hub));
+            sendServerMessage("You are already in the hub [" + QString::number(m_hub) + "] " + server->getHubName(m_hub));
             return;
         }
 
         if (server->getHubById(l_new_hub)->hubLockStatus() == HubData::HubLockStatus::LOCKED && !server->getHubById(l_new_hub)->hubInvited().contains(m_id) && !checkPermission(ACLRole::BYPASS_LOCKS)) {
-            sendServerMessage("Hub [" + QString::number(l_new_hub) + "] " + server->getHubName(l_new_hub) + " is locked.");
+            sendServerMessage("The hub [" + QString::number(l_new_hub) + "] " + server->getHubName(l_new_hub) + " is locked.");
             return;
         }
 
@@ -72,18 +72,19 @@ void AOClient::cmdHub(int argc, QStringList argv)
             m_sneaked = true;
 
         changeArea(m_area_list[0], true);
+        fullArup();
 
         if (!l_sneaked)
             m_sneaked = false;
 
         const QVector<AOClient *> l_clients = server->getClients();
         for (AOClient *l_client : l_clients)
-            l_client->fullArup();
+            l_client->arup(ARUPType::PLAYER_COUNT, false, l_client->m_hub);
 
-        sendServerMessage("Hub changed.");
+        sendServerMessage("Hub is changed to [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + ".");
 
         if (server->getHubById(m_hub)->hubLockStatus() == HubData::HubLockStatus::SPECTATABLE)
-            sendServerMessage("hub " + server->getHubName(m_hub) + " is spectate-only; to chat IC you will need to be invited by the GM.");
+            sendServerMessage("The hub [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + " is spectate-only; to chat IC you will need to be invited by the GM.");
     }
 }
 
@@ -105,9 +106,8 @@ void AOClient::cmdGm(int argc, QStringList argv)
         sendServerMessageHub("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " is now GM in this hub.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "NEW HUB OWNER", "Owner UID: " + QString::number(m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, QString::number(m_hub));
     }
-    else if (!l_hub->hubOwners().contains(m_id)) {
+    else if (!l_hub->hubOwners().contains(m_id))
         sendServerMessage("You cannot become a GM in this hub.");
-    }
     else if (argc == 1) {
         bool l_ok;
         AOClient *l_owner_candidate = server->getClientByID(argv[0].toInt(&l_ok));

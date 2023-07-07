@@ -348,7 +348,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
         sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " enters from the area " + "[" + QString::number(m_area_list.indexOf(l_old_area)) + "] " + server->getAreaName(l_old_area));
 
     if (server->getAreaById(m_current_area)->lockStatus() == AreaData::LockStatus::SPECTATABLE)
-        sendServerMessage("Area " + server->getAreaName(m_current_area) + " is spectate-only. To chat IC you will need to be invited by the CM.");
+        sendServerMessage("The area [" + QString::number(m_area_list.indexOf(m_current_area)) + "] " + server->getAreaName(m_current_area) + " is spectate-only. To chat IC you will need to be invited by the CM.");
 
     emit logChangeArea((m_current_char + " " + m_showname), m_ooc_name, m_ipid, server->getAreaById(m_current_area)->name(), server->getAreaName(l_old_area) + " -> " + server->getAreaName(new_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
@@ -548,31 +548,17 @@ void AOClient::calculateIpid()
     // bit cumbersome.
 
     QCryptographicHash hash(QCryptographicHash::Md5); // Don't need security, just hashing for uniqueness
-
     hash.addData(m_remote_ip.toString().toUtf8());
-
     m_ipid = hash.result().toHex().right(8); // Use the last 8 characters (4 bytes)
 }
 
-void AOClient::sendServerMessage(QString message)
-{
-    sendPacket("CT", {ConfigManager::serverName(), message, "1"});
-}
+void AOClient::sendServerMessage(QString message) { sendPacket("CT", {ConfigManager::serverName(), message, "1"}); }
 
-void AOClient::sendServerMessageArea(QString message)
-{
-    server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}), m_current_area);
-}
+void AOClient::sendServerMessageArea(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}), m_current_area); }
 
-void AOClient::sendServerBroadcast(QString message)
-{
-    server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}));
-}
+void AOClient::sendServerBroadcast(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"})); }
 
-void AOClient::sendServerMessageHub(QString message)
-{
-    server->broadcast(m_hub, PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}));
-}
+void AOClient::sendServerMessageHub(QString message) { server->broadcast(m_hub, PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"})); }
 
 bool AOClient::checkPermission(ACLRole::Permission f_permission) const
 {

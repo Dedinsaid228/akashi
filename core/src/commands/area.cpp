@@ -290,10 +290,8 @@ void AOClient::cmdGetAreas(int argc, QStringList argv)
     l_entries.append("== Area List ==\n==Hub: [" + QString::number(m_hub) + "] " + server->getHubName(m_hub) + "==");
     l_entries.append("== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
     for (int i = 0; i < server->getAreaCount(); i++)
-        if (server->getAreaById(i)->playerCount() > 0) {
-            QStringList l_cur_area_lines = buildAreaList(i);
-            l_entries.append(l_cur_area_lines);
-        }
+        if (server->getAreaById(i)->playerCount() > 0)
+            l_entries.append(buildAreaList(i));
 
     sendServerMessage(l_entries.join("\n"));
 }
@@ -307,10 +305,8 @@ void AOClient::cmdGetAreaHubs(int argc, QStringList argv)
     l_entries.append("== Area List ==");
     l_entries.append("== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
     for (int i = 0; i < server->getAreaCount(); i++)
-        if (server->getAreaById(i)->playerCount() > 0) {
-            QStringList l_cur_area_lines = buildAreaList(i, false);
-            l_entries.append(l_cur_area_lines);
-        }
+        if (server->getAreaById(i)->playerCount() > 0)
+            l_entries.append(buildAreaList(i, false));
 
     sendServerMessage(l_entries.join("\n"));
 }
@@ -508,10 +504,8 @@ void AOClient::cmdJudgeLog(int argc, QStringList argv)
     // Judgelog contains an IPID, so we shouldn't send that unless the caller has appropriate permissions
     if (checkPermission(ACLRole::KICK) || checkPermission(ACLRole::BAN))
         sendServerMessage(l_message);
-    else {
-        QString filteredmessage = l_message.remove(QRegularExpression("[(].*[)]")); // Filter out anything between two parentheses. This should only ever be the IPID
-        sendServerMessage(filteredmessage);
-    }
+    else
+        sendServerMessage(l_message.remove(QRegularExpression("[(].*[)]"))); // Filter out anything between two parentheses. This should only ever be the IPID
 }
 
 void AOClient::cmdIgnoreBgList(int argc, QStringList argv)
@@ -783,42 +777,51 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             file_stream.setCodec("UTF-8");
 #endif
-            for (int i = 0; i < server->getAreaCount(); i++) {
-                AreaData *l_area = server->getAreaById(i);
-                QStringList l_evidence_list;
-                QString l_evidence_format("%1%2name%3desc%4image");
-                int l_evidence_count = 0;
-                const QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
-                for (const AreaData::Evidence &evidence : l_area_evidence) {
-                    l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
-                    l_evidence_count++;
+            int l_area_id = 0;
+            for (int l_hub = 0; l_hub < server->getHubsCount(); l_hub++) {
+                for (int i = 0; i < server->getAreaCount(); i++) {
+                    AreaData *l_area = server->getAreaById(i);
+                        if (l_area->getHub() == l_hub) {
+                            QStringList l_evidence_list;
+                            QString l_evidence_format("%1%2name%3desc%4image");
+                            int l_evidence_count = 0;
+                            const QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
+                            for (const AreaData::Evidence &evidence : l_area_evidence) {
+                                l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
+                                l_evidence_count++;
+                            }
+
+                        file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
+                                        "\nbackground=" + QVariant(l_area->background()).toString() +
+                                        "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
+                                        "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
+                                        "\nevidence_mod=" + getEviMod(i) +
+                                        "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
+                                        "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
+                                        "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
+                                        "\nautomod=" + QVariant(l_area->autoMod()).toString() +
+                                        "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
+                                        "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
+                                        "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
+                                        "\nstatus=" + getAreaStatus(i) +
+                                        "\nlock_status=" + getLockStatus(i) +
+                                        "\narea_message=" + l_area->areaMessage() +
+                                        "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +
+                                        "\nwtce_enabled=" + QVariant(l_area->isWtceAllowed()).toString() +
+                                        "\nshouts_enabled=" + QVariant(l_area->isShoutAllowed()).toString() +
+                                        "\ntoggle_music=" + QVariant(l_area->isMusicAllowed()).toString() +
+                                        "\nshownames_allowed=" + QVariant(l_area->shownameAllowed()).toString() +
+                                        "\nchange_status=" + QVariant(l_area->allowChangeStatus()).toString() +
+                                        "\nooc_type=" + getOocType(i) +
+                                        "\nevidence=" + l_evidence_list.join(",") +
+                                        "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
+
+                        l_area_id++;
+                        }
+                    }
                 }
-                file_stream << "[" + QString::number(i) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
-                                   "\nbackground=" + QVariant(l_area->background()).toString() +
-                                   "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
-                                   "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
-                                   "\nevidence_mod=" + getEviMod(i) +
-                                   "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
-                                   "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
-                                   "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
-                                   "\nautomod=" + QVariant(l_area->autoMod()).toString() +
-                                   "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
-                                   "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
-                                   "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
-                                   "\nstatus=" + getAreaStatus(i) +
-                                   "\nlock_status=" + getLockStatus(i) +
-                                   "\narea_message=" + l_area->areaMessage() +
-                                   "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +
-                                   "\nwtce_enabled=" + QVariant(l_area->isWtceAllowed()).toString() +
-                                   "\nshouts_enabled=" + QVariant(l_area->isShoutAllowed()).toString() +
-                                   "\ntoggle_music=" + QVariant(l_area->isMusicAllowed()).toString() +
-                                   "\nshownames_allowed=" + QVariant(l_area->shownameAllowed()).toString() +
-                                   "\nchange_status=" + QVariant(l_area->allowChangeStatus()).toString() +
-                                   "\nooc_type=" + getOocType(i) +
-                                   "\nevidence=" + l_evidence_list.join(",") +
-                                   "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
             }
-        }
+
         new_areas_ini.close();
 
         if (new_hubs_ini.open(QIODevice::WriteOnly | QIODevice::Append)) {

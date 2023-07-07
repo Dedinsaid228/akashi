@@ -20,10 +20,10 @@ PacketInfo PacketZZ::getPacketInfo() const
 
 void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
 {
-    QString l_name = client.getSenderName(client.m_id);
-    QString l_areaName = area->name();
-    QString l_hubName = client.getServer()->getHubName(client.m_hub);
-    QString l_modcallNotice = "!!!MODCALL!!!\nArea: " + l_areaName + "\nHub:" + l_hubName + "\nCaller: " + l_name + "\n";
+    QString l_modcallNotice = "!!!MODCALL!!!"
+                              "\nArea: [" + QString::number(client.m_area_list.indexOf(client.m_current_area)) + "] " + area->name() +
+                              "\nHub: [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) +
+                              "\nCaller: [" + QString::number(client.m_id) + "] " + client.getSenderName(client.m_id) + "(" + client.m_ipid + ")\n";
 
     if (!client.m_usemodcall) {
         client.sendServerMessage("You cannot use Mod Call anymore. Be patient!");
@@ -36,15 +36,14 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
         l_modcallNotice.append("No reason given.");
 
     const QVector<AOClient *> l_clients = client.getServer()->getClients();
-
     for (AOClient *l_client : l_clients)
         if (l_client->m_authenticated)
             l_client->sendPacket(PacketFactory::createPacket("ZZ", {l_modcallNotice}));
 
-    emit client.logModcall((client.m_current_char + " " + client.m_showname), client.m_ipid, client.m_ooc_name, l_areaName, QString::number(client.m_id), client.m_hwid, client.getServer()->getHubName(client.m_hub));
+    emit client.logModcall((client.m_current_char + " " + client.m_showname), client.m_ipid, client.m_ooc_name, area->name(), QString::number(client.m_id), client.m_hwid, client.getServer()->getHubName(client.m_hub));
 
     if (ConfigManager::discordModcallWebhookEnabled())
-        emit client.getServer()->modcallWebhookRequest(l_name, l_hubName, l_areaName, m_content.value(0), client.getServer()->getAreaBuffer(l_areaName));
+        emit client.getServer()->modcallWebhookRequest(client.getSenderName(client.m_id), client.getServer()->getHubName(client.m_hub), area->name(), m_content.value(0), client.getServer()->getAreaBuffer(area->name()));
 
     if (client.m_wuso)
         client.m_usemodcall = false;
