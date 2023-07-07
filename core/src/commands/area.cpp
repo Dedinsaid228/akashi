@@ -790,7 +790,7 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                             l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
                             l_evidence_count++;
                         }
-                         file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
+                        file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
                                            "\nbackground=" + QVariant(l_area->background()).toString() +
                                            "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
                                            "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
