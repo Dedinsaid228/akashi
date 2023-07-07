@@ -790,31 +790,30 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                             l_evidence_list.append(l_evidence_format.arg(QString::number(l_evidence_count), evidence.name, evidence.description, evidence.image));
                             l_evidence_count++;
                         }
-
-                        file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
-                                        "\nbackground=" + QVariant(l_area->background()).toString() +
-                                        "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
-                                        "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
-                                        "\nevidence_mod=" + getEviMod(i) +
-                                        "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
-                                        "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
-                                        "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
-                                        "\nautomod=" + QVariant(l_area->autoMod()).toString() +
-                                        "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
-                                        "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
-                                        "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
-                                        "\nstatus=" + getAreaStatus(i) +
-                                        "\nlock_status=" + getLockStatus(i) +
-                                        "\narea_message=" + l_area->areaMessage() +
-                                        "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +
-                                        "\nwtce_enabled=" + QVariant(l_area->isWtceAllowed()).toString() +
-                                        "\nshouts_enabled=" + QVariant(l_area->isShoutAllowed()).toString() +
-                                        "\ntoggle_music=" + QVariant(l_area->isMusicAllowed()).toString() +
-                                        "\nshownames_allowed=" + QVariant(l_area->shownameAllowed()).toString() +
-                                        "\nchange_status=" + QVariant(l_area->allowChangeStatus()).toString() +
-                                        "\nooc_type=" + getOocType(i) +
-                                        "\nevidence=" + l_evidence_list.join(",") +
-                                        "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
+                         file_stream << "[" + QString::number(l_area_id) + ":" + QString::number(l_area->getHub()) + ":" + server->getAreaName(i).toUtf8() + "]" +
+                                           "\nbackground=" + QVariant(l_area->background()).toString() +
+                                           "\nprotected_area=" + QVariant(l_area->isProtected()).toString() +
+                                           "\niniswap_allowed=" + QVariant(l_area->iniswapAllowed()).toString() +
+                                           "\nevidence_mod=" + getEviMod(i) +
+                                           "\nblankposting_allowed=" + QVariant(l_area->blankpostingAllowed()).toString() +
+                                           "\nforce_immediate=" + QVariant(l_area->forceImmediate()).toString() +
+                                           "\nchillmod=" + QVariant(l_area->chillMod()).toString() +
+                                           "\nautomod=" + QVariant(l_area->autoMod()).toString() +
+                                           "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
+                                           "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
+                                           "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
+                                           "\nstatus=" + getAreaStatus(i) +
+                                           "\nlock_status=" + getLockStatus(i) +
+                                           "\narea_message=" + l_area->areaMessage() +
+                                           "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +
+                                           "\nwtce_enabled=" + QVariant(l_area->isWtceAllowed()).toString() +
+                                           "\nshouts_enabled=" + QVariant(l_area->isShoutAllowed()).toString() +
+                                           "\ntoggle_music=" + QVariant(l_area->isMusicAllowed()).toString() +
+                                           "\nshownames_allowed=" + QVariant(l_area->shownameAllowed()).toString() +
+                                           "\nchange_status=" + QVariant(l_area->allowChangeStatus()).toString() +
+                                           "\nooc_type=" + getOocType(i) +
+                                           "\nevidence=" + l_evidence_list.join(",") +
+                                           "\nmusiclist=" + m_music_manager->getCustomMusicList(i).join(",") + "\n\n";
 
                         l_area_id++;
                     }
