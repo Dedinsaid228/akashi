@@ -349,7 +349,7 @@ QString AOClient::getEviMod(int f_area)
     return "UNKNOWN";
 }
 
-QString AOClient::getAreaStatus(int f_area)
+/** QString AOClient::getAreaStatus(int f_area)
 {
     AreaData *l_area = server->getAreaById(f_area);
     switch (l_area->status()) {
@@ -372,7 +372,7 @@ QString AOClient::getAreaStatus(int f_area)
     }
 
     return "UNKNOWN";
-}
+} **/
 
 QString AOClient::getLockStatus(int f_area)
 {

@@ -18,37 +18,37 @@ void AOClient::autoMod(bool ic_chat, int chars)
         return;
     }
 
-    if ((l_currentdate - m_lastmessagetime + m_lastmessagechars * 0.046875 * 1000 < ConfigManager::autoModTrigger() && ic_chat) ||
+    if ((l_currentdate - m_lastmessagetime < ConfigManager::autoModTrigger() + m_lastmessagechars * 0.046875 * 1000 && ic_chat) ||
         (l_currentdate - m_lastoocmessagetime < ConfigManager::autoModOocTrigger() && !ic_chat)) {
-        if (l_warn < 2) {
+        if (l_warn < ConfigManager::autoModWarns()) {
             if (server->getDatabaseManager()->warnExist(m_ipid)) {
                 long date = QDateTime::currentDateTime().toSecsSinceEpoch();
                 server->getDatabaseManager()->updateWarn(m_ipid, l_warn + 1);
                 server->getDatabaseManager()->updateWarn(m_ipid, date);
             }
             else {
-                DBManager::automodwarns l_warn;
-                l_warn.ipid = m_ipid;
-                l_warn.date = QDateTime::currentDateTime().toSecsSinceEpoch();
-                l_warn.warns = 2;
-                server->getDatabaseManager()->addWarn(l_warn);
+                DBManager::automodwarns warn;
+                warn.ipid = m_ipid;
+                warn.date = QDateTime::currentDateTime().toSecsSinceEpoch();
+                warn.warns = 2;
+                server->getDatabaseManager()->addWarn(warn);
             }
 
             sendServerMessage("You got a warn from the Automod! If you get " + QString::number(3 - l_warn) + " warns, you will be punished.");
             updateLastTime(ic_chat, chars);
-            return;
         }
-
-        switch (server->getDatabaseManager()->getHazNum(m_ipid)) {
-        case 0:
-            autoMute(ic_chat);
-            break;
-        case 1:
-            autoKick();
-            break;
-        case 2:
-            autoBan();
-            break;
+        else {
+            switch (server->getDatabaseManager()->getHazNum(m_ipid)) {
+            case 0:
+                autoMute(ic_chat);
+                break;
+            case 1:
+                autoKick();
+                break;
+            case 2:
+                autoBan();
+                break;
+            }
         }
     }
 

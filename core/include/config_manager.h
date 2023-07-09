@@ -31,7 +31,6 @@
 #include <QUrl>
 
 #include "include/data_types.h"
-#include "include/typedefs.h"
 
 /**
  * @brief The config file handler class.
@@ -73,7 +72,7 @@ class ConfigManager
      *
      * @return See short description.
      */
-    static MusicList musiclist();
+    static QStringList musiclist();
 
     /**
      * @brief Returns an ordered QList of all basesongs of this server.
@@ -389,6 +388,8 @@ class ConfigManager
 
     static int autoModOocTrigger();
 
+    static int autoModWarns();
+
     /**
      * @brief Returns the duration of the ban given by the automoderator.
      *
@@ -489,6 +490,8 @@ class ConfigManager
      */
     static void reloadSettings();
 
+    static QStringList getCustomStatuses();
+
   private:
     /**
      * @brief Checks if a file exists and is valid.
@@ -548,7 +551,7 @@ class ConfigManager
     /**
      * @brief Contains the musiclist with time durations.
      */
-    static MusicList *m_musicList;
+    static QStringList *m_musicList;
 
     /**
      * @brief Contains an ordered list for the musiclist.

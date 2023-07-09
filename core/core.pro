@@ -98,7 +98,6 @@ HEADERS += include/aoclient.h \
     include/db_manager.h \
     include/discord.h \
     include/server.h \
-    include/typedefs.h \
     include/advertiser.h \
     include/logger/u_logger.h \
     include/logger/writer_modcall.h \

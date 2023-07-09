@@ -112,7 +112,7 @@ void Server::start()
     m_backgrounds = ConfigManager::backgrounds();
 
     // Build our music manager.
-    MusicList l_musiclist = ConfigManager::musiclist();
+    QStringList l_musiclist = ConfigManager::musiclist();
     music_manager = new MusicManager(ConfigManager::cdnList(), l_musiclist, ConfigManager::ordered_songs(), this);
     connect(music_manager, &MusicManager::sendFMPacket, this, &Server::unicast);
     connect(music_manager, &MusicManager::sendAreaFMPacket, this, QOverload<std::shared_ptr<AOPacket>, int>::of(&Server::broadcast));

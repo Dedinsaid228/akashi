@@ -483,10 +483,8 @@ void AOClient::cmdStatus(int argc, QStringList argv)
         sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " changed status to " + l_arg.toUpper());
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SETSTATUS", l_arg.toUpper(), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
-    else {
-        const QStringList keys = AreaData::map_statuses.keys();
-        sendServerMessage("That does not look like a valid status. Valid statuses are " + keys.join(", "));
-    }
+    else
+        sendServerMessage("That does not look like a valid status. Valid statuses are " + l_area->Status.join(", ") + "\n" + ConfigManager::getCustomStatuses().join(", ").toUpper());
 }
 
 void AOClient::cmdJudgeLog(int argc, QStringList argv)
@@ -802,7 +800,7 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
                                            "\nfloodguard_active=" + QVariant(l_area->floodguardActive()).toString() +
                                            "\nignore_bglist=" + QVariant(l_area->ignoreBgList()).toString() +
                                            "\nbg_locked=" + QVariant(l_area->bgLocked()).toString() +
-                                           "\nstatus=" + getAreaStatus(i) +
+                                           "\nstatus=" + l_area->status() +
                                            "\nlock_status=" + getLockStatus(i) +
                                            "\narea_message=" + l_area->areaMessage() +
                                            "\nsend_area_message_on_join=" + QVariant(l_area->sendAreaMessageOnJoin()).toString() +

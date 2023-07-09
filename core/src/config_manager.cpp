@@ -17,8 +17,6 @@
 //////////////////////////////////////////////////////////////////////////////////////
 #include "include/config_manager.h"
 
-#include <include/config_manager.h>
-
 QSettings *ConfigManager::m_settings = new QSettings("config/config.ini", QSettings::IniFormat);
 QSettings *ConfigManager::m_discord = new QSettings("config/discord.ini", QSettings::IniFormat);
 ConfigManager::CommandSettings *ConfigManager::m_commands = new CommandSettings();
@@ -26,7 +24,7 @@ QSettings *ConfigManager::m_areas = new QSettings("config/areas.ini", QSettings:
 QSettings *ConfigManager::m_hubs = new QSettings("config/hubs.ini", QSettings::IniFormat);
 QSettings *ConfigManager::m_logtext = new QSettings("config/text/logtext.ini", QSettings::IniFormat);
 QElapsedTimer *ConfigManager::m_uptimeTimer = new QElapsedTimer;
-MusicList *ConfigManager::m_musicList = new MusicList;
+QStringList *ConfigManager::m_musicList = new QStringList;
 QStringList *ConfigManager::m_ordered_list = new QStringList;
 
 bool ConfigManager::verifyServerConfig()
@@ -134,13 +132,12 @@ QStringList ConfigManager::backgrounds()
     return l_backgrounds;
 }
 
-MusicList ConfigManager::musiclist()
+QStringList ConfigManager::musiclist()
 {
     // Make sure the list is empty before appending new data.
     if (!m_ordered_list->empty())
         m_ordered_list->clear();
 
-    // QStringList l_music_list;
     QFile l_file("config/music.txt");
     l_file.open(QIODevice::ReadOnly | QIODevice::Text);
 
@@ -480,6 +477,8 @@ int ConfigManager::autoModTrigger() { return m_settings->value("Options/automodt
 
 int ConfigManager::autoModOocTrigger() { return m_settings->value("Options/automodooctrig", 300).toInt(); }
 
+int ConfigManager::autoModWarns() { return m_settings->value("Options/automodwarns", 3).toInt(); };
+
 QString ConfigManager::autoModBanDuration() { return m_settings->value("Options/automodbanduration", "7d").toString(); }
 
 QString ConfigManager::autoModWarnTerm() { return m_settings->value("Options/automodwarnterm", "30m").toString(); }
@@ -509,6 +508,8 @@ void ConfigManager::setMotd(const QString f_motd) { m_settings->setValue("Option
 bool ConfigManager::webUsersSpectableOnly() { return m_settings->value("Options/wuso", "false").toBool(); }
 
 void ConfigManager::webUsersSpectableOnlyToggle() { m_settings->setValue("Options/wuso", !webUsersSpectableOnly()); }
+
+QStringList ConfigManager::getCustomStatuses() { return loadConfigFile("customstatuses"); }
 
 bool ConfigManager::fileExists(const QFileInfo &f_file) { return (f_file.exists() && f_file.isFile()); }
 

@@ -137,7 +137,7 @@ void AOClient::cmdAddSong(int argc, QStringList argv)
     bool l_success = false;
     if (l_argv.size() == 1) {
         QString l_song_name = l_argv.value(0);
-        l_success = m_music_manager->addCustomSong(l_song_name, l_song_name, 0, m_current_area);
+        l_success = m_music_manager->addCustomSong(l_song_name, m_current_area);
     }
 
     if (l_argv.size() >= 2) {

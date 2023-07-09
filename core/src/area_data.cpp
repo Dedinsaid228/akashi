@@ -55,7 +55,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     m_iniswapAllowed = areas_ini->value("iniswap_allowed", "true").toBool();
     m_bgLocked = areas_ini->value("bg_locked", "false").toBool();
     m_eviMod = QVariant(areas_ini->value("evidence_mod", "FFA").toString().toUpper()).value<EvidenceMod>();
-    m_status = QVariant(areas_ini->value("status", "IDLE").toString().toUpper()).value<AreaData::Status>();
+    m_status = areas_ini->value("status", "IDLE").toString().toUpper();
     m_locked = QVariant(areas_ini->value("lock_status", "FREE").toString().toUpper()).value<AreaData::LockStatus>();
     m_blankpostingAllowed = areas_ini->value("blankposting_allowed", "true").toBool();
     m_area_message = areas_ini->value("area_message").toString();
@@ -85,18 +85,6 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     connect(m_message_floodguard_timer, &QTimer::timeout, this, &AreaData::allowMessage);
 }
 
-const QMap<QString, AreaData::Status> AreaData::map_statuses = {
-    {"idle", AreaData::Status::IDLE},
-    {"rp", AreaData::Status::RP},
-    {"casing", AreaData::Status::CASING},
-    {"lfp", AreaData::Status::LOOKING_FOR_PLAYERS},
-    {"looking-for-players", AreaData::Status::LOOKING_FOR_PLAYERS},
-    {"recess", AreaData::Status::RECESS},
-    {"gaming", AreaData::Status::GAMING},
-    {"erp", AreaData::Status::ERP},
-    {"yablachki", AreaData::Status::YABLACHKI},
-};
-
 void AreaData::clientLeftArea(int f_charId, int f_userId)
 {
     --m_playerCount;
@@ -119,10 +107,8 @@ void AreaData::clientJoinedArea(int f_charId, int f_userId)
     emit sendAreaPacketClient(PacketFactory::createPacket("MC", {m_currentMusic, QString::number(-1), ConfigManager::serverName(), QString::number(1)}), f_userId);
 }
 
-QList<int> AreaData::owners() const
-{
-    return m_owners;
-}
+QList<int> AreaData::owners() const { return m_owners; }
+
 void AreaData::addOwner(int f_clientId)
 {
     m_owners.append(f_clientId);
@@ -144,45 +130,21 @@ bool AreaData::removeOwner(int f_clientId)
     return false;
 }
 
-bool AreaData::blankpostingAllowed() const
-{
-    return m_blankpostingAllowed;
-}
+bool AreaData::blankpostingAllowed() const { return m_blankpostingAllowed; }
 
-void AreaData::toggleBlankposting()
-{
-    m_blankpostingAllowed = !m_blankpostingAllowed;
-}
+void AreaData::toggleBlankposting() { m_blankpostingAllowed = !m_blankpostingAllowed; }
 
-bool AreaData::isProtected() const
-{
-    return m_isProtected;
-}
+bool AreaData::isProtected() const { return m_isProtected; }
 
-void AreaData::toggleIsProtected()
-{
-    m_isProtected = !m_isProtected;
-}
+void AreaData::toggleIsProtected() { m_isProtected = !m_isProtected; }
 
-AreaData::LockStatus AreaData::lockStatus() const
-{
-    return m_locked;
-}
+AreaData::LockStatus AreaData::lockStatus() const { return m_locked; }
 
-void AreaData::lock()
-{
-    m_locked = LockStatus::LOCKED;
-}
+void AreaData::lock() { m_locked = LockStatus::LOCKED; }
 
-void AreaData::unlock()
-{
-    m_locked = LockStatus::FREE;
-}
+void AreaData::unlock() { m_locked = LockStatus::FREE; }
 
-void AreaData::spectatable()
-{
-    m_locked = LockStatus::SPECTATABLE;
-}
+void AreaData::spectatable() { m_locked = LockStatus::SPECTATABLE; }
 
 bool AreaData::invite(int f_clientId)
 {
@@ -249,16 +211,19 @@ void AreaData::deleteEvidence(int f_eviId) { m_evidence.removeAt(f_eviId); }
 
 void AreaData::replaceEvidence(int f_eviId, const AreaData::Evidence &f_newEvi_r) { m_evidence.replace(f_eviId, f_newEvi_r); }
 
-AreaData::Status AreaData::status() const { return m_status; }
+QString AreaData::status() const { return m_status; }
 
 bool AreaData::changeStatus(const QString &f_newStatus_r)
 {
-    if (AreaData::map_statuses.contains(f_newStatus_r)) {
-        m_status = AreaData::map_statuses[f_newStatus_r];
+    QStringList l_cstatues = ConfigManager::getCustomStatuses();
+    qDebug() << f_newStatus_r.toUpper();
+    qDebug() << l_cstatues;
+    if (Status.contains(f_newStatus_r.toUpper()) || l_cstatues.contains(f_newStatus_r.toUpper()) || l_cstatues.contains(f_newStatus_r)) {
+        m_status = f_newStatus_r;
         return true;
     }
-
-    return false;
+    else
+        return false;
 }
 
 QList<int> AreaData::invited() const { return m_invited; }

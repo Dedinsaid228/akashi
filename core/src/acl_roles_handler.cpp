@@ -115,33 +115,23 @@ ACLRole::ACLRole() {}
 
 ACLRole::ACLRole(ACLRole::Permissions f_permissions) :
     m_permissions(f_permissions)
-{
-}
+{}
 
 ACLRole::~ACLRole() {}
 
-ACLRole::Permissions ACLRole::getPermissions() const
-{
-    return m_permissions;
-}
+ACLRole::Permissions ACLRole::getPermissions() const { return m_permissions; }
 
 bool ACLRole::checkPermission(Permission f_permission) const
 {
-    if (f_permission == ACLRole::NONE) {
+    if (f_permission == ACLRole::NONE)
         return true;
-    }
+
     return m_permissions.testFlag(f_permission);
 }
 
-void ACLRole::setPermissions(ACLRole::Permissions f_permissions)
-{
-    m_permissions = f_permissions;
-}
+void ACLRole::setPermissions(ACLRole::Permissions f_permissions) { m_permissions = f_permissions; }
 
-void ACLRole::setPermission(Permission f_permission, bool f_mode)
-{
-    m_permissions.setFlag(f_permission, f_mode);
-}
+void ACLRole::setPermission(Permission f_permission, bool f_mode) { m_permissions.setFlag(f_permission, f_mode); }
 
 ACLRolesHandler::ACLRolesHandler(QObject *parent) :
     QObject(parent)
@@ -164,9 +154,9 @@ ACLRole ACLRolesHandler::getRoleById(QString f_id)
 bool ACLRolesHandler::insertRole(QString f_id, ACLRole f_role)
 {
     f_id = f_id.toUpper();
-    if (readonly_roles.contains(f_id)) {
+    if (readonly_roles.contains(f_id))
         return false;
-    }
+
     m_roles.insert(f_id, f_role);
     return true;
 }
@@ -174,20 +164,16 @@ bool ACLRolesHandler::insertRole(QString f_id, ACLRole f_role)
 bool ACLRolesHandler::removeRole(QString f_id)
 {
     f_id = f_id.toUpper();
-    if (readonly_roles.contains(f_id)) {
+    if (readonly_roles.contains(f_id))
         return false;
-    }
-    else if (!m_roles.contains(f_id)) {
+    else if (!m_roles.contains(f_id))
         return false;
-    }
+
     m_roles.remove(f_id);
     return true;
 }
 
-void ACLRolesHandler::clearRoles()
-{
-    m_roles.clear();
-}
+void ACLRolesHandler::clearRoles() { m_roles.clear(); }
 
 bool ACLRolesHandler::loadFile(QString f_file_name)
 {
@@ -195,9 +181,8 @@ bool ACLRolesHandler::loadFile(QString f_file_name)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     l_settings.setIniCodec("UTF-8");
 #endif
-    if (!checkPermissionsIni(&l_settings)) {
+    if (!checkPermissionsIni(&l_settings))
         return false;
-    }
 
     m_roles.clear();
     QStringList l_role_records;
@@ -211,22 +196,21 @@ bool ACLRolesHandler::loadFile(QString f_file_name)
         }
 
         l_settings.beginGroup(i_group);
-        if (l_role_records.contains(l_upper_group)) {
+        if (l_role_records.contains(l_upper_group))
             qWarning() << "[ACL Role Handler]"
                        << "warning: role" << l_upper_group << "already exist";
-        }
+
         l_role_records.append(l_upper_group);
 
         ACLRole l_role;
         const QList<ACLRole::Permission> l_permissions = ACLRole::PERMISSION_CAPTIONS.keys();
         for (const ACLRole::Permission &i_permission : l_permissions) {
             const QVariant l_value = l_settings.value(ACLRole::PERMISSION_CAPTIONS.value(i_permission));
-            if (l_value.isValid()) {
+            if (l_value.isValid())
                 l_role.setPermission(i_permission, l_value.toBool());
-            }
         }
-        m_roles.insert(l_upper_group, std::move(l_role));
 
+        m_roles.insert(l_upper_group, std::move(l_role));
         l_settings.endGroup();
     }
     return true;
@@ -238,34 +222,33 @@ bool ACLRolesHandler::saveFile(QString f_file_name)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     l_settings.setIniCodec("UTF-8");
 #endif
-    if (!checkPermissionsIni(&l_settings)) {
+    if (!checkPermissionsIni(&l_settings))
         return false;
-    }
 
     l_settings.clear();
     const QStringList l_role_id_list = m_roles.keys();
     for (const QString &l_role_id : l_role_id_list) {
         const QString l_upper_role_id = l_role_id.toUpper();
-        if (readonly_roles.contains(l_upper_role_id)) {
+        if (readonly_roles.contains(l_upper_role_id))
             continue;
-        }
 
-        const ACLRole i_role = m_roles.value(l_upper_role_id);
         l_settings.beginGroup(l_upper_role_id);
-        if (i_role.checkPermission(ACLRole::SUPER)) {
+        const ACLRole i_role = m_roles.value(l_upper_role_id);
+        if (i_role.checkPermission(ACLRole::SUPER))
             l_settings.setValue(ACLRole::PERMISSION_CAPTIONS.value(ACLRole::SUPER), true);
-        }
         else {
             const QList<ACLRole::Permission> l_permissions = ACLRole::PERMISSION_CAPTIONS.keys();
             for (const ACLRole::Permission i_permission : l_permissions) {
-                if (!i_role.checkPermission(i_permission)) {
+                if (!i_role.checkPermission(i_permission))
                     continue;
-                }
+
                 l_settings.setValue(ACLRole::PERMISSION_CAPTIONS.value(i_permission), true);
             }
         }
+
         l_settings.endGroup();
     }
+
     l_settings.sync();
     if (l_settings.status() != QSettings::NoError) {
         qWarning() << "[ACL Role Handler]"
@@ -284,12 +267,10 @@ bool ACLRolesHandler::checkPermissionsIni(QSettings *f_settings)
             qWarning() << "[ACL Role Handler]"
                        << "error: failed to open file; aborting (" << f_settings->fileName() << ")";
             break;
-
         case QSettings::FormatError:
             qWarning() << "[ACL Role Handler]"
                        << "error: file is malformed; aborting (" << f_settings->fileName() << ")";
             break;
-
         default:
             qWarning() << "[ACL Role Handler]"
                        << "error: unknown error; aborting; aborting (" << f_settings->fileName() << ")";
@@ -298,5 +279,6 @@ bool ACLRolesHandler::checkPermissionsIni(QSettings *f_settings)
 
         return false;
     }
+
     return true;
 }

@@ -67,20 +67,14 @@ class AreaData : public QObject
      * @details This is purely aesthetic, and serves no functional purpose from a gameplay perspective.
      * It's only benefit is giving the users a rough idea as to what is going on in an area.
      */
-    enum Status
-    {
-        IDLE,                //!< The area is currently not busy with anything, or the area is empty.
-        RP,                  //!< There is some (non-Ace Attorney-related) roleplay going on in the area.
-        CASING,              //!< An Ace Attorney or Danganronpa-styled case is currently being held in the area.
-        LOOKING_FOR_PLAYERS, //!< Something is being planned in the area, but it needs more players.
-        RECESS,              //!< The area is currently taking a break from casing, but will continue later.
-        GAMING,              //!< The users inside the area are playing some game outside of AO, and are using the area to communicate.
-        ERP,                 //!< Not serious, nevermind.
-        YABLACHKI            //!< Uh... I'll just leave this here: https://www.youtube.com/watch?v=K4tsKL7WlgM
+    QStringList Status{
+        "IDLE",                //!< The area is currently not busy with anything, or the area is empty.
+        "RP",                  //!< There is some (non-Ace Attorney-related) roleplay going on in the area.
+        "CASING",              //!< An Ace Attorney or Danganronpa-styled case is currently being held in the area.
+        "LOOKING_FOR_PLAYERS", //!< Something is being planned in the area, but it needs more players.
+        "RECESS",              //!< The area is currently taking a break from casing, but will continue later.
+        "GAMING"               //!< The users inside the area are playing some game outside of AO, and are using the area to communicate.
     };
-
-    /// Exposes the metadata of the Status enum.
-    Q_ENUM(Status);
 
     /**
      * @brief Determines who may traverse and communicate in the area.
@@ -225,11 +219,6 @@ class AreaData : public QObject
         DEFENCE,    //!< Self-explanatory.
         PROSECUTOR, //!< Self-explanatory.
     };
-
-    /**
-     * @brief Contains a list of associations between `/status X` calls and what actual status they set the area to.
-     */
-    static const QMap<QString, AreaData::Status> map_statuses;
 
     /**
      * @brief A client in the area has left the area.
@@ -451,7 +440,7 @@ class AreaData : public QObject
      *
      * @return See short description.
      */
-    Status status() const;
+    QString status() const;
 
     /**
      * @brief Changes the area of the status to a new one.
@@ -1066,7 +1055,7 @@ class AreaData : public QObject
      *
      * @see Status
      */
-    Status m_status;
+    QString m_status;
 
     /**
      * @brief The IDs of all the owners (or Case Makers / CMs) of the area.

@@ -402,7 +402,6 @@ void AOClient::changePosition(QString new_pos)
     }
 
     m_pos = new_pos;
-
     sendServerMessage("Position changed to " + m_pos + ".");
     sendPacket("SP", {m_pos});
 }
@@ -473,7 +472,7 @@ void AOClient::arup(ARUPType type, bool broadcast, int hub)
             if (l_area_status == "IDLE")
                 l_area_status = "";
 
-            l_arup_data.append(l_area_status);
+            l_arup_data.append(l_area_status.toUpper());
             break;
         }
         case ARUPType::CM:
