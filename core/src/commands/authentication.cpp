@@ -194,25 +194,25 @@ void AOClient::cmdSetPerms(int argc, QStringList argv)
 
     const QString l_target_acl = argv[1];
     if (!server->getACLRolesHandler()->roleExists(l_target_acl)) {
-        sendServerMessage("That role doesn't exist!");
+        sendServerMessage("That role does not exist.");
         return;
     }
 
     if (l_target_acl == ACLRolesHandler::SUPER_ID && !checkPermission(ACLRole::SUPER)) {
-        sendServerMessage("You aren't allowed to set that role!");
+        sendServerMessage("You are not allowed to set that role.");
         return;
     }
 
     const QString l_target_username = argv[0];
     if (l_target_username == "root") {
-        sendServerMessage("You can't change root's role!");
+        sendServerMessage("You cannot change root's role.");
         return;
     }
 
     if (server->getDatabaseManager()->updateACL(l_target_username, l_target_acl))
-        sendServerMessage("Successfully applied role " + l_target_acl + " to user " + l_target_username);
+        sendServerMessage("Successfully applied the role " + l_target_acl + " to the user " + l_target_username + ".");
     else
-        sendServerMessage(l_target_username + " wasn't found!");
+        sendServerMessage(l_target_username + " was not found.");
 }
 
 void AOClient::cmdRemovePerms(int argc, QStringList argv)

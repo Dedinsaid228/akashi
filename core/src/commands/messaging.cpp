@@ -62,17 +62,22 @@ void AOClient::cmdForcePos(int argc, QStringList argv)
     }
 
     for (AOClient *l_target : l_targets) {
-        l_target->sendServerMessage("Position forcibly changed.");
+        l_target->sendServerMessage("Your position is forcibly changed to the pos " + argv[0] + ".");
         l_target->changePosition(argv[0]);
         l_forced_clients++;
     }
 
-    sendServerMessage("Forced " + QString::number(l_forced_clients) + " into pos " + argv[0] + ".");
+    sendServerMessage("Force moved " + QString::number(l_forced_clients) + " clients to the pos " + argv[0] + ".");
 }
 
 void AOClient::cmdG(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
+
+    if (m_is_ooc_muted) {
+        sendServerMessage("You are OOC muted, and cannot speak.");
+        return;
+    }
 
     QString l_sender_message = argv.join(" ");
     if (l_sender_message.size() > ConfigManager::maxCharacters()) {
@@ -92,6 +97,11 @@ void AOClient::cmdG(int argc, QStringList argv)
 void AOClient::cmdNeed(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
+
+    if (m_is_ooc_muted) {
+        sendServerMessage("You are OOC muted, and cannot speak.");
+        return;
+    }
 
     QString l_sender_message = argv.join(" ");
     if (l_sender_message.size() > ConfigManager::maxCharacters()) {
@@ -156,6 +166,11 @@ void AOClient::cmdPM(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
+    if (m_is_ooc_muted) {
+        sendServerMessage("You are OOC muted, and cannot speak.");
+        return;
+    }
+
     const int l_sender_area = m_current_area;
     bool ok;
     int l_target_id = argv.takeFirst().toInt(&ok); // using takeFirst removes the ID from our list of arguments...
@@ -190,6 +205,11 @@ void AOClient::cmdPM(int argc, QStringList argv)
 void AOClient::cmdAnnounce(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
+
+    if (m_is_ooc_muted) {
+        sendServerMessage("You are OOC muted, and cannot speak.");
+        return;
+    }
 
     sendServerBroadcast("=== Announcement ===\r\n" + argv.join(" ") + "\r\n=============");
 }
@@ -227,9 +247,9 @@ void AOClient::cmdGimp(int argc, QStringList argv)
     }
 
     if (l_target->m_is_gimped)
-        sendServerMessage("That player is already gimped!");
+        sendServerMessage("That player is already gimped.");
     else
-        sendServerMessage("Gimped player.");
+        sendServerMessage("That player has been gimped.");
 
     l_target->m_is_gimped = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "GIMP", "Gimped UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -254,10 +274,10 @@ void AOClient::cmdUnGimp(int argc, QStringList argv)
     }
 
     if (!(l_target->m_is_gimped))
-        sendServerMessage("That player is not gimped!");
+        sendServerMessage("That player is not gimped.");
     else {
-        sendServerMessage("Ungimped player.");
-        l_target->sendServerMessage("A moderator has ungimped you!");
+        sendServerMessage("That player has been ungimped.");
+        l_target->sendServerMessage("A moderator has been ungimped you.");
     }
 
     l_target->m_is_gimped = false;
@@ -288,9 +308,9 @@ void AOClient::cmdDisemvowel(int argc, QStringList argv)
     }
 
     if (l_target->m_is_disemvoweled)
-        sendServerMessage("That player is already disemvoweled!");
+        sendServerMessage("That player is already disemvoweled.");
     else
-        sendServerMessage("Disemvoweled player.");
+        sendServerMessage("That player has been disemvoweled.");
 
     l_target->m_is_disemvoweled = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "DISEMVOWEL", "Disemvoweled UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -315,10 +335,10 @@ void AOClient::cmdUnDisemvowel(int argc, QStringList argv)
     }
 
     if (!(l_target->m_is_disemvoweled))
-        sendServerMessage("That player is not disemvoweled!");
+        sendServerMessage("That player is not disemvoweled.");
     else {
-        sendServerMessage("Undisemvoweled player.");
-        l_target->sendServerMessage("A moderator has undisemvoweled you!");
+        sendServerMessage("That player has been undisemvoweled.");
+        l_target->sendServerMessage("A moderator has undisemvoweled you.");
     }
 
     l_target->m_is_disemvoweled = false;
@@ -348,9 +368,9 @@ void AOClient::cmdShake(int argc, QStringList argv)
     }
 
     if (l_target->m_is_shaken)
-        sendServerMessage("That player is already shaken!");
+        sendServerMessage("That player is already shaken.");
     else
-        sendServerMessage("Shook player.");
+        sendServerMessage("That player has been shaken.");
 
     l_target->m_is_shaken = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SHAKE", "Shaked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -375,10 +395,10 @@ void AOClient::cmdUnShake(int argc, QStringList argv)
     }
 
     if (!(l_target->m_is_shaken))
-        sendServerMessage("That player is not shaken!");
+        sendServerMessage("That player is not shaken.");
     else {
-        sendServerMessage("Unshook player.");
-        l_target->sendServerMessage("A moderator has unshook you!");
+        sendServerMessage("That player has been unshaken.");
+        l_target->sendServerMessage("A moderator has unshaken you.");
     }
 
     l_target->m_is_shaken = false;
@@ -475,8 +495,7 @@ void AOClient::cmdCharCurse(int argc, QStringList argv)
     else
         server->updateCharsTaken(server->getAreaById(m_current_area));
 
-    l_target->sendServerMessage("You have been charcursed!");
-    sendServerMessage("Charcursed player.");
+    sendServerMessage("That player has been charcursed.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHARCURSE", "Charcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -505,8 +524,8 @@ void AOClient::cmdUnCharCurse(int argc, QStringList argv)
     l_target->m_is_charcursed = false;
     l_target->m_charcurse_list.clear();
     server->updateCharsTaken(server->getAreaById(m_current_area));
-    sendServerMessage("Uncharcursed player.");
-    l_target->sendServerMessage("You were uncharcursed.");
+    sendServerMessage("That player has been uncharcursed.");
+    l_target->sendServerMessage("A moderator has uncharcursed you.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UNCHARCURSE", "Uncharcursed UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 

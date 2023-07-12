@@ -14,8 +14,7 @@ MusicManager::MusicManager(QStringList f_cdns, QStringList f_root_list, QStringL
 }
 
 MusicManager::~MusicManager()
-{
-}
+{}
 
 QStringList MusicManager::musiclist(int f_area_id)
 {
@@ -56,6 +55,7 @@ bool MusicManager::validateSong(QString f_song_name, QStringList f_approved_cdns
                     l_cdn_approved = true;
                     break;
                 }
+
             if (!l_cdn_approved)
                 return false;
         }

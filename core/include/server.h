@@ -380,7 +380,7 @@ class Server : public QObject
      */
     void reloadSettings(int f_uid);
 
-    void hubListen(QString message, int area_index, QString sender_name);
+    void hubListen(QString message, int area_index, QString sender_name, int sender_id);
 
     QFutureWatcher<void> reload_watcher;
 

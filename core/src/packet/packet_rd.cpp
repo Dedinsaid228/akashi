@@ -76,9 +76,9 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
     else if (client.getServer()->m_latest_version.isEmpty())
         info_message += "Unable to get the latest version. \n";
     else if (QCoreApplication::applicationVersion() == client.getServer()->m_latest_version)
-        info_message += "It's latest version. \n";
+        info_message += "It is latest version. \n";
     else
-        info_message += "New version available! \n";
+        info_message += "New version is available! \n";
 
     if (!client.getServer()->m_latest_version.isEmpty() && QCoreApplication::applicationVersion() != "unstable")
         info_message += "Github: https://github.com/Ddedinya/kakashi/releases/tag/v" + client.getServer()->m_latest_version + " \n";
@@ -97,7 +97,7 @@ void PacketRD::handlePacket(AreaData *area, AOClient &client) const
         l_hub_list.append("[" + QString::number(i) + "] " + client.getServer()->getHubName(i) + " with " + l_playercount + " players.");
     }
 
-    info_message += "\nYou are in hub [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) + "\nHub list:\n" + l_hub_list.join("\n") + "\nTo view a more detailed list, you can use /hub command.";
+    info_message += "\nYou are in the hub [" + QString::number(client.m_hub) + "] " + client.getServer()->getHubName(client.m_hub) + "\nHub list:\n" + l_hub_list.join("\n") + "\nTo view a more detailed list, you can use /hub command.";
     client.sendServerMessage(info_message);
 }
 

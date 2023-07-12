@@ -33,7 +33,7 @@ class ACLRole
         IGNORE_BGLIST = 1 << 14,
         SEND_NOTICE = 1 << 15,
         WUSO = 1 << 16,
-        TAKETAKED = 1 << 17,
+        TAKETAKEN = 1 << 17,
         IPIDINFO = 1 << 18,
         GM = 1 << 19,
         SAVEAREA = 1 << 20,

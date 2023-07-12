@@ -26,7 +26,7 @@ void PacketZZ::handlePacket(AreaData *area, AOClient &client) const
                               "\nCaller: [" + QString::number(client.m_id) + "] " + client.getSenderName(client.m_id) + "(" + client.m_ipid + ")\n";
 
     if (!client.m_usemodcall) {
-        client.sendServerMessage("You cannot use Mod Call anymore. Be patient!");
+        client.sendServerMessage("You cannot use Mod Call anymore. Be patient.");
         return;
     }
 

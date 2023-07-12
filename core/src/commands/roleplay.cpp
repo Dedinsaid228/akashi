@@ -330,9 +330,9 @@ void AOClient::cmdVote(int argc, QStringList argv)
             }
 
             if (l_candidates_count <= 2) {
-                sendServerMessageArea("ERROR! Candidates were not found or there are few of them. Voting has been stopped. Please find more players.\n"
-                                      "- CM that started voting does not count, as well as all its open clients.\n"
-                                      "- If area is set to SPECTATABLE or LOCKED, then only invited clients can be candidates.");
+                sendServerMessageArea("ERROR! Candidates were not found or there are not enough of them. Voting has been stopped. Please find more players.\n"
+                                      "- The CM that started voting does not count, as well as all their open clients.\n"
+                                      "- If the area is set to SPECTATABLE or LOCKED, only invited clients can be candidates.");
                 l_area->toggleVote();
                 return;
             }
@@ -351,7 +351,7 @@ void AOClient::cmdVote(int argc, QStringList argv)
         bool l_ok;
         AOClient *l_target_client = server->getClientByID(argv[0].toInt(&l_ok));
         if (!l_ok) {
-            sendServerMessage("That doesn't look like a valid ID.");
+            sendServerMessage("That does not look like a valid ID.");
             return;
         }
 
@@ -365,7 +365,7 @@ void AOClient::cmdVote(int argc, QStringList argv)
             return;
         }
 
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " voted.");
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " has voted.");
         l_target_client->m_vote_points++;
         m_can_vote = false;
         bool l_all_voted = true;

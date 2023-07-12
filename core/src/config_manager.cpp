@@ -511,6 +511,8 @@ void ConfigManager::webUsersSpectableOnlyToggle() { m_settings->setValue("Option
 
 QStringList ConfigManager::getCustomStatuses() { return loadConfigFile("customstatuses"); }
 
+int ConfigManager::getAreaCountLimit() { return m_settings->value("Options/arealimit", "25").toInt(); }
+
 bool ConfigManager::fileExists(const QFileInfo &f_file) { return (f_file.exists() && f_file.isFile()); }
 
 bool ConfigManager::dirExists(const QFileInfo &f_dir) { return (f_dir.exists() && f_dir.isDir()); }

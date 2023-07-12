@@ -50,7 +50,7 @@ void AOClient::cmdCM(int argc, QStringList argv)
         bool l_ok;
         AOClient *l_owner_candidate = server->getClientByID(argv[0].toInt(&l_ok));
         if (!l_ok) {
-            sendServerMessage("That doesn't look like a valid ID.");
+            sendServerMessage("That does not look like a valid ID.");
             return;
         }
 
@@ -198,7 +198,7 @@ void AOClient::cmdLock(int argc, QStringList argv)
     }
 
     if (m_current_area == m_area_list[0]) {
-        sendServerMessage("You cannot lock area 0!");
+        sendServerMessage("You cannot lock the area 0!");
         return;
     }
 
@@ -226,7 +226,7 @@ void AOClient::cmdSpectatable(int argc, QStringList argv)
     }
 
     if (m_current_area == m_area_list[0]) {
-        sendServerMessage("You cannot mute area 0!");
+        sendServerMessage("You cannot mute the area 0!");
         return;
     }
 
@@ -254,7 +254,7 @@ void AOClient::cmdAreaMute(int argc, QStringList argv)
     }
 
     if (m_current_area == m_area_list[0]) {
-        sendServerMessage("You cannot mute area 0!");
+        sendServerMessage("You cannot mute the area 0!");
         return;
     }
 
@@ -304,9 +304,12 @@ void AOClient::cmdGetAreaHubs(int argc, QStringList argv)
     QStringList l_entries;
     l_entries.append("== Area List ==");
     l_entries.append("== Currently Online: " + QString::number(server->getPlayerCount()) + " ==");
-    for (int i = 0; i < server->getAreaCount(); i++)
-        if (server->getAreaById(i)->playerCount() > 0)
-            l_entries.append(buildAreaList(i, false));
+    for (int i = 0; i < server->getHubsCount(); i++) {
+        l_entries.append("== Hub: [" + QString::number(i) + "] " + server->getHubName(i) + " ==");
+        for (int area = 0; area < server->getAreaCount(); area++)
+            if (server->getAreaById(area)->playerCount() > 0 && server->getAreaById(area)->getHub() == i)
+                l_entries.append(buildAreaList(area, false));
+    }
 
     sendServerMessage(l_entries.join("\n"));
 }
@@ -365,7 +368,8 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
         l_client_to_kick->sendServerMessage("You kicked from the area.");
     }
     else if (argv[0] == "*") { // kick all clients in the area
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players from area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players from the area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
+
         AreaData *l_area = server->getAreaById(m_current_area);
         const QVector<AOClient *> l_clients = server->getClients();
         for (AOClient *l_client : l_clients) {
@@ -375,6 +379,7 @@ void AOClient::cmdAreaKick(int argc, QStringList argv)
                 l_area->removeOwner(l_client->m_id);
                 l_client->sendServerMessage("You kicked from the area.");
             }
+
             arup(ARUPType::CM, true, m_hub);
             sendServerMessage("Clients kicked from the area.");
         }
@@ -406,7 +411,7 @@ void AOClient::cmdModAreaKick(int argc, QStringList argv)
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "MODAREAKICK", "Kicked UID: " + QString::number(l_client_to_kick->m_id), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     arup(ARUPType::CM, true, m_hub);
     sendServerMessage("Client " + argv[0] + " kicked from the area.");
-    l_client_to_kick->sendServerMessage("You kicked from the area by moderator.");
+    l_client_to_kick->sendServerMessage("You kicked from the area by a moderator.");
 }
 
 void AOClient::cmdSetBackground(int argc, QStringList argv)
@@ -465,7 +470,7 @@ void AOClient::cmdStatus(int argc, QStringList argv)
     Q_UNUSED(argc);
 
     if (QDateTime::currentDateTime().toSecsSinceEpoch() - m_last_status_change_time < 2) {
-        sendServerMessage("You change status very often!");
+        sendServerMessage("You change a status very often!");
         return;
     }
 
@@ -473,18 +478,21 @@ void AOClient::cmdStatus(int argc, QStringList argv)
 
     AreaData *l_area = server->getAreaById(m_current_area);
     if (!l_area->allowChangeStatus() && !checkPermission(ACLRole::CM)) {
-        sendServerMessage("Change of status is prohibited in this area.");
+        sendServerMessage("Change of a status is prohibited in this area.");
         return;
     }
 
-    QString l_arg = argv[0].toLower();
+    QString l_arg = argv[0].toLower().replace("-", "_");
+    if (l_arg == "lfp")
+        l_arg = "looking_for_players";
+
     if (l_area->changeStatus(l_arg)) {
         arup(ARUPType::STATUS, true, m_hub);
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " changed status to " + l_arg.toUpper());
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " changed a status to " + l_arg.toUpper());
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SETSTATUS", l_arg.toUpper(), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else
-        sendServerMessage("That does not look like a valid status. Valid statuses are " + l_area->Status.join(", ") + "\n" + ConfigManager::getCustomStatuses().join(", ").toUpper());
+        sendServerMessage("That does not look like a valid status. Valid statuses are " + l_area->Status.join(", ") + " LFP, " + ConfigManager::getCustomStatuses().join(", ").toUpper());
 }
 
 void AOClient::cmdJudgeLog(int argc, QStringList argv)
@@ -660,7 +668,7 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
 
     QString l_area_name = dezalgo(argv.join(" "));
     if (server->getAreaNames().contains(l_area_name)) {
-        sendServerMessage("An area with that name already exists!");
+        sendServerMessage("An area with that name already exists.");
         return;
     }
 
@@ -676,15 +684,15 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
-    sendServerMessage("Area has been renamed!");
+    sendServerMessage("This area has been renamed.");
 }
 
 void AOClient::cmdCreateArea(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
 
-    if (m_area_list.length() == 25) {
-        sendServerMessage("The limit on the number of areas has been reached... what are you doing?");
+    if (m_area_list.length() == ConfigManager::getAreaCountLimit()) {
+        sendServerMessage("The limit on the number of areas has been reached.");
         return;
     }
 
@@ -705,7 +713,7 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
-    sendServerMessage("Area " + argv.join(" ") + " has been created!");
+    sendServerMessage("The area " + argv.join(" ") + " has been created!");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CREATEAREA", l_area_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -721,7 +729,7 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
     }
 
     if (m_area_list[l_area] == m_area_list[0]) {
-        sendServerMessage("You cannot delete area 0!");
+        sendServerMessage("You cannot delete the area 0!");
         return;
     }
 
@@ -742,7 +750,7 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
-    sendServerMessage("Area " + QString::number(l_area) + " has been removed!");
+    sendServerMessage("The area " + QString::number(l_area) + " has been removed!");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "DELETEAREA", QString::number(l_area), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -835,12 +843,12 @@ void AOClient::cmdSaveAreas(int argc, QStringList argv)
             }
         }
         new_hubs_ini.close();
-        sendServerMessage("New areas.ini and hubs.ini files created!");
+        sendServerMessage("New areas.ini and hubs.ini files created.");
         m_area_saving = false;
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SAVEAREAS", l_files_name, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else {
-        sendServerMessage("You don't have permission to save a areas. Please contact a moderator for permission.");
+        sendServerMessage("You do not have permission to save a areas. Please contact a moderator for permission.");
         return;
     }
 }
@@ -871,7 +879,7 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
     }
 
     if (m_area_list[l_area1] == m_area_list[0] || m_area_list[l_area2] == m_area_list[0]) {
-        sendServerMessage("You cannot swap area 0!");
+        sendServerMessage("You cannot swap the area 0!");
         return;
     }
 
@@ -914,7 +922,7 @@ void AOClient::cmdToggleStatus(int argc, QStringList argv)
     AreaData *l_area = server->getAreaById(m_current_area);
     l_area->toggleChangeStatus();
     QString l_state = l_area->allowChangeStatus() ? "allowed." : "prohibited.";
-    sendServerMessage("Change area status " + l_state);
+    sendServerMessage("Changing the area's status " + l_state);
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TOGGLESTATUS", l_state, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -934,5 +942,5 @@ void AOClient::cmdOocType(int argc, QStringList argv)
         sendServerMessage("Invalid OOC chat type.");
         return;
     }
-    sendServerMessage("Changed OOC chat type.");
+    sendServerMessage("OOC chat type is changed.");
 }

@@ -30,11 +30,11 @@ void AOClient::autoMod(bool ic_chat, int chars)
                 DBManager::automodwarns warn;
                 warn.ipid = m_ipid;
                 warn.date = QDateTime::currentDateTime().toSecsSinceEpoch();
-                warn.warns = 2;
+                warn.warns = 1;
                 server->getDatabaseManager()->addWarn(warn);
             }
 
-            sendServerMessage("You got a warn from the Automod! If you get " + QString::number(3 - l_warn) + " warns, you will be punished.");
+            sendServerMessage("You got a warn from the Automod! If you get " + QString::number(ConfigManager::autoModWarns() - l_warn) + " warns, you will be punished.");
             updateLastTime(ic_chat, chars);
         }
         else {

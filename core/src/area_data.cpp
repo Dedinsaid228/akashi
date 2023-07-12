@@ -99,9 +99,9 @@ void AreaData::clientJoinedArea(int f_charId, int f_userId)
 {
     ++m_playerCount;
 
-    if (f_charId != -1) {
+    if (f_charId != -1)
         m_charactersTaken.append(f_charId);
-    }
+
     m_joined_ids.append(f_userId);
     emit userJoinedArea(m_index, f_userId);
     emit sendAreaPacketClient(PacketFactory::createPacket("MC", {m_currentMusic, QString::number(-1), ConfigManager::serverName(), QString::number(1)}), f_userId);
@@ -174,9 +174,9 @@ int AreaData::index() const { return m_index; }
 
 QList<int> AreaData::charactersTaken() const { return m_charactersTaken; }
 
-bool AreaData::changeCharacter(int f_from, int f_to, bool taketaked)
+bool AreaData::changeCharacter(int f_from, int f_to, bool taketaken)
 {
-    if (m_charactersTaken.contains(f_to) && taketaked == false)
+    if (m_charactersTaken.contains(f_to) && taketaken == false)
         return false;
 
     if (f_to != -1) {
@@ -216,8 +216,6 @@ QString AreaData::status() const { return m_status; }
 bool AreaData::changeStatus(const QString &f_newStatus_r)
 {
     QStringList l_cstatues = ConfigManager::getCustomStatuses();
-    qDebug() << f_newStatus_r.toUpper();
-    qDebug() << l_cstatues;
     if (Status.contains(f_newStatus_r.toUpper()) || l_cstatues.contains(f_newStatus_r.toUpper()) || l_cstatues.contains(f_newStatus_r)) {
         m_status = f_newStatus_r;
         return true;
@@ -239,7 +237,6 @@ bool AreaData::isShoutAllowed() const { return m_can_use_shouts; }
 void AreaData::startMessageFloodguard(int f_duration)
 {
     m_can_send_ic_messages = false;
-
     m_message_floodguard_timer->start(f_duration);
 }
 
@@ -259,7 +256,6 @@ void AreaData::clearTestimony()
 {
     m_testimonyRecording = AreaData::TestimonyRecording::STOPPED;
     m_statement = -1;
-
     m_testimony.clear();
 }
 
@@ -306,7 +302,6 @@ void AreaData::removeStatement(int f_position)
 QPair<QStringList, AreaData::TestimonyProgress> AreaData::jumpToStatement(int f_position)
 {
     m_statement = f_position;
-
     if (m_statement > m_testimony.size() - 1) {
         m_statement = 1;
         return {m_testimony.at(m_statement), TestimonyProgress::LOOPED};
@@ -342,7 +337,6 @@ QStringList AreaData::getNotecards()
 {
     QMapIterator<QString, QString> l_noteIter(m_notecards);
     QStringList l_notecards;
-
     while (l_noteIter.hasNext()) {
         l_noteIter.next();
         l_notecards << l_noteIter.key() << ": " << l_noteIter.value() << "\n";
@@ -441,8 +435,8 @@ void AreaData::setEvidenceList(QStringList f_evi_list)
             l_evi_name = l_match.captured("name");
             l_evi_desc = l_match.captured("desc");
             l_evi_image = l_match.captured("image");
-            AreaData::Evidence l_evi = {l_evi_name, l_evi_desc, l_evi_image};
 
+            AreaData::Evidence l_evi = {l_evi_name, l_evi_desc, l_evi_image};
             appendEvidence(l_evi);
         }
         else

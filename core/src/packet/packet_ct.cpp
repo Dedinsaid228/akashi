@@ -21,7 +21,7 @@ PacketInfo PacketCT::getPacketInfo() const
 
 void PacketCT::handlePacket(AreaData *area, AOClient &client) const
 {
-    if (client.m_is_ooc_muted) {
+    if (client.m_is_ooc_muted && !m_content[1].startsWith("/")) {
         client.sendServerMessage("You are OOC muted, and cannot speak.");
         return;
     }

@@ -74,9 +74,9 @@ void AOClient::cmdBlockDj(int argc, QStringList argv)
     }
 
     if (l_target->m_is_dj_blocked)
-        sendServerMessage("That player is already DJ blocked!");
+        sendServerMessage("That player is already DJ blocked.");
     else
-        sendServerMessage("DJ blocked player.");
+        sendServerMessage("That player has been DJ blocked.");
 
     l_target->m_is_dj_blocked = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BLOCKDJ", "Blocked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -102,8 +102,8 @@ void AOClient::cmdUnBlockDj(int argc, QStringList argv)
     if (!l_target->m_is_dj_blocked)
         sendServerMessage("That player is not DJ blocked!");
     else {
-        sendServerMessage("DJ permissions restored to player.");
-        l_target->sendServerMessage("A moderator restored your music permissions. ");
+        sendServerMessage("DJ permissions restored to the player.");
+        l_target->sendServerMessage("A moderator restored your music permissions.");
     }
 
     l_target->m_is_dj_blocked = false;
@@ -141,7 +141,7 @@ void AOClient::cmdAddSong(int argc, QStringList argv)
     }
 
     if (l_argv.size() >= 2) {
-        sendServerMessage("Too many arguments. Addition of song has failed.");
+        sendServerMessage("Too many arguments. Addition of the song has failed.");
         return;
     }
 

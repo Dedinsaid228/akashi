@@ -146,7 +146,7 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"kick_other", {{ACLRole::NONE}, 0, &AOClient::cmdKickOther}},
     {"ipidinfo", {{ACLRole::IPIDINFO}, 1, &AOClient::cmdIpidInfo}},
     {"sneak", {{ACLRole::NONE}, 0, &AOClient::cmdSneak}},
-    {"taketaked", {{ACLRole::TAKETAKED}, 0, &AOClient::cmdTakeTakedChar}},
+    {"taketaken", {{ACLRole::TAKETAKEN}, 0, &AOClient::cmdTakeTakenChar}},
     {"currentevimod", {{ACLRole::CM}, 0, &AOClient::cmdCurrentEvimod}},
     {"bgs", {{ACLRole::NONE}, 0, &AOClient::cmdBgs}},
     {"blind", {{ACLRole::MUTE}, 1, &AOClient::cmdBlind}},
@@ -297,7 +297,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
     m_last_area_change_time = QDateTime::currentDateTime().toSecsSinceEpoch();
 
     if (!m_sneaked)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " moved to the area " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " has moved to the area " + "[" + QString::number(m_area_list.indexOf(new_area)) + "] " + server->getAreaName(new_area));
 
     if (m_current_char != "") {
         server->getAreaById(m_current_area)->changeCharacter(server->getCharID(m_current_char), -1);
@@ -345,7 +345,7 @@ void AOClient::changeArea(int new_area, bool ignore_cooldown)
         sendServerMessage(server->getAreaById(m_current_area)->areaMessage());
 
     if (!m_sneaked)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " enters from the area " + "[" + QString::number(m_area_list.indexOf(l_old_area)) + "] " + server->getAreaName(l_old_area));
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " has entered from the area " + "[" + QString::number(m_area_list.indexOf(l_old_area)) + "] " + server->getAreaName(l_old_area));
 
     if (server->getAreaById(m_current_area)->lockStatus() == AreaData::LockStatus::SPECTATABLE)
         sendServerMessage("The area [" + QString::number(m_area_list.indexOf(m_current_area)) + "] " + server->getAreaName(m_current_area) + " is spectate-only. To chat IC you will need to be invited by the CM.");
@@ -397,12 +397,12 @@ bool AOClient::changeCharacter(int char_id)
 void AOClient::changePosition(QString new_pos)
 {
     if (new_pos == "hidden") {
-        sendServerMessage("You can't change position to this.");
+        sendServerMessage("You cannot change your position to this one.");
         return;
     }
 
     m_pos = new_pos;
-    sendServerMessage("Position changed to " + m_pos + ".");
+    sendServerMessage("Your position is changed to " + m_pos + ".");
     sendPacket("SP", {m_pos});
 }
 
@@ -468,7 +468,7 @@ void AOClient::arup(ARUPType type, bool broadcast, int hub)
         }
         case ARUPType::STATUS:
         {
-            QString l_area_status = QVariant::fromValue(l_area->status()).toString().replace("_", "-"); // LOOKING_FOR_PLAYERS to LOOKING-FOR-PLAYERS
+            QString l_area_status = l_area->status().replace("_", "-").toUpper(); // LOOKING_FOR_PLAYERS to LOOKING-FOR-PLAYERS
             if (l_area_status == "IDLE")
                 l_area_status = "";
 

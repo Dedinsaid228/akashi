@@ -46,7 +46,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
         client.sendEvidenceListHidCmNoCm(area);
 
     client.getServer()->broadcast(validated_packet, client.m_current_area);
-    client.getServer()->hubListen(m_content[4], client.m_current_area, client.getSenderName(client.m_id));
+    client.getServer()->hubListen(m_content[4], client.m_current_area, client.getSenderName(client.m_id), client.m_id);
 
     if (evipresent)
         client.sendEvidenceList(area);

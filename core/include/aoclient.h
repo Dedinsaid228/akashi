@@ -178,8 +178,6 @@ class AOClient : public QObject
      */
     QString m_current_char;
 
-    int m_befrel_char_id;
-
     /**
      * @brief The internal name of the character the client is iniswapped to.
      *
@@ -1592,7 +1590,7 @@ class AOClient : public QObject
      *
      * @iscommand
      */
-    void cmdTakeTakedChar(int argc, QStringList argv);
+    void cmdTakeTakenChar(int argc, QStringList argv);
 
     /**
      * @brief Blind the targeted player from being able to see or talk IC/OOC.
@@ -2325,8 +2323,6 @@ class AOClient : public QObject
     void playMusic(QStringList f_args, bool f_hubbroadcast = false, bool f_once = false, bool f_gdrive = false);
 
     QString getEviMod(int f_area);
-
-    QString getAreaStatus(int f_area);
 
     QString getLockStatus(int f_area);
 

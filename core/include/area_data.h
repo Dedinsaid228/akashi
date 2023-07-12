@@ -395,7 +395,7 @@ class AreaData : public QObject
      * @todo This is godawful, but I'm at my wits end. Needs a bigger refactor later down the line --
      * the separation should help somewhat already, maybe.
      */
-    bool changeCharacter(int f_from = -1, int f_to = -1, bool taketaked = false);
+    bool changeCharacter(int f_from = -1, int f_to = -1, bool taketaken = false);
 
     /**
      * @brief Returns a copy of the list of evidence in the area.

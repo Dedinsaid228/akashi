@@ -38,15 +38,10 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
 {
     QStringList entries;
     AreaData *area = server->getAreaById(area_idx);
-
-    if (area->playerCount() == 0)
-        return entries;
-
     if (area->getHub() != m_hub && ignore_hubs)
         return entries;
 
-    QString area_name = server->getAreaName(area_idx);
-    entries.append("=== " + area_name + " ===");
+    entries.append("=== " + server->getAreaName(area_idx) + " ===");
 
     switch (area->lockStatus()) {
     case AreaData::LockStatus::LOCKED:
@@ -61,17 +56,11 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
     }
 
     if (server->getHubById(area->getHub())->getHidePlayerCount()) {
-        if (!ignore_hubs)
-            entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
-
-        entries.append("[???][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
+        entries.append("[???][" + area->status().replace("_", "-").toUpper() + "]");
         return entries;
     }
 
-    if (!ignore_hubs)
-        entries.append("[Hub: " + server->getHubName(area->getHub()) + "]");
-
-    entries.append("[" + QString::number(area->playerCount()) + " users][" + QVariant::fromValue(area->status()).toString().replace("_", "-") + "]");
+    entries.append("[" + QString::number(area->playerCount()) + " users][" + area->status().replace("_", "-").toUpper() + "]");
 
     const QVector<AOClient *> l_clients = server->getClients();
     for (AOClient *l_client : l_clients) {
@@ -129,17 +118,17 @@ void AOClient::diceThrower(int sides, int dice, bool p_roll, int roll_modifier)
     QString total_results = results.join(" ");
     if (p_roll) {
         if (roll_modifier)
-            sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
+            sendServerMessage("You have rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
         else
-            sendServerMessage("You rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
+            sendServerMessage("You have rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
         return;
     }
 
     QString l_sender_name = getSenderName(m_id);
     if (roll_modifier)
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " has rolled a " + QString::number(dice) + "d" + QString::number(sides) + "+" + QString::number(roll_modifier) + ". Results: " + total_results);
     else
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + l_sender_name + " has rolled a " + QString::number(dice) + "d" + QString::number(sides) + ". Results: " + total_results);
 }
 
 QString AOClient::getAreaTimer(int area_idx, int timer_idx)
@@ -263,6 +252,11 @@ void AOClient::sendNotice(QString f_notice, bool f_global)
 
 void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, bool f_gdrive)
 {
+    if (m_is_spectator) {
+        sendServerMessage("Spectator are blocked from changing the music.");
+        return;
+    }
+
     if (m_is_dj_blocked) {
         sendServerMessage("You are blocked from changing the music.");
         return;
@@ -287,12 +281,12 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         l_song = f_args.join(" ");
 
     if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be/")) {
-        sendServerMessage("You cannot use YouTube links.");
+        sendServerMessage("You cannot use a YouTube link.");
         return;
     }
 
     if (!l_song.startsWith("http") && !server->getMusicList().contains(l_song) && l_song != "~stop.mp3") {
-        sendServerMessage("Unknown musicfile! You may have made a mistake in the filename or in the link.");
+        sendServerMessage("Unknown music file! You may have made a mistake in the filename or in the link.");
         return;
     }
 
@@ -348,31 +342,6 @@ QString AOClient::getEviMod(int f_area)
 
     return "UNKNOWN";
 }
-
-/** QString AOClient::getAreaStatus(int f_area)
-{
-    AreaData *l_area = server->getAreaById(f_area);
-    switch (l_area->status()) {
-    case AreaData::Status::IDLE:
-        return "IDLE";
-    case AreaData::Status::CASING:
-        return "CASING";
-    case AreaData::Status::GAMING:
-        return "GAMING";
-    case AreaData::Status::LOOKING_FOR_PLAYERS:
-        return "LOOKING_FOR_PLAYERS";
-    case AreaData::Status::RP:
-        return "RP";
-    case AreaData::Status::RECESS:
-        return "RECESS";
-    case AreaData::Status::ERP:
-        return "ERP";
-    case AreaData::Status::YABLACHKI:
-        return "YABLACHKI";
-    }
-
-    return "UNKNOWN";
-} **/
 
 QString AOClient::getLockStatus(int f_area)
 {

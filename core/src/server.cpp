@@ -473,18 +473,22 @@ void Server::reloadSettings(int f_uid)
     m_ipignore_list = ConfigManager::ipignoreBans();
     acl_roles_handler->loadFile("config/acl_roles.ini");
     command_extension_collection->loadFile("config/command_extensions.ini");
-    m_characters = ConfigManager::charlist();
     m_backgrounds = ConfigManager::backgrounds();
     music_manager->reloadRequest();
-    ConfigManager::musiclist();
     m_music_list = music_manager->rootMusiclist();
-
-    broadcast(PacketFactory::createPacket("SC", getCharacters()));
-    broadcast(PacketFactory::createPacket("FM", getMusicList()));
+    QStringList l_characters = m_characters;
+    m_characters = ConfigManager::charlist();
 
     const QVector<AOClient *> l_clients = getClients();
-    for (AOClient *l_client : l_clients)
-        getAreaById(l_client->m_current_area)->changeCharacter(l_client->m_befrel_char_id, getCharID(l_client->m_current_char));
+    for (AOClient *l_client : l_clients) {
+        l_client->sendPacket("FM", music_manager->musiclist(l_client->m_current_area));
+
+        if (m_characters != l_characters) {
+            l_client->sendPacket("SC", getCharacters());
+            l_client->changeCharacter(l_client->SPECTATOR_ID);
+            l_client->sendPacket("DONE");
+        }
+    }
 
     for (int i = 0; i < getAreaCount(); i++)
         updateCharsTaken(getAreaById(i));
@@ -493,11 +497,11 @@ void Server::reloadSettings(int f_uid)
     l_client->sendServerMessage("Configurations is reloaded.");
 }
 
-void Server::hubListen(QString message, int area_index, QString sender_name)
+void Server::hubListen(QString message, int area_index, QString sender_name, int sender_id)
 {
     for (AOClient *client : qAsConst(m_clients))
         if (!client->m_blinded && client->m_hub_listen && client->m_hub == getAreaById(area_index)->getHub())
-            client->sendServerMessage(sender_name + " in the area [" + QString::number(client->m_area_list.indexOf(area_index)) + "] " + getAreaName(area_index) + ": " + message);
+            client->sendServerMessage("[" + QString::number(sender_id) + "] " + sender_name + " in the area [" + QString::number(client->m_area_list.indexOf(area_index)) + "] " + getAreaName(area_index) + ": " + message);
 }
 
 void Server::broadcast(std::shared_ptr<AOPacket> packet, int area_index)

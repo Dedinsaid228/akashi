@@ -86,8 +86,8 @@ const QHash<ACLRole::Permission, QString> ACLRole::PERMISSION_CAPTIONS{
         "wuso",
     },
     {
-        ACLRole::Permission::TAKETAKED,
-        "taketaked",
+        ACLRole::Permission::TAKETAKEN,
+        "taketaken",
     },
     {
         ACLRole::Permission::IPIDINFO,

@@ -492,6 +492,8 @@ class ConfigManager
 
     static QStringList getCustomStatuses();
 
+    static int getAreaCountLimit();
+
   private:
     /**
      * @brief Checks if a file exists and is valid.

@@ -32,7 +32,7 @@ void AOClient::cmdDoc(int argc, QStringList argv)
         sendServerMessage("Document: " + l_area->document());
     else {
         l_area->changeDoc(argv.join(" "));
-        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " changed the document.");
+        sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " has changed the document.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CHANGEDOC", argv.join(" "), server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 }
@@ -44,7 +44,7 @@ void AOClient::cmdClearDoc(int argc, QStringList argv)
 
     AreaData *l_area = server->getAreaById(m_current_area);
     l_area->changeDoc("No document.");
-    sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " cleared the document.");
+    sendServerMessageArea("[" + QString::number(m_id) + "] " + getSenderName(m_id) + " has cleared the document.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "CLEARDOC", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -67,7 +67,7 @@ void AOClient::cmdEvidenceMod(int argc, QStringList argv)
         return;
     }
 
-    sendServerMessage("Changed evidence mod.");
+    sendServerMessage("Evidence mod in this area is changed to " + argv[0].toUpper() + ".");
 
     // Resend evidence lists to everyone in the area
     sendEvidenceList(l_area);
@@ -80,7 +80,7 @@ void AOClient::cmdEvidence_Swap(int argc, QStringList argv)
     AreaData *l_area = server->getAreaById(m_current_area);
     int l_ev_size = l_area->evidence().size() - 1;
     if (l_ev_size < 0) {
-        sendServerMessage("No evidence in area.");
+        sendServerMessage("No evidence in the area.");
         return;
     }
 
@@ -93,7 +93,7 @@ void AOClient::cmdEvidence_Swap(int argc, QStringList argv)
     }
 
     if ((l_ev_id1 < 0) || (l_ev_id2 < 0)) {
-        sendServerMessage("Evidence ID can't be negative.");
+        sendServerMessage("Evidence ID cannot be negative.");
         return;
     }
 
@@ -103,7 +103,7 @@ void AOClient::cmdEvidence_Swap(int argc, QStringList argv)
         sendServerMessage("The evidence " + QString::number(l_ev_id1) + " and " + QString::number(l_ev_id2) + " have been swapped.");
     }
     else
-        sendServerMessage("Unable to swap evidence. Evidence ID out of range.");
+        sendServerMessage("Unable to swap the evidence. Evidence ID out of range.");
 }
 
 void AOClient::cmdTestify(int argc, QStringList argv)
@@ -117,7 +117,7 @@ void AOClient::cmdTestify(int argc, QStringList argv)
     else {
         clearTestimony();
         l_area->setTestimonyRecording(AreaData::TestimonyRecording::RECORDING);
-        sendServerMessage("Started testimony recording.");
+        sendServerMessage("Testimony recording is started.");
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STARTTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 }
@@ -197,7 +197,7 @@ void AOClient::cmdPauseTestimony(int argc, QStringList argv)
     AreaData *l_area = server->getAreaById(m_current_area);
     l_area->setTestimonyRecording(AreaData::TestimonyRecording::STOPPED);
     server->broadcast(PacketFactory::createPacket("RT", {"testimony1", "1"}), m_current_area);
-    sendServerMessage("Testimony has been stopped.");
+    sendServerMessage("Testimony recording has been stopped.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "STOPTESTIMONY", "", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -229,7 +229,7 @@ void AOClient::cmdSaveTestimony(int argc, QStringList argv)
     if (l_permission_found) {
         AreaData *l_area = server->getAreaById(m_current_area);
         if (l_area->testimony().size() - 1 <= 0) {
-            sendServerMessage("Can't save an empty testimony.");
+            sendServerMessage("Cannot save an empty testimony.");
             return;
         }
 

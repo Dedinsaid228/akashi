@@ -178,7 +178,7 @@ void AOClient::cmdMods(int argc, QStringList argv)
 void AOClient::cmdHelp(int argc, QStringList argv)
 {
     if (argc == 0) {
-        sendServerMessage("(!) It's better to use the wiki: https://github.com/Ddedinya/kakashi/wiki \n"
+        sendServerMessage("(!) It is better to use the wiki: https://github.com/Ddedinya/kakashi/wiki \n"
                           "/help area - commands relate to setting an area.\n"
                           "/help areaedit - commands relate to manage areas.\n"
                           "/help hubs - commands relate to manage hubs.\n"
@@ -349,7 +349,7 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/gimp [uid] - replace client's IC messages with strings randomly selected from gimp.txt. [MUTE]\n"
                           "/ungimp [uid] - bring back all client's IC messages. [MUTE]\n"
                           "/ipidinfo [ipid] - get some information about the IPID. [IPIDINFO]\n"
-                          "/taketaked - allow or deny yourself take taked characters. [TAKETAKED]\n"
+                          "/taketaken - allow or deny yourself take taked characters. [TAKETAKEN]\n"
                           "/notice [message] - send all clients in the area a message in a special window. [SEND_NOTICE]\n"
                           "/noticeg [message] - send all clients a message in a special window. [SEND_NOTICE]\n"
                           "/shake [uid] - shuffle the order of words in the client's IC messages. [MUTE]\n"
@@ -366,7 +366,7 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/permitsaving [uid] - allow the client to save 1 testimony with /savetestimony. [MODCHAT]\n"
                           "/updateban [ban id] [duration/reason] [updated info] - update the ban with the specified ban ID. [BAN]\n"
                           "/removewuso [uid] - remove the WUSO action on the player. [WUSO]\n"
-                          "/togglewuso - enable or disable WUSO. [WUSO]"
+                          "/togglewuso - enable or disable WUSO. [WUSO]\n"
                           "/hub_protected - enable or disable the ability to become a GM in the hub. [MODCHAT]");
     else
         sendServerMessage("Wrong category! Type /help for category list.");
@@ -702,10 +702,6 @@ void AOClient::cmdReload(int argc, QStringList argv)
         sendServerMessage("Another reloading configurations is still not finished.");
         return;
     }
-
-    const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients)
-        l_client->m_befrel_char_id = server->getCharID(l_client->m_current_char);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     server->reload_watcher.setFuture(QtConcurrent::run(server, &Server::reloadSettings, m_id));
 #else
@@ -785,11 +781,11 @@ void AOClient::cmdKickUid(int argc, QStringList argv)
 
         l_target->sendPacket("KK", {l_reason});
         l_target->m_socket->close();
-        sendServerMessage("Kicked client with UID " + argv[0] + " for reason: " + l_reason);
+        sendServerMessage("Kicked client with UID " + argv[0] + " for a reason: " + l_reason);
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "KICKUID", "Kicked UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
     else if (argv[0] == "*") { // kick all clients in the area
-        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players from area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
+        emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "AREAKICK", "Kicked all players in the area", server->getAreaById(m_current_area)->name(), QString::number(m_id), m_hwid, server->getHubName(m_hub));
         const QVector<AOClient *> l_clients = server->getClients();
         for (AOClient *l_client : l_clients)
             if (l_client->m_current_area == m_current_area && l_client->m_id != m_id) {
@@ -797,7 +793,7 @@ void AOClient::cmdKickUid(int argc, QStringList argv)
                 l_client->m_socket->close();
             }
 
-        sendServerMessage("Kicked all clients for reason: " + l_reason);
+        sendServerMessage("Kicked all clients for a reason: " + l_reason);
         emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "KICKUID", "Kicked all clients in area from the server", server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
     }
 }
@@ -848,7 +844,7 @@ void AOClient::cmdUpdateBan(int argc, QStringList argv)
         return;
     }
 
-    sendServerMessage("Ban updated.");
+    sendServerMessage("The ban has been updated.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "UPDATEBAN", "Update info: " + argv[1] + " " + argv[2], server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
@@ -925,15 +921,15 @@ void AOClient::cmdIpidInfo(int argc, QStringList argv)
     sendServerMessage(l_ipid_info.join("\n"));
 }
 
-void AOClient::cmdTakeTakedChar(int argc, QStringList argv)
+void AOClient::cmdTakeTakenChar(int argc, QStringList argv)
 {
     Q_UNUSED(argc);
     Q_UNUSED(argv);
 
     m_take_taked_char = !m_take_taked_char;
-    QString l_str_en = m_take_taked_char ? "now take taked characters" : "no longer take taked characters";
+    QString l_str_en = m_take_taked_char ? "now may take taken characters" : "no longer may take taken characters";
     sendServerMessage("You are " + l_str_en + ".");
-    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TAKETAKEDCHAR", l_str_en, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
+    emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "TAKETAKENCHAR", l_str_en, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 
 void AOClient::cmdBlind(int argc, QStringList argv)
@@ -962,7 +958,7 @@ void AOClient::cmdBlind(int argc, QStringList argv)
     if (l_target->m_blinded)
         sendServerMessage("That player is already blinded!");
     else
-        sendServerMessage("Blind player.");
+        sendServerMessage("That player has been blinded.");
 
     l_target->m_blinded = true;
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "BLIND", "Blinded UID: " + QString::number(l_target->m_id), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
@@ -990,8 +986,8 @@ void AOClient::cmdUnBlind(int argc, QStringList argv)
     if (!l_target->m_blinded)
         sendServerMessage("That player is not blinded!");
     else {
-        sendServerMessage("Unblind player.");
-        l_target->sendServerMessage("A moderator unblinded you. ");
+        sendServerMessage("That player has been unblinded.");
+        l_target->sendServerMessage("A moderator has unblinded you. ");
     }
 
     l_target->m_blinded = false;
@@ -1039,10 +1035,10 @@ void AOClient::cmdRemoveWebUsersSpectateOnly(int argc, QStringList argv)
     }
 
     if (!l_target->m_wuso)
-        sendServerMessage("This player is not affected by WUSO Mod!");
+        sendServerMessage("That player is not affected by WUSO.");
     else {
         sendServerMessage("Done.");
-        l_target->sendServerMessage("Now the restrictions of the WUSO Mod do not apply to you.");
+        l_target->sendServerMessage("Now the restrictions of the WUSO do not apply to you.");
     }
 
     l_target->m_wuso = false;
