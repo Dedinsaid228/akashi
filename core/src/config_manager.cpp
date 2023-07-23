@@ -477,7 +477,9 @@ int ConfigManager::autoModTrigger() { return m_settings->value("Options/automodt
 
 int ConfigManager::autoModOocTrigger() { return m_settings->value("Options/automodooctrig", 300).toInt(); }
 
-int ConfigManager::autoModWarns() { return m_settings->value("Options/automodwarns", 3).toInt(); };
+int ConfigManager::autoModWarns() { return m_settings->value("Options/automodwarns", 3).toInt(); }
+
+QString ConfigManager::autoModHaznumTerm() { return m_settings->value("Options/automodhaznumterm", "7d").toString(); }
 
 QString ConfigManager::autoModBanDuration() { return m_settings->value("Options/automodbanduration", "7d").toString(); }
 

@@ -45,7 +45,11 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
     if (evipresent)
         client.sendEvidenceListHidCmNoCm(area);
 
-    client.getServer()->broadcast(validated_packet, client.m_current_area);
+    if (!client.m_blinded)
+        client.getServer()->broadcast(validated_packet, client.m_current_area);
+    else
+        client.sendPacket(validated_packet);
+
     client.getServer()->hubListen(m_content[4], client.m_current_area, client.getSenderName(client.m_id), client.m_id);
 
     if (evipresent)

@@ -375,10 +375,14 @@ void AOClient::cmdGHub(int argc, QStringList argv)
         return;
     }
 
-    const QVector<AOClient *> l_clients = server->getClients();
-    for (AOClient *l_client : l_clients)
-        if (l_client->m_global_enabled && l_client->m_hub == m_hub)
-            l_client->sendPacket("CT", {"[HUB MESSAGE][" + server->getAreaName(m_current_area) + "]" + m_ooc_name, l_sender_message});
+    if (!m_blinded) {
+        const QVector<AOClient *> l_clients = server->getClients();
+        for (AOClient *l_client : l_clients)
+            if (l_client->m_global_enabled && !l_client->m_blinded && l_client->m_hub == m_hub)
+                l_client->sendPacket("CT", {"[HUB MESSAGE][" + server->getAreaName(m_current_area) + "]" + m_ooc_name, l_sender_message});
+    }
+    else
+        sendPacket("CT", {"[HUB MESSAGE][" + server->getAreaName(m_current_area) + "]" + m_ooc_name, l_sender_message});
 
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "HUBGLOBALCHAT", l_sender_message, server->getAreaName(m_current_area), QString::number(m_id), m_hwid, QString::number(m_hub));
     return;

@@ -54,43 +54,44 @@ jobs:
           name: kakashi-linux-qt5.12.8
           path: bin/
 
-  build-windows-qt5:
-    needs: formatting-check
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          aqtversion: '==3.1.*'
-          version: '5.15.2'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win32_mingw81'
-
-      - name: Build
-        run: |
-          cd $Env:GITHUB_WORKSPACE
-          qmake QMAKE_CXXFLAGS+="-fno-sized-deallocation"
-          make
-          windeployqt bin\akashi.exe --release --no-opengl-sw
-          mv bin\config_sample bin\config
-
-      - name: Deploy OpenSSL
-        run: |
-          curl https://sshapeshifter.ru/openssl-1.1.1k.zip --output openssl-1.1.1k.zip
-          tar -xf openssl-1.1.1k.zip
-          copy .\libcrypto-1_1.dll .\bin\libcrypto-1_1.dll
-          copy .\libssl-1_1.dll .\bin\libssl-1_1.dll
-          
-      - name: Upload zip
-        uses: actions/upload-artifact@v2
-        with:
-          name: kakashi-windows-qt5
-          path: bin\
+  #kill yourself fucking python and fucking windows and fucking qt5
+  #build-windows-qt5:
+  #  needs: formatting-check
+  #  runs-on: windows-latest
+  #
+  #  steps:
+  #    - uses: actions/checkout@v2
+  #    - uses: ilammy/msvc-dev-cmd@v1
+  #
+  #    - name: Install Qt
+  #      uses: jurplel/install-qt-action@v3
+  #      with:
+  #        aqtversion: '==3.1.*'
+  #        version: '5.15.2'
+  #        host: 'windows'
+  #        target: 'desktop'
+  #        arch: 'win32_mingw81'
+  #
+  #    - name: Build
+  #      run: |
+  #        cd $Env:GITHUB_WORKSPACE
+  #        qmake QMAKE_CXXFLAGS+="-fno-sized-deallocation"
+  #        make
+  #        windeployqt bin\akashi.exe --release --no-opengl-sw
+  #        mv bin\config_sample bin\config
+  #
+  #    - name: Deploy OpenSSL
+  #      run: |
+  #        curl https://sshapeshifter.ru/openssl-1.1.1k.zip --output openssl-1.1.1k.zip
+  #        tar -xf openssl-1.1.1k.zip
+  #        copy .\libcrypto-1_1.dll .\bin\libcrypto-1_1.dll
+  #        copy .\libssl-1_1.dll .\bin\libssl-1_1.dll
+  #
+  #    - name: Upload zip
+  #      uses: actions/upload-artifact@v2
+  #      with:
+  #        name: kakashi-windows-qt5
+  #        path: bin\
 
   build-linux-qt6:
     needs: formatting-check

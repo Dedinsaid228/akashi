@@ -21,7 +21,6 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QMap>
-#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QSettings>
 #include <QString>

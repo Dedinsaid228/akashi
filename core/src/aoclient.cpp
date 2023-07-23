@@ -236,7 +236,7 @@ void AOClient::clientConnected()
         return;
 
     long l_currentdate = QDateTime::currentDateTime().toSecsSinceEpoch();
-    if ((l_currentdate - l_haznumdate) > 604752) { // If about a week or more has passed since the last punishment from the Automod.
+    if ((l_currentdate - l_haznumdate) > parseTime(ConfigManager::autoModHaznumTerm())) {
         int l_haznumnew = server->getDatabaseManager()->getHazNum(m_ipid) - 1;
         if (l_haznumnew < 0)
             return;
@@ -251,8 +251,6 @@ void AOClient::handlePacket(std::shared_ptr<AOPacket> packet)
 #ifdef NET_DEBUG
     qDebug() << "Received packet:" << packet->getPacketInfo().header << ":" << packet->getContent() << "args length:" << packet->getContent().length();
 #endif
-    AreaData *l_area = server->getAreaById(m_current_area);
-
     if (packet->getContent().join("").size() > 16384)
         return;
 
@@ -271,16 +269,19 @@ void AOClient::handlePacket(std::shared_ptr<AOPacket> packet)
         return;
     }
 
+    AreaData *l_area = server->getAreaById(m_current_area);
     packet->handlePacket(l_area, *this);
 }
 
 void AOClient::changeArea(int new_area, bool ignore_cooldown)
 {
-    if (m_blinded)
-        return;
-
     if (m_current_area == new_area) {
         sendServerMessage("You are already in the area [" + QString::number(m_area_list.indexOf(m_current_area)) + "] " + server->getAreaName(m_current_area));
+        return;
+    }
+
+    if (server->getAreaById(new_area)->getHub() != m_hub) {
+        sendServerMessage("The area that you want to move is not in the hub that you are in. What is wrong with your client?");
         return;
     }
 

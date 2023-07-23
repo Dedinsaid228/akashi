@@ -898,7 +898,7 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
 
-    sendServerMessage("Areas " + QString::number(l_area1) + " and " + QString::number(l_area2) + " have been swapped.");
+    sendServerMessage("The areas " + QString::number(l_area1) + " and " + QString::number(l_area2) + " have been swapped.");
     emit logCMD((m_current_char + " " + m_showname), m_ipid, m_ooc_name, "SWAPAREAS", QString::number(l_area1) + " and " + QString::number(l_area2), server->getAreaName(m_current_area), QString::number(m_id), m_hwid, server->getHubName(m_hub));
 }
 

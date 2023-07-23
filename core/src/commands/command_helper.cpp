@@ -92,17 +92,7 @@ QStringList AOClient::buildAreaList(int area_idx, bool ignore_hubs)
     return entries;
 }
 
-int AOClient::genRand(int min, int max)
-{
-#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
-    qsrand(QDateTime::currentMSecsSinceEpoch());
-    quint32 random_number = (qrand() % (max - min + 1)) + min;
-    return random_number;
-
-#else
-    return QRandomGenerator::system()->bounded(min, max + 1);
-#endif
-}
+int AOClient::genRand(int min, int max) { return QRandomGenerator::system()->bounded(min, max + 1); }
 
 void AOClient::diceThrower(int sides, int dice, bool p_roll, int roll_modifier)
 {

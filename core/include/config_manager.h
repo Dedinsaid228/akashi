@@ -390,6 +390,8 @@ class ConfigManager
 
     static int autoModWarns();
 
+    static QString autoModHaznumTerm();
+
     /**
      * @brief Returns the duration of the ban given by the automoderator.
      *

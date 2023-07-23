@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
     QCoreApplication::setApplicationName("kakashi");
-    QCoreApplication::setApplicationVersion("unstable");
+    QCoreApplication::setApplicationVersion("1.2.5");
     std::atexit(cleanup);
 
     // Verify server configuration is sound.

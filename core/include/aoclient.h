@@ -23,6 +23,7 @@
 
 #include <QDateTime>
 #include <QHostAddress>
+#include <QRandomGenerator>
 #include <QRegularExpression>
 #include <QTimer>
 #include <QtGlobal>

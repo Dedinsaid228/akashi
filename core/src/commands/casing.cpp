@@ -258,7 +258,7 @@ void AOClient::cmdSaveTestimony(int argc, QStringList argv)
         }
     }
     else {
-        sendServerMessage("You don't have permission to save a testimony. Please contact a moderator for permission.");
+        sendServerMessage("You do not have permission to save a testimony. Please contact a moderator for permission.");
         return;
     }
 }

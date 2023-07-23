@@ -70,7 +70,10 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
             return;
         }
 
-        client.getServer()->broadcast(final_packet, client.m_current_area);
+        if (!client.m_blinded)
+            client.getServer()->broadcast(final_packet, client.m_current_area);
+        else
+            client.sendPacket(final_packet);
 
         if (area->autoMod())
             client.autoMod();
