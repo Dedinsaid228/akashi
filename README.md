@@ -1,8 +1,8 @@
 # kakashi
-Poorly made fork of the C++ server for Attorney Online 2 with additional functional.
+Poorly made fork of the C++ server for Attorney Online 2 with additional functional. Used on AO Shapeshifter (RU).
 For a better understanding the work of this program it is recommended to read the wiki, located in the same repo.
 
-Плохо сделанный форк сервера для Attorney Online 2, написанного на C++, с дополнительным функционалом.
+Плохо сделанный форк сервера для Attorney Online 2, написанного на C++, с дополнительным функционалом. Используется на AO Shapeshifter (RU).
 Для лучшего понимания работы данной программы рекомендуется прочитать вики, расположенное в этом же репозитории.
 
 # Build instructions
