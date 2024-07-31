@@ -32,9 +32,22 @@ void WriterFull::flush(const QString f_entry)
     if (l_logfile.open(QIODevice::WriteOnly | QIODevice::Append)) {
         QTextStream file_stream(&l_logfile);
         file_stream << f_entry;
+        l_logfile.close();
     }
 
-    l_logfile.close();
+    QFileInfo l_fileinfo("logs/server.log");
+    if (QDateTime::currentDateTime().toSecsSinceEpoch() - l_fileinfo.birthTime().toSecsSinceEpoch() > 7776000) { // rename log file every 90 days
+        QString newFileName = "logs/server-" + l_fileinfo.birthTime().toString("yyyy.MM.dd-HH.mm.ss") + "-" + QDateTime::currentDateTime().toString("yyyy.MM.dd-HH.mm.ss") + ".log";
+        bool renamed = QFile::rename("logs/server.log", newFileName);
+
+        if (renamed) {
+            QFile file("logs/server.log");
+            if (file.open(QIODevice::WriteOnly | QIODevice::Append)) {
+                file.setFileTime(QDateTime::currentDateTime(), QFileDevice::FileBirthTime);
+                file.close();
+            }
+        }
+    }
 }
 
 void WriterFull::flush(const QString f_entry, const QString f_area_name)

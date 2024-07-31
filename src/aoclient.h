@@ -274,6 +274,8 @@ class AOClient : public QObject
 
     bool m_hub_listen = false;
 
+    int m_score = 0;
+
     /**
      * @brief Represents the client's client software, and its version.
      *
@@ -1303,6 +1305,8 @@ class AOClient : public QObject
 
     void cmdOocType(int argc, QStringList argv);
 
+    void cmdToggleAutoCap(int argc, QStringList argv);
+
     ///@}
 
     /**
@@ -1732,6 +1736,12 @@ class AOClient : public QObject
     void cmdSubTheme(int argc, QStringList argv);
 
     void cmdVote(int argc, QStringList argv);
+
+    void cmdScoreboard(int argc, QStringList argv);
+
+    void cmdAddScore(int argc, QStringList argv);
+
+    void cmdRemoveScore(int argc, QStringList argv);
 
     /**
      * @brief Writes a "note card" in the current area.

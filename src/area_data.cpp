@@ -69,6 +69,7 @@ AreaData::AreaData(QString p_name, int p_index, MusicManager *p_music_manager = 
     setEvidenceList(areas_ini->value("evidence", "").toStringList());
     m_can_change_status = areas_ini->value("change_status", "true").toBool();
     m_ooc_type = QVariant(areas_ini->value("ooc_type", "ALL").toString().toUpper()).value<AreaData::OocType>();
+    m_auto_cap = areas_ini->value("auto_cap", "false").toBool();
     areas_ini->endGroup();
     QTimer *timer1 = new QTimer();
     m_timers.append(timer1);
@@ -461,6 +462,10 @@ void AreaData::toggleVote() { m_vote_started = !m_vote_started; }
 AreaData::OocType AreaData::oocType() const { return m_ooc_type; }
 
 void AreaData::setOocType(const OocType &f_oocType_r) { m_ooc_type = f_oocType_r; }
+
+bool AreaData::autoCap() const { return m_auto_cap; }
+
+void AreaData::toggleAutoCap() { m_auto_cap = !m_auto_cap; }
 
 int AreaData::getHub() { return m_hub; }
 

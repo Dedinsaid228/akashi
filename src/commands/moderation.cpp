@@ -248,7 +248,10 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/notecard [message] - write a note card in the current area.\n"
                           "/notecard_reveal - reveal all note cards in the current area. [CM]\n"
                           "/notecard_clear - сlear a note card.\n"
-                          "/vote (uid) - without arguments - start or end voting (requires [CM] permission), with arguments - vote for the candidate.");
+                          "/vote (uid) - without arguments - start or end voting (requires [CM] permission), with arguments - vote for the candidate.\n"
+                          "/scoreboard - get a list of scores for invited clients in the area.\n"
+                          "/addscore [uid] (scores) - add score(-s) to the client.\n"
+                          "/takescore [uid] (scores) - take away score(-s) to the client.");
     else if (argv[0] == "testimony")
         sendServerMessage("[brackets] mean [required arguments]. Actually, commands don't need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"
@@ -304,7 +307,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/togglewtce - toggle whether the WTCE buttons can be used or not in the area. [CM]\n"
                           "/toggleshouts - toggle whether shouts can be used or not in the area. [CM]\n"
                           "/togglestatus - toggle whether status can be changed or not in the area. [CM]\n"
-                          "/ooc_type [all/invited/cm] - allow everyone to speak in OOC chat, only invited clients or only CMs. [CM]");
+                          "/ooc_type [all/invited/cm] - allow everyone to speak in OOC chat, only invited clients or only CMs. [CM]\n"
+                          "/toggleautocap - toggle whether all messages will start with a capital letter and end with a period automatically or not in the area. [CM]");
     else if (argv[0] == "areaedit")
         sendServerMessage("[brackets] mean [required arguments], (brackets) mean (optional arguments). Actually, commands don't need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"

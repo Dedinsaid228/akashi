@@ -991,6 +991,10 @@ class AreaData : public QObject
 
     void setOocType(const OocType &f_oocType_r);
 
+    bool autoCap() const;
+
+    void toggleAutoCap();
+
     /**
      * @brief Starts a timer that determines whether a game message may be broadcasted or not.
      *
@@ -1288,6 +1292,8 @@ class AreaData : public QObject
     bool m_vote_started = false;
 
     OocType m_ooc_type;
+
+    bool m_auto_cap = false;
 
     int m_hub;
 

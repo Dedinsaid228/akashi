@@ -382,3 +382,84 @@ void AOClient::cmdVote(int argc, QStringList argv)
     else
         sendServerMessage("You didn't provide an UID, you have already voted, or you are not allowed to use the command.");
 }
+
+void AOClient::cmdScoreboard(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+
+    QString l_scoreboard = "Scoreboard:";
+    AreaData *l_area = server->getAreaById(areaId());
+    const QVector<AOClient *> l_clients = server->getClients();
+    for (AOClient *l_client : l_clients)
+        if ((l_area->lockStatus() == AreaData::LockStatus::FREE || l_area->invited().contains(l_client->clientId())) && l_client->areaId() == areaId())
+            l_scoreboard += "\n[" + QString::number(l_client->clientId()) + "] " + getSenderName(l_client->clientId()) + " - " + QString::number(l_client->m_score);
+
+    sendServerMessageArea(l_scoreboard);
+}
+
+void AOClient::cmdAddScore(int argc, QStringList argv)
+{
+    bool l_ok;
+    AOClient *l_client = server->getClientByID(argv[0].toInt(&l_ok));
+
+    if (!l_ok) {
+        sendServerMessage("That does not look like a valid ID.");
+        return;
+    }
+
+    if (l_client == nullptr) {
+        sendServerMessage("Unable to find client with ID " + argv[0] + ".");
+        return;
+    }
+
+    int l_scores;
+    if (argc == 1)
+        l_scores = 1;
+    else {
+        bool l_ok2;
+        l_scores = argv[1].toInt(&l_ok2);
+
+        if (!l_ok2) {
+            sendServerMessage("That does not look like a valid score count.");
+            return;
+        }
+    }
+
+    l_client->m_score += l_scores;
+    sendServerMessage("You added " + QString::number(l_scores) + " score(-s) to " + argv[0] + ".");
+    l_client->sendServerMessage("You got " + QString::number(l_scores) + " score(-s)!");
+}
+
+void AOClient::cmdRemoveScore(int argc, QStringList argv)
+{
+    bool l_ok;
+    AOClient *l_client = server->getClientByID(argv[0].toInt(&l_ok));
+
+    if (!l_ok) {
+        sendServerMessage("That does not look like a valid ID.");
+        return;
+    }
+
+    if (l_client == nullptr) {
+        sendServerMessage("Unable to find client with ID " + argv[0] + ".");
+        return;
+    }
+
+    int l_scores;
+    if (argc == 1)
+        l_scores = 1;
+    else {
+        bool l_ok2;
+        l_scores = argv[1].toInt(&l_ok2);
+
+        if (!l_ok2) {
+            sendServerMessage("That does not look like a valid score count.");
+            return;
+        }
+    }
+
+    l_client->m_score -= l_scores;
+    sendServerMessage("You take away " + QString::number(l_scores) + " score(-s) from " + argv[0] + ".");
+    l_client->sendServerMessage(QString::number(l_scores) + " score(-s) were taken away from you!");
+}

@@ -190,7 +190,10 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"playggl_once_hub", {{ACLRole::GM}, 1, &AOClient::cmdPlayHubOnceGgl}},
     {"kickphantoms", {{ACLRole::NONE}, 0, &AOClient::cmdKickPhantoms}},
     {"play_ambience", {{ACLRole::NONE}, 1, &AOClient::cmdPlayAmbience}},
-    {"play_ambience_ggl", {{ACLRole::NONE}, 1, &AOClient::cmdPlayAmbienceGgl}}};
+    {"play_ambience_ggl", {{ACLRole::NONE}, 1, &AOClient::cmdPlayAmbienceGgl}},
+    {"scoreboard", {{ACLRole::CM}, 0, &AOClient::cmdScoreboard}},
+    {"addscore", {{ACLRole::CM}, 1, &AOClient::cmdAddScore}},
+    {"takescore", {{ACLRole::CM}, 1, &AOClient::cmdRemoveScore}}};
 
 void AOClient::clientDisconnected(int f_hub)
 {
@@ -648,6 +651,7 @@ AOClient::AOClient(
     m_password(""),
     m_joined(false),
     m_vote_points(0),
+    m_score(0),
     m_socket(socket),
     m_music_manager(p_manager),
     m_last_wtce_time(0),

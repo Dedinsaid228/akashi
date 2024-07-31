@@ -474,8 +474,7 @@ std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
         }
     }
 
-    bool automod = area->autoMod();
-    if (automod) {
+    if (area->autoMod()) {
         if (l_incoming_msg.isEmpty() && client.m_blankposts_row < 3)
             client.m_blankposts_row++;
         else if (!l_incoming_msg.isEmpty()) {
@@ -484,6 +483,15 @@ std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
         }
         else
             client.autoMod(true);
+    }
+
+    if (area->autoCap() && !l_args[4].isEmpty()) {
+        QStringList temp = l_args[4].split("");
+        temp[1] = temp[1].toUpper();
+        if (temp[temp.count() - 2] != "." && temp[temp.count() - 2] != "?" && temp[temp.count() - 2] != "!")
+            temp.append(".");
+
+        l_args[4] = temp.join("");
     }
 
     return PacketFactory::createPacket("MS", l_args);
