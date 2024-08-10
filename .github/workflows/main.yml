@@ -84,6 +84,10 @@ jobs:
           copy .\tls\qopensslbackend.dll .\bin\tls\qopensslbackend.dll
           copy .\tls\qschannelbackend.dll .\bin\tls\qschannelbackend.dll
 
+      - name: Deploy yt-dlp
+        run: |
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2024.08.06/yt-dlp.exe --output bin\yt-dlp.exe
+
       - name: Upload zip
         uses: actions/upload-artifact@v2
         with:

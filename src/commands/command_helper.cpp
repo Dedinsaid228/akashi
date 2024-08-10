@@ -20,7 +20,12 @@
 #include "config_manager.h"
 #include "hub_data.h"
 #include "packet/packet_factory.h"
+#include "qhttpmultipart.h"
 #include "server.h"
+
+#include "QtConcurrent/qtconcurrentrun.h"
+#include <QProcess>
+#include <QQueue>
 
 // This file is for functions used by various commands, defined in the command helper function category in aoclient.h
 // Be sure to register the command in the header before adding it here!
@@ -143,7 +148,7 @@ QString AOClient::getAreaTimer(int area_idx, int timer_idx)
 
 long long AOClient::parseTime(QString input)
 {
-    QRegularExpression l_regex("(?:(?:(?<year>.*?)y)*(?:(?<week>.*?)w)*(?:(?<day>.*?)d)*(?:(?<hr>.*?)h)*(?:(?<min>.*?)m)*(?:(?<sec>.*?)s)*)");
+    static QRegularExpression l_regex("(?:(?:(?<year>.*?)y)*(?:(?<week>.*?)w)*(?:(?<day>.*?)d)*(?:(?<hr>.*?)h)*(?:(?<min>.*?)m)*(?:(?<sec>.*?)s)*)");
     QRegularExpressionMatch match = l_regex.match(input);
     QString str_year, str_week, str_hour, str_day, str_minute, str_second;
     int year, week, day, hour, minute, second;
@@ -202,14 +207,14 @@ bool AOClient::checkPasswordRequirements(QString f_username, QString f_password)
             return false;
     }
     else if (ConfigManager::passwordRequireNumbers()) {
-        QRegularExpression regex("[0123456789]");
+        static QRegularExpression regex("[0123456789]");
         QRegularExpressionMatch match = regex.match(l_decoded_password);
 
         if (!match.hasMatch())
             return false;
     }
     else if (ConfigManager::passwordRequireSpecialCharacters()) {
-        QRegularExpression regex("[~!@#$%^&*_-+=`|\\(){}\[]:;\"'<>,.?/]");
+        static QRegularExpression regex("[~!@#$%^&*_-+=`|\\(){}\[]:;\"'<>,.?/]");
         QRegularExpressionMatch match = regex.match(l_decoded_password);
 
         if (!match.hasMatch())
@@ -264,22 +269,115 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         return;
     }
 
-    QString l_song;
-    if (f_gdrive)
-        l_song = "https://drive.google.com/uc?export=download&id=" + f_args.join(" "); // Thanks RedFox
-    else
-        l_song = f_args.join(" ");
-
-    if (l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be/")) {
-        sendServerMessage("You cannot use a YouTube link.");
-        return;
-    }
-
+    QString l_song = f_args.join(" ");
     if (!l_song.startsWith("http") && !server->getMusicList().contains(l_song) && l_song != "~stop.mp3") {
         sendServerMessage("Unknown music file! You may have made a mistake in the filename or in the link.");
         return;
     }
 
+    if (l_song.startsWith("https://youtube.com/") || l_song.startsWith("https://youtu.be/")) {
+        if (ConfigManager::useYtdlp()) {
+            sendServerMessage("Start loading... it takes some time.");
+            QProcess *l_proc = new QProcess();
+            QString l_path = "temp/" + QString::number(areaId()) + "/" + QUuid::createUuid().toString() + ".opus";
+
+#ifdef Q_OS_WIN
+            l_proc->start("./yt-dlp.exe", {"-x", "-q", "--audio-format", "opus", "-o", l_path, l_song});
+#else
+            l_proc->start("yt-dlp", {"-x", "-q", "--audio-format", "opus", "-o", l_path, l_song});
+#endif
+
+            QObject::connect(l_proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished), this,
+                             [this, l_path, f_hubbroadcast, f_once, f_ambience](int l_code, QProcess::ExitStatus l_status) mutable {
+                                 if (l_status == QProcess::NormalExit && l_code == 0) {
+                                     auto l_future = QtConcurrent::run([this, l_path]() {
+                                         return this->uploadToLetterBox(l_path);
+                                     });
+
+                                     QFutureWatcher<QString> *l_watch = new QFutureWatcher<QString>(this);
+                                     connect(l_watch, &QFutureWatcher<QString>::finished, this, [l_watch, f_hubbroadcast, f_once, f_ambience, this]() {
+                                         QString l_link = l_watch->future().result();
+                                         if (!l_link.isEmpty())
+                                             startMusicPlaying(l_link, f_hubbroadcast, f_once, f_ambience);
+                                         else
+                                             sendServerMessage("Error: the server got a empty link!");
+                                         l_watch->deleteLater();
+                                     });
+
+                                     l_watch->setFuture(l_future);
+                                 }
+                                 else
+                                     sendServerMessage("Audio download failed: code " + QString::number(l_code));
+                             });
+
+            return;
+        }
+        else {
+            sendServerMessage("You cannot use a YouTube link.");
+            return;
+        }
+    }
+
+    if (f_gdrive)
+        l_song = "https://drive.google.com/uc?export=download&id=" + f_args.join(" ");
+
+    startMusicPlaying(l_song, f_hubbroadcast, f_once, f_ambience);
+}
+
+QString AOClient::uploadToLetterBox(QString f_path)
+{
+    QFile *l_file = new QFile(f_path);
+    if (!l_file->open(QIODevice::ReadOnly)) {
+        sendServerMessage("Error: Failed to open file.");
+        delete l_file;
+        return "";
+    }
+
+    QHttpPart l_filepart;
+    l_filepart.setHeader(QNetworkRequest::ContentDispositionHeader,
+                         QVariant("form-data; name=\"fileToUpload\"; filename=\"" + QFileInfo(f_path).fileName() + "\""));
+
+    QHttpMultiPart *l_multipart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    l_filepart.setBodyDevice(l_file);
+    l_file->setParent(l_multipart);
+    l_multipart->append(l_filepart);
+
+    QHttpPart l_timepart;
+    l_timepart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"time\""));
+    l_timepart.setBody("1h");
+    l_multipart->append(l_timepart);
+
+    QHttpPart l_typepart;
+    l_typepart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant("form-data; name=\"reqtype\""));
+    l_typepart.setBody("fileupload");
+    l_multipart->append(l_typepart);
+
+    QNetworkAccessManager *l_manager = new QNetworkAccessManager(this);
+    QNetworkReply *l_reply = l_manager->post(QNetworkRequest(QUrl("https://litterbox.catbox.moe/resources/internals/api.php")), l_multipart);
+    l_multipart->setParent(l_reply);
+
+    QEventLoop l_eventloop;
+    QObject::connect(l_reply, &QNetworkReply::finished, &l_eventloop, &QEventLoop::quit);
+    l_eventloop.exec();
+
+    QString l_response;
+    if (l_reply->error() == QNetworkReply::NoError)
+        l_response = l_reply->readAll();
+    else {
+        sendServerMessage("Error: " + l_reply->errorString());
+        l_response = "";
+    }
+
+    l_reply->deleteLater();
+    l_file->remove();
+    l_file->deleteLater();
+
+    return l_response;
+}
+
+void AOClient::startMusicPlaying(QString f_song, bool f_hubbroadcast, bool f_once, bool f_ambience)
+{
+    AreaData *l_area = server->getAreaById(areaId());
     QString l_play_once;
     if (f_once)
         l_play_once = "0";
@@ -288,9 +386,9 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
 
     std::shared_ptr<AOPacket> music_change;
     if (f_ambience)
-        music_change = PacketFactory::createPacket("MC", {l_song, "-1", characterName(), "1", "1"});
+        music_change = PacketFactory::createPacket("MC", {f_song, "-1", characterName(), "1", "1"});
     else
-        music_change = PacketFactory::createPacket("MC", {l_song, QString::number(server->getCharID(character())), characterName(), l_play_once, "0"});
+        music_change = PacketFactory::createPacket("MC", {f_song, QString::number(server->getCharID(character())), characterName(), l_play_once, "0"});
 
     if (f_hubbroadcast) {
         server->broadcast(hubId(), music_change);
@@ -298,18 +396,18 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         for (int i = 0; i < server->getAreaCount(); i++) {
             AreaData *area = server->getAreaById(i);
             if (area->getHub() == hubId())
-                area->changeMusic(getSenderName(clientId()), l_song);
+                area->changeMusic(getSenderName(clientId()), f_song);
         }
     }
     else {
         server->broadcast(music_change, areaId());
         if (f_ambience)
-            l_area->changeAmbience(l_song);
+            l_area->changeAmbience(f_song);
         else
-            l_area->changeMusic(getSenderName(clientId()), l_song);
+            l_area->changeMusic(getSenderName(clientId()), f_song);
     }
 
-    emit logMusic((character() + " " + characterName()), name(), m_ipid, server->getAreaById(areaId())->name(), l_song, QString::number(clientId()), m_hwid, server->getHubName(hubId()));
+    emit logMusic((character() + " " + characterName()), name(), m_ipid, server->getAreaById(areaId())->name(), f_song, QString::number(clientId()), m_hwid, server->getHubName(hubId()));
 }
 
 QString AOClient::getSenderName(int f_uid)

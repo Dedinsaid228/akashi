@@ -29,10 +29,8 @@ void PlayerStateObserver::registerClient(AOClient *client)
         packets.append(std::make_shared<PacketPU>(i_client->clientId(), PacketPU::AREA_ID, i_client->areaId()));
     }
 
-    for (std::shared_ptr<AOPacket> packet : std::as_const(packets)) {
+    for (const std::shared_ptr<AOPacket> &packet : std::as_const(packets))
         client->sendPacket(packet);
-        // delete packet;
-    }
 }
 
 void PlayerStateObserver::unregisterClient(AOClient *client)

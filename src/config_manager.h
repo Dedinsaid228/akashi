@@ -406,6 +406,8 @@ class ConfigManager
      */
     static QString autoModWarnTerm();
 
+    static bool useYtdlp();
+
     /**
      * @brief Returns a list of magic 8 ball answers.
      *

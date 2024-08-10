@@ -2370,6 +2370,10 @@ class AOClient : public QObject
      */
     void playMusic(QStringList f_args, bool f_hubbroadcast = false, bool f_once = false, bool f_gdrive = false, bool f_ambience = false);
 
+    QString uploadToLetterBox(QString f_path);
+
+    void startMusicPlaying(QString f_song, bool f_hubbroadcast, bool f_once, bool f_ambience);
+
     QString getEviMod(int f_area);
 
     QString getLockStatus(int f_area);

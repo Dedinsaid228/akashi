@@ -35,8 +35,9 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
         return;
     }
 
-    client.setName(client.dezalgo(m_content[0]).replace(QRegularExpression("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&"), "")); // no fucky wucky shit here
-    if (client.name().isEmpty() || client.name() == ConfigManager::serverName())                                     // impersonation & empty name protection
+    static QRegularExpression re("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&");
+    client.setName(client.dezalgo(m_content[0]).replace(re, ""));                // no fucky wucky shit here
+    if (client.name().isEmpty() || client.name() == ConfigManager::serverName()) // impersonation & empty name protection
         return;
 
     if (client.name().length() > 30) {

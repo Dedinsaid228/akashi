@@ -525,8 +525,10 @@ void AOClient::cmdJudgeLog(int argc, QStringList argv)
     // Judgelog contains an IPID, so we shouldn't send that unless the caller has appropriate permissions
     if (checkPermission(ACLRole::KICK) || checkPermission(ACLRole::BAN))
         sendServerMessage(l_message);
-    else
-        sendServerMessage(l_message.remove(QRegularExpression("[(].*[)]"))); // Filter out anything between two parentheses. This should only ever be the IPID
+    else {
+        static QRegularExpression re("[(].*[)]");
+        sendServerMessage(l_message.remove(re)); // Filter out anything between two parentheses. This should only ever be the IPID
+    }
 }
 
 void AOClient::cmdIgnoreBgList(int argc, QStringList argv)

@@ -20,9 +20,6 @@
 #include <QQueue>
 
 #include "area_data.h"
-#include "config_manager.h"
-#include "db_manager.h"
-#include "music_manager.h"
 #include "packet/packet_factory.h"
 #include "server.h"
 
@@ -51,7 +48,7 @@ void AOClient::updateEvidenceList(AreaData *area)
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
-            QRegularExpression l_regex("<owner=(.*?)>");
+            static QRegularExpression l_regex("<owner=(.*?)>");
             QRegularExpressionMatch l_match = l_regex.match(evidence.description);
             if (l_match.hasMatch()) {
                 QStringList owners = l_match.captured(1).split(",");
@@ -78,7 +75,7 @@ void AOClient::updateEvidenceListHidCmNoCm(AreaData *area)
     const QList<AreaData::Evidence> l_area_evidence = area->evidence();
     for (const AreaData::Evidence &evidence : l_area_evidence) {
         if (!checkPermission(ACLRole::CM) && area->eviMod() == AreaData::EvidenceMod::HIDDEN_CM) {
-            QRegularExpression l_regex("<owner=(.*?)>");
+            static QRegularExpression l_regex("<owner=(.*?)>");
             QRegularExpressionMatch l_match = l_regex.match(evidence.description);
             if (l_match.hasMatch()) {
                 QStringList owners = l_match.captured(1).split(",");
@@ -107,7 +104,7 @@ bool AOClient::evidencePresent(QString id)
         return false;
 
     QList<AreaData::Evidence> l_area_evidence = l_area->evidence();
-    QRegularExpression l_regex("<owner=(.*?)>");
+    static QRegularExpression l_regex("<owner=(.*?)>");
     QRegularExpressionMatch l_match = l_regex.match(l_area_evidence[l_idvalid].description);
     if (l_match.hasMatch()) {
         QStringList l_owners = l_match.captured(1).split(",");
@@ -133,7 +130,7 @@ void AOClient::getAreaList()
 
 QString AOClient::dezalgo(QString p_text)
 {
-    QRegularExpression rxp("([̴̵̶̷̸̡̢̧̨̛̖̗̘̙̜̝̞̟̠̣̤̥̦̩̪̫̬̭̮̯̰̱̲̳̹̺̻̼͇͈͉͍͎̀́̂̃̄̅̆̇̈̉̊̋̌̍̎̏̐̑̒̓̔̽̾̿̀́͂̓̈́͆͊͋͌̕̚ͅ͏͓͔͕͖͙͚͐͑͒͗͛ͣͤͥͦͧͨͩͪͫͬͭͮͯ͘͜͟͢͝͞͠͡])");
+    static QRegularExpression rxp("([̴̵̶̷̸̡̢̧̨̛̖̗̘̙̜̝̞̟̠̣̤̥̦̩̪̫̬̭̮̯̰̱̲̳̹̺̻̼͇͈͉͍͎̀́̂̃̄̅̆̇̈̉̊̋̌̍̎̏̐̑̒̓̔̽̾̿̀́͂̓̈́͆͊͋͌̕̚ͅ͏͓͔͕͖͙͚͐͑͒͗͛ͣͤͥͦͧͨͩͪͫͬͭͮͯ͘͜͟͢͝͞͠͡])");
     QString filtered = p_text.replace(rxp, "");
     return filtered;
 }

@@ -491,6 +491,8 @@ QString ConfigManager::autoModBanDuration() { return m_settings->value("Options/
 
 QString ConfigManager::autoModWarnTerm() { return m_settings->value("Options/automodwarnterm", "30m").toString(); }
 
+bool ConfigManager::useYtdlp() { return m_settings->value("Options/ytdlp", true).toBool(); }
+
 void ConfigManager::setAuthType(const DataTypes::AuthType f_auth) { m_settings->setValue("Options/auth", fromDataType<DataTypes::AuthType>(f_auth).toLower()); }
 
 QStringList ConfigManager::magic8BallAnswers() { return m_commands->magic_8ball; }

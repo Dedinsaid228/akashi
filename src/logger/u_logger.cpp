@@ -16,6 +16,7 @@
 //    along with this program.  If not, see <https://www.gnu.org/licenses/>.        //
 //////////////////////////////////////////////////////////////////////////////////////
 #include "logger/u_logger.h"
+#include "config_manager.h"
 
 ULogger::ULogger(QObject *parent) :
     QObject(parent)
