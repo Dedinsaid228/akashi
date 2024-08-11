@@ -22,6 +22,7 @@
 #include "packet/packet_cc.h"
 #include "packet/packet_ch.h"
 #include "packet/packet_ct.h"
+#include "packet/packet_cu.h"
 #include "packet/packet_de.h"
 #include "packet/packet_ee.h"
 #include "packet/packet_factory.h"
@@ -39,6 +40,7 @@
 #include "packet/packet_rm.h"
 #include "packet/packet_rt.h"
 #include "packet/packet_setcase.h"
+#include "packet/packet_tt.h"
 #include "packet/packet_zz.h"
 
 AOPacket::AOPacket(QStringList p_contents) :
@@ -128,4 +130,6 @@ void AOPacket::registerPackets()
     PacketFactory::registerClass<PacketZZ>("ZZ");
     PacketFactory::registerClass<PacketPR>("PR");
     PacketFactory::registerClass<PacketPU>("PU");
+    PacketFactory::registerClass<PacketTT>("TT");
+    PacketFactory::registerClass<PacketCU>("CU");
 }

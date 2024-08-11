@@ -41,14 +41,58 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
     if (client.m_pos != "" && client.m_pos.toLower() != "hidden")
         validated_packet->setContentField(5, client.m_pos);
 
+    QList<std::shared_ptr<AOPacket>> l_packets;
+    static QRegularExpression re("¨<(.*?)>¨");
+    QRegularExpressionMatchIterator l_iter = re.globalMatch(validated_packet->toString().split("#")[5]);
+    int l_capcon = 0;
+    QString l_mes = validated_packet->toString().split("#")[5];
+    QString l_lastpos;
+    while (l_iter.hasNext()) {
+        QRegularExpressionMatch l_match = l_iter.next();
+        if (l_match.hasMatch()) {
+            QString l_part = l_mes.mid(l_capcon, l_match.capturedStart() - l_capcon);
+            QString l_cap = l_match.captured(1);
+            QStringList l_temp = validated_packet->toString().split("#");
+            l_capcon = l_match.capturedEnd();
+            l_temp[5] = l_part;
+            if (!l_lastpos.isEmpty())
+                l_temp[4] = l_lastpos;
+            l_lastpos = l_cap;
+            l_temp[29] = "1";
+            l_temp.removeFirst();
+            l_packets.append(PacketFactory::createPacket("MS", l_temp));
+            qDebug() << l_temp;
+        }
+    }
+
+    if (!l_packets.isEmpty()) {
+        QString l_part = l_mes.mid(l_capcon);
+        QStringList l_temp = validated_packet->toString().split("#");
+        l_temp[5] = l_part;
+        l_temp[4] = l_lastpos;
+        l_temp[29] = "1";
+        l_temp.removeFirst();
+        l_packets.append(PacketFactory::createPacket("MS", l_temp));
+    }
+
     bool evipresent = client.evidencePresent(validated_packet->getContent()[11]);
     if (evipresent)
         client.sendEvidenceListHidCmNoCm(area);
 
-    if (!client.m_blinded)
-        client.getServer()->broadcast(validated_packet, client.areaId());
-    else
-        client.sendPacket(validated_packet);
+    if (!client.m_blinded) {
+        if (!l_packets.isEmpty())
+            for (const std::shared_ptr<AOPacket> &l_packet : l_packets)
+                client.getServer()->broadcast(l_packet, client.areaId());
+        else
+            client.getServer()->broadcast(validated_packet, client.areaId());
+    }
+    else {
+        if (!l_packets.isEmpty())
+            for (const std::shared_ptr<AOPacket> &l_packet : l_packets)
+                client.sendPacket(l_packet);
+        else
+            client.sendPacket(validated_packet);
+    }
 
     client.getServer()->hubListen(m_content[4], client.areaId(), client.getSenderName(client.clientId()), client.clientId());
 
@@ -167,7 +211,8 @@ std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
     }
 
     if (client.m_is_disemvoweled) {
-        QString l_disemvoweled_message = l_incoming_msg.remove(QRegularExpression("[AEIOUaeioЁУЕЫАОЭЯёуеыаоэя]"));
+        static QRegularExpression re("[AEIOUaeioЁУЕЫАОЭЯёуеыаоэя]");
+        QString l_disemvoweled_message = l_incoming_msg.remove(re);
         l_incoming_msg = l_disemvoweled_message;
     }
 
@@ -445,7 +490,7 @@ std::shared_ptr<AOPacket> PacketMS::validateIcPacket(AOClient &client) const
         }
 
         QString l_decoded_message = client.decodeMessage(l_args[4]); // Get rid of that pesky encoding first.
-        QRegularExpression jump("(?<arrow>>)(?<int>[0,1,2,3,4,5,6,7,8,9]+)");
+        static QRegularExpression jump("(?<arrow>>)(?<int>[0,1,2,3,4,5,6,7,8,9]+)");
         QRegularExpressionMatch match = jump.match(l_decoded_message);
         if (match.hasMatch()) {
             client.m_pos = "wit";

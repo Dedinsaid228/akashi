@@ -275,7 +275,7 @@ void AOClient::playMusic(QStringList f_args, bool f_hubbroadcast, bool f_once, b
         return;
     }
 
-    if (l_song.startsWith("https://youtube.com/") || l_song.startsWith("https://youtu.be/")) {
+    if (l_song.startsWith("https://youtube.com/") || l_song.startsWith("https://youtu.be/") || l_song.startsWith("https://www.youtube.com/") || l_song.startsWith("https://www.youtu.be/")) {
         if (ConfigManager::useYtdlp()) {
             sendServerMessage("Start loading... it takes some time.");
             QProcess *l_proc = new QProcess();
