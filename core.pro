@@ -82,7 +82,9 @@ SOURCES += \
     src/packet/packet_rm.cpp \
     src/packet/packet_rt.cpp \
     src/packet/packet_setcase.cpp \
-    src/packet/packet_zz.cpp
+    src/packet/packet_zz.cpp \
+    src/packet/packet_tt.cpp \
+    src/packet/packet_cu.cpp
 
 HEADERS += src/aoclient.h \
     src/acl_roles_handler.h \
@@ -127,4 +129,6 @@ HEADERS += src/aoclient.h \
     src/packet/packet_rm.h \
     src/packet/packet_rt.h \
     src/packet/packet_setcase.h \
-    src/packet/packet_zz.h
+    src/packet/packet_zz.h \
+    src/packet/packet_tt.h \
+    src/packet/packet_cu.h
