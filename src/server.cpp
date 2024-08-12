@@ -208,9 +208,7 @@ void Server::clientConnected()
         is_at_multiclient_limit = true;
 
     auto ban = db_manager->isIPBanned(client->getIpid());
-    auto hwidban = db_manager->isIPBanned(client->getIpid());
     bool is_banned = ban.first;
-    bool is_hwid_banned = hwidban.first;
     if (is_banned) {
         QString ban_duration;
         if (!(ban.second.duration == -2))
@@ -222,18 +220,7 @@ void Server::clientConnected()
         socket->sendTextMessage(ban_reason->toUtf8());
     }
 
-    if (is_hwid_banned) {
-        QString ban_duration;
-        if (!(hwidban.second.duration == -2))
-            ban_duration = QDateTime::fromSecsSinceEpoch(ban.second.time).addSecs(ban.second.duration).toString("MM/dd/yyyy, hh:mm");
-        else
-            ban_duration = "Permanently.";
-
-        std::shared_ptr<AOPacket> ban_reason = PacketFactory::createPacket("BD", {"Reason: " + hwidban.second.reason + "\nBan ID: " + QString::number(hwidban.second.id) + "\nUntil: " + ban_duration});
-        socket->sendTextMessage(ban_reason->toUtf8());
-    }
-
-    if (is_banned || is_hwid_banned || is_at_multiclient_limit) {
+    if (is_banned || is_at_multiclient_limit) {
         client->deleteLater();
         l_socket->close(QWebSocketProtocol::CloseCodeNormal);
         markIDFree(user_id);

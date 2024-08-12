@@ -31,6 +31,7 @@ void PacketHI::handlePacket(AreaData *area, AOClient &client) const
 
     client.m_hwid = incoming_hwid;
     emit client.getServer()->logConnectionAttempt(client.m_ipid, client.m_hwid);
+    client.clientConnected();
     auto ban = client.getServer()->getDatabaseManager()->isHDIDBanned(client.m_hwid);
     if (ban.first) {
         QString ban_duration;
