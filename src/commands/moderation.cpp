@@ -454,7 +454,7 @@ void AOClient::cmdAbout(int argc, QStringList argv)
                       "\n and other cool guys!"
                       "\n Github: https://github.com/AttorneyOnline/akashi "
                       "\n kakashi by Ddedinya."
-                      "\n Based on akashi jackfruit. "
+                      "\n Based on akashi jackfruit (Pre-release). "
                       "\n Github: https://github.com/Ddedinya/kakashi");
 }
 

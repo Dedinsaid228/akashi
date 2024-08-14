@@ -47,6 +47,7 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
     int l_capcon = 0;
     QString l_mes = validated_packet->toString().split("#")[5];
     QString l_lastpos;
+    bool l_firstmes = true;
     while (l_iter.hasNext()) {
         QRegularExpressionMatch l_match = l_iter.next();
         if (l_match.hasMatch()) {
@@ -58,7 +59,10 @@ void PacketMS::handlePacket(AreaData *area, AOClient &client) const
             if (!l_lastpos.isEmpty())
                 l_temp[4] = l_lastpos;
             l_lastpos = l_cap;
-            l_temp[29] = "1";
+            if (l_firstmes)
+                l_firstmes = false;
+            else
+                l_temp[29] = "1";
             l_temp.removeFirst();
             l_packets.append(PacketFactory::createPacket("MS", l_temp));
             qDebug() << l_temp;

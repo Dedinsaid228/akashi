@@ -191,6 +191,7 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"kickphantoms", {{ACLRole::NONE}, 0, &AOClient::cmdKickPhantoms}},
     {"play_ambience", {{ACLRole::NONE}, 1, &AOClient::cmdPlayAmbience}},
     {"play_ambience_ggl", {{ACLRole::NONE}, 1, &AOClient::cmdPlayAmbienceGgl}},
+    {"toggleautocap", {{ACLRole::CM}, 0, &AOClient::cmdToggleAutoCap}},
     {"scoreboard", {{ACLRole::CM}, 0, &AOClient::cmdScoreboard}},
     {"addscore", {{ACLRole::CM}, 1, &AOClient::cmdAddScore}},
     {"takescore", {{ACLRole::CM}, 1, &AOClient::cmdRemoveScore}}};
