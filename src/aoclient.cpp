@@ -137,6 +137,7 @@ const QMap<QString, AOClient::CommandInfo> AOClient::COMMANDS{
     {"clearcm", {{ACLRole::KICK}, 0, &AOClient::cmdClearCM}},
     {"areamessage", {{ACLRole::CM}, 0, &AOClient::cmdAreaMessage}},
     {"addsong", {{ACLRole::CM}, 1, &AOClient::cmdAddSong}},
+    {"webfiles", {{ACLRole::NONE}, 0, &AOClient::cmdWebfiles}},
     {"addcategory", {{ACLRole::CM}, 1, &AOClient::cmdAddCategory}},
     {"removeentry", {{ACLRole::CM}, 1, &AOClient::cmdRemoveCategorySong}},
     {"toggleroot", {{ACLRole::CM}, 0, &AOClient::cmdToggleRootlist}},
@@ -560,13 +561,13 @@ void AOClient::calculateIpid()
     m_ipid = hash.result().toHex().right(8); // Use the last 8 characters (4 bytes)
 }
 
-void AOClient::sendServerMessage(QString message) { sendPacket("CT", {ConfigManager::serverName(), message, "1"}); }
+void AOClient::sendServerMessage(QString message) { sendPacket("CT", {ConfigManager::serverTag(), message, "1"}); }
 
-void AOClient::sendServerMessageArea(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"}), areaId()); }
+void AOClient::sendServerMessageArea(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverTag(), message, "1"}), areaId()); }
 
-void AOClient::sendServerBroadcast(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"})); }
+void AOClient::sendServerBroadcast(QString message) { server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverTag(), message, "1"})); }
 
-void AOClient::sendServerMessageHub(QString message) { server->broadcast(hubId(), PacketFactory::createPacket("CT", {ConfigManager::serverName(), message, "1"})); }
+void AOClient::sendServerMessageHub(QString message) { server->broadcast(hubId(), PacketFactory::createPacket("CT", {ConfigManager::serverTag(), message, "1"})); }
 
 bool AOClient::checkPermission(ACLRole::Permission f_permission) const
 {
@@ -666,6 +667,7 @@ AOClient::AOClient(
     m_id(user_id),
     m_current_area(0),
     m_current_char(""),
+    m_hub(0),
     server(p_server),
     is_partial(false)
 {}

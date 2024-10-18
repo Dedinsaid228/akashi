@@ -36,8 +36,8 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
     }
 
     static QRegularExpression re("\\[|\\]|\\{|\\}|\\#|\\$|\\%|\\&");
-    client.setName(client.dezalgo(m_content[0]).replace(re, ""));                // no fucky wucky shit here
-    if (client.name().isEmpty() || client.name() == ConfigManager::serverName()) // impersonation & empty name protection
+    client.setName(client.dezalgo(m_content[0]).replace(re, ""));                                                               // no fucky wucky shit here
+    if (client.name().isEmpty() || client.name() == ConfigManager::serverName() || client.name() == ConfigManager::serverTag()) // impersonation & empty name protection
         return;
 
     if (client.name().length() > 30) {
@@ -47,8 +47,15 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
 
     QString l_message = client.dezalgo(m_content[1]);
     QString l_ooc_name = client.name();
-    if (l_message.length() == 0 || l_message.length() > ConfigManager::maxCharacters())
+    if (l_message.length() == 0)
         return;
+
+    if (!ConfigManager::filterList().isEmpty()) {
+        foreach (const QString &regex, ConfigManager::filterList()) {
+            QRegularExpression re(regex, QRegularExpression::CaseInsensitiveOption);
+            l_message.replace(re, "❌");
+        }
+    }
 
     std::shared_ptr<AOPacket> final_packet = PacketFactory::createPacket("CT", {l_ooc_name, l_message, "0"});
     if (l_message.at(0) == '/') {
@@ -77,5 +84,7 @@ void PacketCT::handlePacket(AreaData *area, AOClient &client) const
 
         if (area->autoMod())
             client.autoMod();
+
+        emit client.logOOC((client.character() + " " + client.characterName()), client.name(), client.m_ipid, area->name(), l_message, QString::number(client.clientId()), client.m_hwid, client.getServer()->getHubName(client.hubId()));
     }
 }

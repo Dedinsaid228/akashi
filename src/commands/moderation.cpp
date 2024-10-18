@@ -198,7 +198,8 @@ void AOClient::cmdHelp(int argc, QStringList argv)
                           "/mods - get a list about moderators on server.\n"
                           "/motd - get a server MOTD. If the user has [MOTD] permission, they can edit MOTD with this command.\n"
                           "/sneak - hide messages about your movements by areas.\n"
-                          "/kickphantoms - kick other your clients.");
+                          "/kickphantoms - kick other your clients.\n"
+                          "/webfiles - get links to download iniswaps of every client in the area.");
     else if (argv[0] == "music")
         sendServerMessage("[brackets] mean [required arguments]. Actually, commands don't need these brackets. "
                           "The prefix after the command description means permission to use that command.\n"

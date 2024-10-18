@@ -113,7 +113,7 @@ void AOClient::cmdNeed(int argc, QStringList argv)
         return;
     }
 
-    server->broadcast(PacketFactory::createPacket("CT", {"=== Advert ===\n[" + server->getHubName(hubId()) + "][" + server->getAreaName(areaId()) + "] needs " + l_sender_message + "."}), Server::TARGET_TYPE::ADVERT);
+    server->broadcast(PacketFactory::createPacket("CT", {ConfigManager::serverTag(), "=== Advert ===\n[" + server->getHubName(hubId()) + "][" + server->getAreaName(areaId()) + "] needs " + l_sender_message + "."}), Server::TARGET_TYPE::ADVERT);
     emit logCMD((character() + " " + characterName()), m_ipid, name(), "NEED", l_sender_message, server->getAreaName(areaId()), QString::number(clientId()), m_hwid, server->getHubName(hubId()));
 }
 

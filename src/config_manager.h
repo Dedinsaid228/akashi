@@ -133,6 +133,13 @@ class ConfigManager
     static int serverPort();
 
     /**
+     * @brief Returns the SSL port to listen for connections on.
+     *
+     * @return See short description.
+     */
+    static int securePort();
+
+    /**
      * @brief Returns the server description.
      *
      * @return See short description.
@@ -145,6 +152,13 @@ class ConfigManager
      * @return See short description.
      */
     static QString serverName();
+
+    /**
+     * @brief Returns the short "tag" version of the server.
+     *
+     * @return See short description.
+     */
+    static QString serverTag();
 
     /**
      * @brief Returns the server's Message of the Day.
@@ -423,6 +437,13 @@ class ConfigManager
     static QStringList gimpList();
 
     /**
+     * @brief Returns the server regex filter list
+     *
+     * @return See short description.
+     */
+    static QStringList filterList();
+
+    /**
      * @brief Returns the server approved domain list.
      *
      * @return See short description.
@@ -519,6 +540,7 @@ class ConfigManager
     {
         QStringList magic_8ball; //!< Contains answers for /8ball, found in config/text/8ball.txt
         QStringList gimps;       //!< Contains phrases for /gimp, found in config/text/gimp.txt
+        QStringList filters;     //!< Contains filter regex, found in config/text/filter.txt
         QStringList cdns;        //!< Contains domains for custom song validation, found in config/text/cdns.txt
     };
 

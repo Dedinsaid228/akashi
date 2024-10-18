@@ -1176,6 +1176,15 @@ class AOClient : public QObject
     void cmdToggleShouts(int argc, QStringList argv);
 
     /**
+     * @brief Generates a download link for characters who are iniswapping
+     *
+     * @details No arguments.
+     *
+     * @iscommand
+     */
+    void cmdWebfiles(int argc, QStringList argv);
+
+    /**
      * @brief Disable/Enable messages when you move to areas or disconnect.
      *
      * @details No arguments.

@@ -605,6 +605,23 @@ void AOClient::cmdClearAreaMessage(int argc, QStringList argv)
     emit logCMD((character() + " " + characterName()), m_ipid, name(), "CLEARAREAMESSAGE", "", server->getAreaById(areaId())->name(), QString::number(clientId()), m_hwid, server->getHubName(hubId()));
 }
 
+void AOClient::cmdWebfiles(int argc, QStringList argv)
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
+    const QVector<AOClient *> l_clients = server->getClients();
+    QStringList l_weblinks;
+    for (AOClient *l_client : l_clients) {
+        if (l_client->m_current_iniswap.isEmpty() || l_client->areaId() != areaId()) {
+            continue;
+        }
+        if (l_client->character().toLower() != l_client->m_current_iniswap.toLower()) {
+            l_weblinks.append("https://attorneyonline.github.io/webDownloader/index.html?char=" + l_client->m_current_iniswap.replace(" ", "%20"));
+        }
+    }
+    sendServerMessage("Character files:\n" + l_weblinks.join("\n"));
+}
+
 void AOClient::cmdSneak(int argc, QStringList argv)
 {
     Q_UNUSED(argc);

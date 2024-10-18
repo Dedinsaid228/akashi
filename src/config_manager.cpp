@@ -72,15 +72,10 @@ bool ConfigManager::verifyServerConfig()
         return false;
     }
 
-    bool web_ao = m_settings->value("webao_enable", false).toBool();
-    if (!web_ao)
-        m_settings->setValue("webao_port", -1);
-    else {
-        m_settings->value("webao_port", 27017).toInt(&ok);
-        if (!ok) {
-            qCritical("webao_port is not a valid port!");
-            return false;
-        }
+    m_settings->value("secure_port", -1).toInt(&ok);
+    if (!ok) {
+        qCritical("secure_port is not a valid port!");
+        return false;
     }
 
     QString l_auth = m_settings->value("auth", "simple").toString().toLower();
@@ -93,6 +88,7 @@ bool ConfigManager::verifyServerConfig()
 
     m_commands->magic_8ball = (loadConfigFile("8ball"));
     m_commands->gimps = (loadConfigFile("gimp"));
+    m_commands->filters = (loadConfigFile("filter"));
     m_commands->cdns = (loadConfigFile("cdns"));
     if (m_commands->cdns.isEmpty())
         m_commands->cdns = QStringList{"cdn.discord.com"};
@@ -275,9 +271,13 @@ int ConfigManager::serverPort()
     return m_settings->value("Options/port", 27016).toInt();
 }
 
+int ConfigManager::securePort() { return m_settings->value("Options/secure_port", -1).toInt(); }
+
 QString ConfigManager::serverDescription() { return m_settings->value("Options/server_description", "This is my flashy new server!").toString(); }
 
 QString ConfigManager::serverName() { return m_settings->value("Options/server_name", "An Unnamed Server").toString(); }
+
+QString ConfigManager::serverTag() { return m_settings->value("Options/server_tag", serverName()).toString(); }
 
 QString ConfigManager::motd() { return m_settings->value("Options/motd", "MOTD not set").toString(); }
 
@@ -498,6 +498,8 @@ void ConfigManager::setAuthType(const DataTypes::AuthType f_auth) { m_settings->
 QStringList ConfigManager::magic8BallAnswers() { return m_commands->magic_8ball; }
 
 QStringList ConfigManager::gimpList() { return m_commands->gimps; }
+
+QStringList ConfigManager::filterList() { return m_commands->filters; }
 
 QStringList ConfigManager::cdnList() { return m_commands->cdns; }
 
