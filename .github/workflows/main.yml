@@ -18,7 +18,7 @@ jobs:
     name: check-clang-format
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Run clang-format style check.
       uses: jidicula/clang-format-action@v4.5.0
       with:
@@ -30,7 +30,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -45,7 +45,7 @@ jobs:
           mv bin/config_sample bin/config
 
       - name: Upload binary
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kakashi-linux-qt6.2.4
           path: bin/
@@ -55,7 +55,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install Qt
@@ -89,7 +89,7 @@ jobs:
           curl -L https://github.com/yt-dlp/yt-dlp/releases/download/2024.08.06/yt-dlp.exe --output bin\yt-dlp.exe
 
       - name: Upload zip
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: kakashi-windows-qt6
           path: bin\
