@@ -187,7 +187,6 @@ QStringList ConfigManager::areaNames()
     return l_sanitized_area_names;
 }
 
-
 QStringList ConfigManager::rawAreaNames()
 {
     QStringList l_area_names = m_areas->childGroups();
