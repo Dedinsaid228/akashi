@@ -713,7 +713,12 @@ void AOClient::cmdRenameArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(hubId(), PacketFactory::createPacket("FA", server->getClientAreaNames(hubId())));
+    QStringList l_areas = getServer()->getClientAreaNames(hubId());
+    if (m_version.release == 2 && m_version.major >= 10) {
+        for (int i = 0; i < l_areas.length(); i++)
+            l_areas[i] = "[" + QString::number(i) + "] " + l_areas[i];
+    }
+    server->broadcast(hubId(), PacketFactory::createPacket("FA", l_areas));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
@@ -742,7 +747,13 @@ void AOClient::cmdCreateArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(hubId(), PacketFactory::createPacket("FA", server->getClientAreaNames(hubId())));
+    QStringList l_areas = getServer()->getClientAreaNames(hubId());
+    if (m_version.release == 2 && m_version.major >= 10) {
+        for (int i = 0; i < l_areas.length(); i++)
+            l_areas[i] = "[" + QString::number(i) + "] " + l_areas[i];
+    }
+
+    server->broadcast(hubId(), PacketFactory::createPacket("FA", l_areas));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
@@ -779,7 +790,13 @@ void AOClient::cmdRemoveArea(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(hubId(), PacketFactory::createPacket("FA", server->getClientAreaNames(hubId())));
+    QStringList l_areas = getServer()->getClientAreaNames(hubId());
+    if (m_version.release == 2 && m_version.major >= 10) {
+        for (int i = 0; i < l_areas.length(); i++)
+            l_areas[i] = "[" + QString::number(i) + "] " + l_areas[i];
+    }
+
+    server->broadcast(hubId(), PacketFactory::createPacket("FA", l_areas));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();
@@ -922,7 +939,13 @@ void AOClient::cmdSwapAreas(int argc, QStringList argv)
     for (AOClient *l_client : l_clients)
         l_client->getAreaList();
 
-    server->broadcast(hubId(), PacketFactory::createPacket("FA", server->getClientAreaNames(hubId())));
+    QStringList l_areas = getServer()->getClientAreaNames(hubId());
+    if (m_version.release == 2 && m_version.major >= 10) {
+        for (int i = 0; i < l_areas.length(); i++)
+            l_areas[i] = "[" + QString::number(i) + "] " + l_areas[i];
+    }
+
+    server->broadcast(hubId(), PacketFactory::createPacket("FA", l_areas));
 
     for (AOClient *l_client : l_clients)
         l_client->fullArup();

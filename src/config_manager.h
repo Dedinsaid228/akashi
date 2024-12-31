@@ -107,6 +107,8 @@ class ConfigManager
      */
     static QStringList sanitizedAreaNames();
 
+    static QStringList areaNames();
+
     /**
      * @brief Returns the raw arealist
      *

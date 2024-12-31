@@ -171,6 +171,23 @@ QStringList ConfigManager::sanitizedAreaNames()
     return l_sanitized_area_names;
 }
 
+QStringList ConfigManager::areaNames()
+{
+    QStringList l_area_names = m_areas->childGroups();
+    std::sort(l_area_names.begin(), l_area_names.end(), [](const QString &a, const QString &b) { return a.split(":")[0].toInt() < b.split(":")[0].toInt(); });
+    QStringList l_sanitized_area_names;
+
+    for (const QString &areaName : std::as_const(l_area_names)) {
+        QStringList l_nameSplit = areaName.split(":");
+        l_nameSplit.removeFirst();
+        QString l_area_name_sanitized = l_nameSplit.join(":");
+        l_sanitized_area_names.append(l_area_name_sanitized);
+    }
+
+    return l_sanitized_area_names;
+}
+
+
 QStringList ConfigManager::rawAreaNames()
 {
     QStringList l_area_names = m_areas->childGroups();

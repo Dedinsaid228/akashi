@@ -65,7 +65,12 @@ void AOClient::cmdHub(int argc, QStringList argv)
         server->getHubById(hubId())->removeClient();
         setHubId(l_new_hub);
         getAreaList();
-        sendPacket("FA", getServer()->getClientAreaNames(hubId()));
+        QStringList l_areas = getServer()->getClientAreaNames(hubId());
+        if (m_version.release == 2 && m_version.major >= 10) {
+            for (int i = 0; i < l_areas.length(); i++)
+                l_areas[i] = "[" + QString::number(i) + "] " + l_areas[i];
+        }
+        sendPacket("FA", l_areas);
         server->getHubById(hubId())->addClient();
 
         if (!l_sneaked)
